@@ -658,16 +658,22 @@
             <h1 class="auth-title">De Onderhoud Centrale</h1>
             <p class="auth-subtitle">Log in om afstelinstructies te bekijken</p>
             <form id="loginForm">
-                <div class="form-group">
-                    <label for="email">E-mail</label>
-                    <input type="email" id="email" class="form-control" required placeholder="jouw@email.nl">
-                </div>
-                <div class="form-group">
-                    <label for="password">Wachtwoord</label>
-                    <input type="password" id="password" class="form-control" required placeholder="••••••••">
-                </div>
-                <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 16px;">Inloggen</button>
-            </form>
+    <div class="form-group">
+        <label for="email">E-mail</label>
+        <input type="email" id="email" class="form-control" required placeholder="jouw@email.nl">
+    </div>
+    <div class="form-group">
+        <label for="password">Wachtwoord</label>
+        <input type="password" id="password" class="form-control" required placeholder="••••••••">
+    </div>
+    <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 16px;">Inloggen</button>
+</form>
+<p style="margin-top: 12px; font-size: 14px; text-align: center;">
+    Nog geen account?
+    <button type="button" class="btn" style="padding: 4px 8px; font-size: 13px;" onclick="openRegisterModal()">
+        Registreren
+    </button>
+</p>
         </div>
     </div>
 
@@ -997,6 +1003,40 @@
             </form>
         </div>
     </div>
+    
+<!-- Register Modal -->
+<div id="registerModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 class="modal-title">Nieuw account registreren</h2>
+            <button class="icon-btn" onclick="closeRegisterModal()">
+                <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+        </div>
+        <form id="registerForm">
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="registerEmail">E-mail *</label>
+                    <input type="email" id="registerEmail" class="form-control" required placeholder="monteur@bedrijf.nl">
+                </div>
+                <div class="form-group">
+                    <label for="registerPassword">Wachtwoord *</label>
+                    <input type="password" id="registerPassword" class="form-control" required placeholder="Minimaal 6 tekens">
+                </div>
+                <div class="form-group">
+                    <label for="registerPassword2">Herhaal wachtwoord *</label>
+                    <input type="password" id="registerPassword2" class="form-control" required>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn" onclick="closeRegisterModal()">Annuleren</button>
+                <button type="submit" class="btn btn-primary">Account aanmaken</button>
+            </div>
+        </form>
+    </div>
+</div>
 
     <script>
         const SUPABASE_URL = 'https://srsnjifezttivawxnndu.supabase.co';
@@ -1049,6 +1089,7 @@
             document.getElementById('favoritesFilter').addEventListener('change', filterSystems);
             document.getElementById('addForm').addEventListener('submit', handleAddSubmit);
             document.getElementById('editForm').addEventListener('submit', handleEditSubmit);
+            document.getElementById('registerForm').addEventListener('submit', handleRegister);
             
             const adminToggleBtn = document.getElementById('adminToggleBtn');
             const adminActions = document.getElementById('adminActions');
@@ -1460,6 +1501,54 @@
             }
         }
 
+        function openRegisterModal() {
+    document.getElementById('registerModal').classList.add('active');
+}
+
+function closeRegisterModal() {
+    document.getElementById('registerModal').classList.remove('active');
+}
+
+        async function handleRegister(e) {
+    e.preventDefault();
+    const email = document.getElementById('registerEmail').value.trim();
+    const password = document.getElementById('registerPassword').value;
+    const password2 = document.getElementById('registerPassword2').value;
+
+    if (password !== password2) {
+        alert('Wachtwoorden komen niet overeen.');
+        return;
+    }
+
+    try {
+        // 1. User aanmaken in Supabase auth
+        const { data, error } = await supabase.auth.signUp({
+            email,
+            password
+        });
+
+        if (error) throw error;
+
+        // 2. user_roles rij met rol 'user'
+        const newUserId = data.user?.id;
+        if (newUserId) {
+            const { error: roleError } = await supabase
+                .from('user_roles')
+                .insert({ user_id: newUserId, role: 'user' });
+
+            if (roleError) {
+                console.error('Fout bij opslaan rol:', roleError);
+            }
+        }
+
+        alert('Account aangemaakt. Controleer je e-mail (indien bevestiging nodig) en log daarna in.');
+        closeRegisterModal();
+    } catch (err) {
+        console.error('Fout bij registreren:', err);
+        alert('Registratie mislukt: ' + err.message);
+    }
+}
+
         function openEditModal(systemId) {
             const system = systems.find(s => s.id === systemId);
             if (!system) return;
@@ -1779,3 +1868,4 @@
     </div>
 </body>
 </html>
+
