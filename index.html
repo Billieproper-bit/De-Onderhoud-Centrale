@@ -602,6 +602,54 @@
             justify-content: center;
             font-size: 24px;
         }
+
+        /* Inklapbare admin-acties */
+        .admin-actions-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            position: relative;
+        }
+
+        .admin-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .admin-toggle-btn {
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            .admin-actions {
+                position: absolute;
+                top: 110%;
+                right: 0;
+                background: var(--color-surface);
+                border: 1px solid var(--color-border);
+                border-radius: var(--radius-base);
+                box-shadow: var(--shadow-md);
+                padding: 8px;
+                flex-direction: column;
+                gap: 4px;
+                min-width: 180px;
+                display: none;
+                z-index: 10;
+            }
+
+            .admin-actions.open {
+                display: flex;
+            }
+
+            #adminBtn,
+            #addSystemBtn {
+                width: 100%;
+            }
+
+            .admin-toggle-btn {
+                display: inline-flex;
+            }
+        }
     </style>
 </head>
 <body>
@@ -642,18 +690,33 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
                         </svg>
                     </button>
-                    <button class="btn" id="adminBtn" style="display: none;">
-                        <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
-                        </svg>
-                        Gebruikersbeheer
-                    </button>
-                    <button class="btn" id="addSystemBtn" style="display: none;">
-                        <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-                        </svg>
-                        Systeem toevoegen
-                    </button>
+
+                    <div class="admin-actions-wrapper">
+                        <button class="btn icon-btn admin-toggle-btn" id="adminToggleBtn" type="button" style="display:none;" title="Beheer">
+                            <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                      d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0l.284 1.174a1 1 0 00.97.758h1.518a1 1 0 01.894.553l.76 1.52a1 1 0 01-.116 1.034l-.96 1.28a1 1 0 000 1.2l.96 1.28a1 1 0 01.116 1.034l-.76 1.52a1 1 0 01-.894.553h-1.518a1 1 0 00-.97.758l-.284 1.174c-.426 1.756-2.924 1.756-3.35 0l-.284-1.174a1 1 0 00-.97-.758H7.253a1 1 0 01-.894-.553l-.76-1.52a1 1 0 01.116-1.034l.96-1.28a1 1 0 000-1.2l-.96-1.28a1 1 0 01-.116-1.034l.76-1.52a1 1 0 01.894-.553h1.518a1 1 0 00.97-.758l.284-1.174z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                      d="M12 9a3 3 0 100 6 3 3 0 000-6z" />
+                            </svg>
+                        </button>
+
+                        <div class="admin-actions" id="adminActions">
+                            <button class="btn" id="adminBtn" style="display: none;">
+                                <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                                </svg>
+                                Gebruikersbeheer
+                            </button>
+                            <button class="btn" id="addSystemBtn" style="display: none;">
+                                <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                                </svg>
+                                Systeem toevoegen
+                            </button>
+                        </div>
+                    </div>
+
                     <span id="userEmail" style="font-size: 14px; color: var(--color-text-secondary);"></span>
                     <button class="btn" id="logoutBtn">
                         <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -987,6 +1050,12 @@
             document.getElementById('addForm').addEventListener('submit', handleAddSubmit);
             document.getElementById('editForm').addEventListener('submit', handleEditSubmit);
             
+            const adminToggleBtn = document.getElementById('adminToggleBtn');
+            const adminActions = document.getElementById('adminActions');
+            adminToggleBtn.addEventListener('click', () => {
+                adminActions.classList.toggle('open');
+            });
+
             initTheme();
         }
 
@@ -1028,6 +1097,9 @@
             
             document.getElementById('addSystemBtn').style.display = canEdit ? 'inline-flex' : 'none';
             document.getElementById('adminBtn').style.display = isAdmin ? 'inline-flex' : 'none';
+
+            const adminToggleBtn = document.getElementById('adminToggleBtn');
+            adminToggleBtn.style.display = canEdit ? 'inline-flex' : 'none';
             
             document.querySelectorAll('.icon-btn[onclick^="openEditModal"]').forEach(btn => {
                 btn.style.display = canEdit ? 'block' : 'none';
