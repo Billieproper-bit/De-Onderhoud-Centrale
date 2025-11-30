@@ -1409,7 +1409,10 @@
 
         async function loadUsers() {
             try {
-                const { data: users, error } = await supabase.auth.admin.listUsers();
+                const { data: users, error } = await supabase
+                  .from('user_profiles')
+                  .select('id, email, role')
+                  .order('email', { ascending: true });
                 
                 if (error) throw error;
 
@@ -1420,10 +1423,10 @@
                 const rolesMap = {};
                 roles?.forEach(r => rolesMap[r.user_id] = r.role);
 
-                allUsers = users.users.map(u => ({
-                    id: u.id,
-                    email: u.email,
-                    role: rolesMap[u.id] || 'user'
+                allUsers = (users || []).map(u => ({
+                id: u.id,
+                email: u.email,
+                role: u.role || 'user'
                 }));
 
                 renderUsersTable();
@@ -1868,4 +1871,5 @@ function closeRegisterModal() {
     </div>
 </body>
 </html>
+
 
