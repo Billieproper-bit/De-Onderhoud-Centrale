@@ -782,6 +782,12 @@
                   </svg>
                   Systeem toevoegen
                 </button>
+                <button class="btn" id="auditBtn" style="display: none;">
+                  <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                  </svg>
+                  Audit Log
+                </button>
               </div>
             </div>
             <span id="userEmail" style="font-size: 14px; color: var(--color-text-secondary);"></span>
@@ -860,6 +866,40 @@
             </thead>
             <tbody id="usersTableBody">
               <tr><td colspan="3" style="text-align: center; padding: 20px;">Laden...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="auditModal" class="modal">
+    <div class="modal-content wide">
+      <div class="modal-header">
+        <h2 class="modal-title">Audit Log</h2>
+        <button class="icon-btn" onclick="closeAuditModal()">
+          <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="admin-section">
+          <h3 style="margin-bottom: 16px;">Activiteitenlogboek</h3>
+          <div style="margin-bottom: 16px;">
+            <input type="text" id="auditSearchInput" class="form-control" placeholder="Zoek op e-mail, actie of details...">
+          </div>
+          <table class="user-table" id="auditTable">
+            <thead>
+              <tr>
+                <th>Datum/Tijd</th>
+                <th>Gebruiker</th>
+                <th>Actie</th>
+                <th>Details</th>
+              </tr>
+            </thead>
+            <tbody id="auditTableBody">
+              <tr><td colspan="4" style="text-align: center; padding: 20px;">Laden...</td></tr>
             </tbody>
           </table>
         </div>
@@ -1134,6 +1174,8 @@
     let currentEditingId = null;
     let allUsers = [];
     let pendingImages = { add: [], edit: [] };
+    let auditLogs = [];
+    let auditFilterTerm = '';
 
     async function init() {
       const { data: { session } } = await supabase.auth.getSession();
@@ -1164,6 +1206,8 @@
       document.getElementById('themeToggle').addEventListener('click', toggleTheme);
       document.getElementById('adminBtn').addEventListener('click', openAdminModal);
       document.getElementById('addSystemBtn').addEventListener('click', openAddModal);
+      document.getElementById('auditBtn').addEventListener('click', openAuditModal);
+      document.getElementById('auditSearchInput')?.addEventListener('input', filterAuditLogs);
       document.getElementById('searchInput').addEventListener('input', filterSystems);
       document.getElementById('systemTypeFilter').addEventListener('change', filterSystems);
       document.getElementById('brandFilter').addEventListener('change', filterSystems);
@@ -1209,6 +1253,7 @@
       const isAdmin = currentUserRole === 'admin';
       document.getElementById('addSystemBtn').style.display = canEdit ? 'inline-flex' : 'none';
       document.getElementById('adminBtn').style.display = isAdmin ? 'inline-flex' : 'none';
+      document.getElementById('auditBtn').style.display = isAdmin ? 'inline-flex' : 'none';
       document.getElementById('adminToggleBtn').style.display = canEdit ? 'inline-flex' : 'none';
       document.querySelectorAll('.icon-btn[onclick*="openEditModal"]').forEach(btn => {
         btn.style.display = canEdit ? 'block' : 'none';
@@ -1384,6 +1429,56 @@
       document.getElementById('adminModal').classList.remove('active');
     }
 
+    async function openAuditModal() {
+      document.getElementById('auditModal').classList.add('active');
+      await loadAuditLogs();
+    }
+
+    function closeAuditModal() {
+      document.getElementById('auditModal').classList.remove('active');
+    }
+
+    async function loadAuditLogs() {
+      try {
+        const { data, error } = await supabase
+          .from('audit_logs')
+          .select('*')
+          .order('timestamp', { ascending: false })
+          .limit(200);
+        if (error) throw error;
+        auditLogs = data || [];
+        renderAuditTable(auditLogs);
+      } catch (error) {
+        console.error('Error loading audit logs:', error);
+        document.getElementById('auditTableBody').innerHTML = '<tr><td colspan="4" style="text-align: center; color: var(--color-error);">Fout bij laden logboek</td></tr>';
+      }
+    }
+
+    function renderAuditTable(logs) {
+      const tbody = document.getElementById('auditTableBody');
+      if (logs.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 20px;">Geen logboekitems gevonden</td></tr>';
+        return;
+      }
+      tbody.innerHTML = logs.map(log => {
+        const date = new Date(log.timestamp).toLocaleString('nl-NL');
+        const actionLabel = log.action === 'system_created' ? '✨ Systeem aangemaakt' : 
+                           log.action === 'system_updated' ? '✏️ Systeem bijgewerkt' : 
+                           log.action === 'role_change' ? '👤 Rol gewijzigd' : log.action;
+        return '<tr><td style="font-size: 13px;">' + date + '</td><td>' + escapeHtml(log.user_email) + '</td><td>' + actionLabel + '</td><td style="font-size: 13px; max-width: 300px; word-break: break-word;">' + escapeHtml(log.details || '') + '</td></tr>';
+      }).join('');
+    }
+
+    function filterAuditLogs() {
+      auditFilterTerm = document.getElementById('auditSearchInput').value.toLowerCase();
+      const filtered = auditLogs.filter(log => {
+        return (log.user_email?.toLowerCase().includes(auditFilterTerm)) ||
+               (log.action?.toLowerCase().includes(auditFilterTerm)) ||
+               (log.details?.toLowerCase().includes(auditFilterTerm));
+      });
+      renderAuditTable(filtered);
+    }
+
     async function loadUsers() {
       try {
         const { data: users, error } = await supabase
@@ -1413,6 +1508,7 @@
           .from('user_roles')
           .upsert({ user_id: userId, role: newRole }, { onConflict: 'user_id' });
         if (error) throw error;
+        await logAuditEvent('role_change', `Gebruiker ${userId} rol gewijzigd naar ${newRole}`);
         const user = allUsers.find(u => u.id === userId);
         if (user) user.role = newRole;
         renderUsersTable();
@@ -1420,6 +1516,22 @@
       } catch (error) {
         console.error('Error updating role:', error);
         alert('Fout bij bijwerken rol: ' + error.message);
+      }
+    }
+
+    async function logAuditEvent(action, details) {
+      if (!currentUser) return;
+      try {
+        const { error } = await supabase.from('audit_logs').insert({
+          user_id: currentUser.id,
+          user_email: currentUser.email,
+          action: action,
+          details: details,
+          timestamp: new Date().toISOString()
+        });
+        if (error) throw error;
+      } catch (error) {
+        console.error('Fout bij logging:', error);
       }
     }
 
@@ -1588,6 +1700,7 @@
         if (error) throw error;
         if (data && data.length > 0) {
           systems.push(data[0]);
+          await logAuditEvent('system_created', `Systeem ${newSystem.brand} ${newSystem.model} (${systemType}) aangemaakt`);
         }
         pendingImages.add = [];
         closeAddModal();
@@ -1637,6 +1750,7 @@
         const systemIndex = systems.findIndex(s => s.id === currentEditingId);
         if (systemIndex !== -1) {
           systems[systemIndex] = Object.assign({}, systems[systemIndex], updates, { images: imageUrls });
+          await logAuditEvent('system_updated', `Systeem ${updates.brand} ${updates.model} bijgewerkt`);
         }
         pendingImages.edit = [];
         closeEditModal();
