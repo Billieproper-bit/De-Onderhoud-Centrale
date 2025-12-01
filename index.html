@@ -1,1789 +1,1888 @@
 <!DOCTYPE html>
 <html lang="nl">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>De Onderhoud Centrale - Afstelinstructies en doelwaarden voor CV-ketels, Warmtepompen en WTW/MV</title>
-  <link rel="icon" type="image/x-icon" href="favicon.ico">
-  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <style>
-    :root {
-      --color-bg-primary: #fcfcf9;
-      --color-surface: #fffdfd;
-      --color-text: #134252;
-      --color-text-secondary: #626c71;
-      --color-primary: #218D8D;
-      --color-primary-hover: #1d7480;
-      --color-border: rgba(94, 82, 64, 0.2);
-      --color-card-border: rgba(94, 82, 64, 0.12);
-      --color-error: #c0152f;
-      --color-success: #218D8D;
-      --color-warning: #a84b2f;
-      --radius-base: 8px;
-      --radius-lg: 12px;
-      --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02);
-      --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.04), 0 2px 4px -1px rgba(0, 0, 0, 0.02);
-    }
-
-    [data-theme="dark"] {
-      --color-bg-primary: #1f2121;
-      --color-surface: #262828;
-      --color-text: #f5f5f5;
-      --color-text-secondary: rgba(167, 169, 169, 0.7);
-      --color-primary: #32b8c6;
-      --color-primary-hover: #2da6b2;
-      --color-border: rgba(119, 124, 124, 0.3);
-      --color-card-border: rgba(119, 124, 124, 0.2);
-    }
-
-    @media (prefers-color-scheme: dark) {
-      body:not([data-theme="light"]) {
-        --color-bg-primary: #1f2121;
-        --color-surface: #262828;
-        --color-text: #f5f5f5;
-        --color-text-secondary: rgba(167, 169, 169, 0.7);
-        --color-primary: #32b8c6;
-        --color-primary-hover: #2da6b2;
-        --color-border: rgba(119, 124, 124, 0.3);
-        --color-card-border: rgba(119, 124, 124, 0.2);
-      }
-    }
-
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: var(--color-bg-primary);
-      color: var(--color-text);
-      line-height: 1.5;
-    }
-
-    .container {
-      max-width: 1280px;
-      margin: 0 auto;
-      padding: 0 20px;
-    }
-
-    .header {
-      background: var(--color-surface);
-      border-bottom: 1px solid var(--color-border);
-      padding: 16px 0;
-      margin-bottom: 24px;
-    }
-
-    .header-content {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 16px;
-      flex-wrap: wrap;
-    }
-
-    .header-title {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .header-title h1 {
-      font-size: 24px;
-      font-weight: 600;
-      color: var(--color-text);
-    }
-
-    .header-subtitle {
-      font-size: 14px;
-      color: var(--color-text-secondary);
-      margin-top: 4px;
-    }
-
-    .header-actions {
-      display: flex;
-      gap: 8px;
-      align-items: center;
-    }
-
-    .btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 8px 16px;
-      border-radius: var(--radius-base);
-      font-size: 14px;
-      font-weight: 500;
-      cursor: pointer;
-      border: 1px solid var(--color-border);
-      background: var(--color-surface);
-      color: var(--color-text);
-      transition: all 0.2s;
-    }
-
-    .btn:hover {
-      background: rgba(33, 141, 141, 0.1);
-      border-color: var(--color-primary);
-    }
-
-    .btn-primary {
-      background: var(--color-primary);
-      color: white;
-      border-color: var(--color-primary);
-    }
-
-    .btn-primary:hover {
-      background: var(--color-primary-hover);
-    }
-
-    .filters {
-      background: var(--color-surface);
-      padding: 20px;
-      border-radius: var(--radius-lg);
-      margin-bottom: 24px;
-      border: 1px solid var(--color-card-border);
-    }
-
-    .filters-row {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 12px;
-      margin-bottom: 12px;
-    }
-
-    .form-group {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-
-    .form-control {
-      padding: 10px 12px;
-      border: 1px solid var(--color-border);
-      border-radius: var(--radius-base);
-      background: var(--color-bg-primary);
-      color: var(--color-text);
-      font-size: 14px;
-      width: 100%;
-    }
-
-    .form-control:focus {
-      outline: 2px solid var(--color-primary);
-      border-color: var(--color-primary);
-    }
-
-    .search-input {
-      position: relative;
-    }
-
-    .search-icon {
-      position: absolute;
-      left: 12px;
-      top: 50%;
-      transform: translateY(-50%);
-      color: var(--color-text-secondary);
-    }
-
-    .search-input input {
-      padding-left: 40px;
-    }
-
-    .results-count {
-      font-size: 14px;
-      color: var(--color-text-secondary);
-    }
-
-    .cards-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(500px, 1fr));
-      gap: 20px;
-      margin-bottom: 40px;
-    }
-
-    @media (max-width: 768px) {
-      .cards-grid {
-        grid-template-columns: 1fr;
-      }
-    }
-
-    .system-card {
-      background: var(--color-surface);
-      border: 1px solid var(--color-card-border);
-      border-radius: var(--radius-lg);
-      padding: 20px;
-      box-shadow: var(--shadow-sm);
-      transition: box-shadow 0.2s;
-    }
-
-    .system-card:hover {
-      box-shadow: var(--shadow-md);
-    }
-
-    .card-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: start;
-      margin-bottom: 16px;
-    }
-
-    .card-title {
-      font-size: 18px;
-      font-weight: 600;
-      color: var(--color-text);
-      margin-bottom: 4px;
-    }
-
-    .card-badge {
-      display: inline-block;
-      padding: 4px 12px;
-      border-radius: 16px;
-      font-size: 12px;
-      font-weight: 500;
-      background: rgba(33, 141, 141, 0.1);
-      color: var(--color-primary);
-      border: 1px solid rgba(33, 141, 141, 0.2);
-    }
-
-    .card-actions {
-      display: flex;
-      gap: 8px;
-    }
-
-    .icon-btn {
-      background: none;
-      border: none;
-      cursor: pointer;
-      padding: 8px;
-      border-radius: var(--radius-base);
-      color: var(--color-text-secondary);
-      transition: all 0.2s;
-    }
-
-    .icon-btn:hover {
-      background: rgba(33, 141, 141, 0.1);
-      color: var(--color-primary);
-    }
-
-    .icon-btn.active {
-      color: #f59e0b;
-    }
-
-    .card-section {
-      margin-bottom: 16px;
-    }
-
-    .card-section-title {
-      font-size: 14px;
-      font-weight: 600;
-      color: var(--color-text);
-      margin-bottom: 8px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .procedure-text {
-      font-size: 14px;
-      color: var(--color-text-secondary);
-      white-space: pre-line;
-      line-height: 1.6;
-    }
-
-    .values-grid {
-      display: grid;
-      gap: 8px;
-    }
-
-    .value-item {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 12px;
-      background: rgba(33, 141, 141, 0.05);
-      border-radius: var(--radius-base);
-      border: 1px solid rgba(33, 141, 141, 0.1);
-    }
-
-    .value-icon {
-      color: var(--color-primary);
-      flex-shrink: 0;
-    }
-
-    .value-content {
-      flex: 1;
-    }
-
-    .value-label {
-      font-size: 12px;
-      color: var(--color-text-secondary);
-      margin-bottom: 2px;
-    }
-
-    .value-number {
-      font-size: 16px;
-      font-weight: 600;
-      color: var(--color-text);
-    }
-
-    .notes-section {
-      background: rgba(245, 158, 11, 0.1);
-      border: 1px solid rgba(245, 158, 11, 0.2);
-      border-radius: var(--radius-base);
-      padding: 12px;
-    }
-
-    .notes-title {
-      font-size: 13px;
-      font-weight: 600;
-      color: #d97706;
-      margin-bottom: 8px;
-    }
-
-    .notes-text {
-      font-size: 13px;
-      color: var(--color-text-secondary);
-      line-height: 1.5;
-    }
-
-    .card-meta {
-      font-size: 13px;
-      color: var(--color-warning);
-      margin-top: 4px;
-      font-style: italic;
-    }
-
-    .loading {
-      text-align: center;
-      padding: 40px;
-      color: var(--color-text-secondary);
-    }
-
-    .empty-state {
-      text-align: center;
-      padding: 60px 20px;
-      color: var(--color-text-secondary);
-    }
-
-    .modal {
-      display: none;
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: rgba(0, 0, 0, 0.5);
-      z-index: 1000;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-    }
-
-    .modal.active {
-      display: flex;
-    }
-
-    .modal-content {
-      background: var(--color-surface);
-      border-radius: var(--radius-lg);
-      padding: 24px;
-      max-width: 500px;
-      width: 100%;
-      max-height: 90vh;
-      overflow-y: auto;
-    }
-
-    .modal-content.wide {
-      max-width: 700px;
-    }
-
-    .modal-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 20px;
-    }
-
-    .modal-title {
-      font-size: 20px;
-      font-weight: 600;
-    }
-
-    .modal-body {
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-    }
-
-    .modal-footer {
-      display: flex;
-      gap: 12px;
-      justify-content: flex-end;
-      margin-top: 20px;
-    }
-
-    .auth-container {
-      max-width: 400px;
-      margin: 60px auto;
-      padding: 20px;
-    }
-
-    .auth-card {
-      background: var(--color-surface);
-      border: 1px solid var(--color-card-border);
-      border-radius: var(--radius-lg);
-      padding: 32px;
-      box-shadow: var(--shadow-md);
-    }
-
-    .auth-title {
-      font-size: 24px;
-      font-weight: 600;
-      margin-bottom: 8px;
-      text-align: center;
-    }
-
-    .auth-subtitle {
-      color: var(--color-text-secondary);
-      text-align: center;
-      margin-bottom: 24px;
-    }
-
-    .hidden {
-      display: none !important;
-    }
-
-    .icon {
-      width: 20px;
-      height: 20px;
-      display: inline-block;
-    }
-
-    .brand-logo {
-      width: 48px;
-      height: 48px;
-      border-radius: var(--radius-base);
-      object-fit: contain;
-      background: white;
-      padding: 4px;
-      border: 1px solid var(--color-card-border);
-    }
-
-    .card-header-with-logo {
-      display: flex;
-      gap: 12px;
-      align-items: start;
-    }
-
-    .admin-section {
-      background: var(--color-surface);
-      padding: 24px;
-      border-radius: var(--radius-lg);
-      border: 1px solid var(--color-card-border);
-      margin-bottom: 24px;
-    }
-
-    .user-table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 16px;
-    }
-
-    .user-table th,
-    .user-table td {
-      padding: 12px;
-      text-align: left;
-      border-bottom: 1px solid var(--color-border);
-    }
-
-    .user-table th {
-      font-weight: 600;
-      font-size: 14px;
-      color: var(--color-text-secondary);
-    }
-
-    .role-badge {
-      display: inline-block;
-      padding: 4px 8px;
-      border-radius: 4px;
-      font-size: 12px;
-      font-weight: 500;
-    }
-
-    .role-badge.admin {
-      background: rgba(192, 21, 47, 0.1);
-      color: var(--color-error);
-      border: 1px solid rgba(192, 21, 47, 0.2);
-    }
-
-    .role-badge.moderator {
-      background: rgba(33, 141, 141, 0.1);
-      color: var(--color-primary);
-      border: 1px solid rgba(33, 141, 141, 0.2);
-    }
-
-    .role-badge.user {
-      background: rgba(119, 124, 124, 0.1);
-      color: var(--color-text-secondary);
-      border: 1px solid rgba(119, 124, 124, 0.2);
-    }
-
-    .parts-list {
-      background: rgba(33, 141, 141, 0.05);
-      border: 1px solid rgba(33, 141, 141, 0.15);
-      border-radius: var(--radius-base);
-      padding: 12px;
-      margin-top: 8px;
-    }
-
-    .parts-title {
-      font-size: 13px;
-      font-weight: 600;
-      color: var(--color-text);
-      margin-bottom: 8px;
-    }
-
-    .parts-text {
-      font-size: 13px;
-      color: var(--color-text-secondary);
-      line-height: 1.5;
-      white-space: pre-line;
-    }
-
-    .image-gallery {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-      gap: 8px;
-      margin-top: 8px;
-    }
-
-    .gallery-item {
-      position: relative;
-      aspect-ratio: 1;
-      border-radius: var(--radius-base);
-      overflow: hidden;
-      cursor: pointer;
-      border: 1px solid var(--color-border);
-      background: var(--color-bg-primary);
-    }
-
-    .gallery-item img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-
-    .gallery-item-delete {
-      position: absolute;
-      top: 4px;
-      right: 4px;
-      background: rgba(192, 21, 47, 0.9);
-      color: white;
-      border: none;
-      border-radius: 50%;
-      width: 24px;
-      height: 24px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 14px;
-      opacity: 0;
-      transition: opacity 0.2s;
-    }
-
-    .gallery-item:hover .gallery-item-delete {
-      opacity: 1;
-    }
-
-    .upload-zone {
-      border: 2px dashed var(--color-border);
-      border-radius: var(--radius-base);
-      padding: 20px;
-      text-align: center;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-
-    .upload-zone:hover {
-      border-color: var(--color-primary);
-      background: rgba(33, 141, 141, 0.05);
-    }
-
-    .upload-zone.drag-over {
-      border-color: var(--color-primary);
-      background: rgba(33, 141, 141, 0.1);
-    }
-
-    .upload-zone input[type="file"] {
-      display: none;
-    }
-
-    .image-count {
-      font-size: 12px;
-      color: var(--color-text-secondary);
-      margin-top: 4px;
-    }
-
-    .lightbox {
-      display: none;
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: rgba(0, 0, 0, 0.9);
-      z-index: 2000;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .lightbox.active {
-      display: flex;
-    }
-
-    .lightbox-content {
-      position: relative;
-      max-width: 90%;
-      max-height: 90%;
-    }
-
-    .lightbox-img {
-      max-width: 100%;
-      max-height: 100%;
-      border-radius: var(--radius-lg);
-    }
-
-    .lightbox-close {
-      position: absolute;
-      top: 10px;
-      right: 10px;
-      background: rgba(0, 0, 0, 0.7);
-      color: white;
-      border: none;
-      border-radius: 50%;
-      width: 40px;
-      height: 40px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 24px;
-    }
-
-    /* Inklapbare admin-acties */
-    .admin-actions-wrapper {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      position: relative;
-    }
-
-    .admin-actions {
-      display: flex;
-      gap: 8px;
-    }
-
-    .admin-toggle-btn {
-      display: none;
-    }
-
-    @media (max-width: 768px) {
-      .admin-actions {
-        position: absolute;
-        top: 110%;
-        right: 0;
-        background: var(--color-surface);
-        border: 1px solid var(--color-border);
-        border-radius: var(--radius-base);
-        box-shadow: var(--shadow-md);
-        padding: 8px;
-        flex-direction: column;
-        gap: 4px;
-        min-width: 180px;
-        display: none;
-        z-index: 10;
-      }
-
-      .admin-actions.open {
-        display: flex;
-      }
-
-      #adminBtn, #addSystemBtn {
-        width: 100%;
-      }
-
-      .admin-toggle-btn {
-        display: inline-flex;
-      }
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>De Onderhoud Centrale - Afstelinstructies en doelwaarden voor CV-ketels, Warmtepompen en WTW/MV</title>
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root {
+            --color-bg-primary: #fcfcf9;
+            --color-surface: #fffdfd;
+            --color-text: #134252;
+            --color-text-secondary: #626c71;
+            --color-primary: #218D8D;
+            --color-primary-hover: #1d7480;
+            --color-border: rgba(94, 82, 64, 0.2);
+            --color-card-border: rgba(94, 82, 64, 0.12);
+            --color-error: #c0152f;
+            --color-success: #218D8D;
+            --color-warning: #a84b2f;
+            --radius-base: 8px;
+            --radius-lg: 12px;
+            --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.04), 0 2px 4px -1px rgba(0, 0, 0, 0.02);
+        }
+
+        body[data-theme="dark"] {
+            --color-bg-primary: #1f2121;
+            --color-surface: #262828;
+            --color-text: #f5f5f5;
+            --color-text-secondary: rgba(167, 169, 169, 0.7);
+            --color-primary: #32b8c6;
+            --color-primary-hover: #2da6b2;
+            --color-border: rgba(119, 124, 124, 0.3);
+            --color-card-border: rgba(119, 124, 124, 0.2);
+        }
+
+        @media (prefers-color-scheme: dark) {
+            body:not([data-theme="light"]) {
+                --color-bg-primary: #1f2121;
+                --color-surface: #262828;
+                --color-text: #f5f5f5;
+                --color-text-secondary: rgba(167, 169, 169, 0.7);
+                --color-primary: #32b8c6;
+                --color-primary-hover: #2da6b2;
+                --color-border: rgba(119, 124, 124, 0.3);
+                --color-card-border: rgba(119, 124, 124, 0.2);
+            }
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--color-bg-primary);
+            color: var(--color-text);
+            line-height: 1.5;
+        }
+
+        .container {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .header {
+            background: var(--color-surface);
+            border-bottom: 1px solid var(--color-border);
+            padding: 16px 0;
+            margin-bottom: 24px;
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .header-title {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .header-title h1 {
+            font-size: 24px;
+            font-weight: 600;
+            color: var(--color-text);
+        }
+
+        .header-subtitle {
+            font-size: 14px;
+            color: var(--color-text-secondary);
+            margin-top: 4px;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            border-radius: var(--radius-base);
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            border: 1px solid var(--color-border);
+            background: var(--color-surface);
+            color: var(--color-text);
+            transition: all 0.2s;
+        }
+
+        .btn:hover {
+            background: rgba(33, 141, 141, 0.1);
+            border-color: var(--color-primary);
+        }
+
+        .btn-primary {
+            background: var(--color-primary);
+            color: white;
+            border-color: var(--color-primary);
+        }
+
+        .btn-primary:hover {
+            background: var(--color-primary-hover);
+        }
+
+        .filters {
+            background: var(--color-surface);
+            padding: 20px;
+            border-radius: var(--radius-lg);
+            margin-bottom: 24px;
+            border: 1px solid var(--color-card-border);
+        }
+
+        .filters-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .form-group { display: flex; flex-direction: column; gap: 4px; }
+
+        .form-control {
+            padding: 10px 12px;
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-base);
+            background: var(--color-bg-primary);
+            color: var(--color-text);
+            font-size: 14px;
+            width: 100%;
+        }
+
+        .form-control:focus {
+            outline: 2px solid var(--color-primary);
+            border-color: var(--color-primary);
+        }
+
+        .search-input { position: relative; }
+
+        .search-icon {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--color-text-secondary);
+        }
+
+        .search-input input { padding-left: 40px; }
+
+        .results-count {
+            font-size: 14px;
+            color: var(--color-text-secondary);
+        }
+
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(500px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        @media (max-width: 768px) {
+            .cards-grid { grid-template-columns: 1fr; }
+        }
+
+        .system-card {
+            background: var(--color-surface);
+            border: 1px solid var(--color-card-border);
+            border-radius: var(--radius-lg);
+            padding: 20px;
+            box-shadow: var(--shadow-sm);
+            transition: box-shadow 0.2s;
+        }
+
+        .system-card:hover { box-shadow: var(--shadow-md); }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 16px;
+        }
+
+        .card-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--color-text);
+            margin-bottom: 4px;
+        }
+
+        .card-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 16px;
+            font-size: 12px;
+            font-weight: 500;
+            background: rgba(33, 141, 141, 0.1);
+            color: var(--color-primary);
+            border: 1px solid rgba(33, 141, 141, 0.2);
+        }
+
+        .card-actions { display: flex; gap: 8px; }
+
+        .icon-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: var(--radius-base);
+            color: var(--color-text-secondary);
+            transition: all 0.2s;
+        }
+
+        .icon-btn:hover {
+            background: rgba(33, 141, 141, 0.1);
+            color: var(--color-primary);
+        }
+
+        .icon-btn.active { color: #f59e0b; }
+
+        .card-section { margin-bottom: 16px; }
+
+        .card-section-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--color-text);
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .procedure-text {
+            font-size: 14px;
+            color: var(--color-text-secondary);
+            white-space: pre-line;
+            line-height: 1.6;
+        }
+
+        .values-grid { display: grid; gap: 8px; }
+
+        .value-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            background: rgba(33, 141, 141, 0.05);
+            border-radius: var(--radius-base);
+            border: 1px solid rgba(33, 141, 141, 0.1);
+        }
+
+        .value-icon { color: var(--color-primary); flex-shrink: 0; }
+
+        .value-content { flex: 1; }
+
+        .value-label {
+            font-size: 12px;
+            color: var(--color-text-secondary);
+            margin-bottom: 2px;
+        }
+
+        .value-number {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--color-text);
+        }
+
+        .notes-section {
+            background: rgba(245, 158, 11, 0.1);
+            border: 1px solid rgba(245, 158, 11, 0.2);
+            border-radius: var(--radius-base);
+            padding: 12px;
+        }
+
+        .notes-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: #d97706;
+            margin-bottom: 8px;
+        }
+
+        .notes-text {
+            font-size: 13px;
+            color: var(--color-text-secondary);
+            line-height: 1.5;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: var(--color-text-secondary);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--color-text-secondary);
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal.active { display: flex; }
+
+        .modal-content {
+            background: var(--color-surface);
+            border-radius: var(--radius-lg);
+            padding: 24px;
+            max-width: 500px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-title { font-size: 20px; font-weight: 600; }
+
+        .modal-body { display: flex; flex-direction: column; gap: 16px; }
+
+        .modal-footer {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+            margin-top: 20px;
+        }
+
+        .auth-container {
+            max-width: 400px;
+            margin: 60px auto;
+            padding: 20px;
+        }
+
+        .auth-card {
+            background: var(--color-surface);
+            border: 1px solid var(--color-card-border);
+            border-radius: var(--radius-lg);
+            padding: 32px;
+            box-shadow: var(--shadow-md);
+        }
+
+        .auth-title {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            text-align: center;
+        }
+
+        .auth-subtitle {
+            color: var(--color-text-secondary);
+            text-align: center;
+            margin-bottom: 24px;
+        }
+
+        .hidden { display: none !important; }
+
+        .icon { width: 20px; height: 20px; display: inline-block; }
+
+        .brand-logo {
+            width: 48px;
+            height: 48px;
+            border-radius: var(--radius-base);
+            object-fit: contain;
+            background: white;
+            padding: 4px;
+            border: 1px solid var(--color-card-border);
+        }
+
+        .card-header-with-logo {
+            display: flex;
+            gap: 12px;
+            align-items: start;
+        }
+
+        .admin-section {
+            background: var(--color-surface);
+            padding: 24px;
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--color-card-border);
+            margin-bottom: 24px;
+        }
+
+        .user-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 16px;
+        }
+
+        .user-table th,
+        .user-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid var(--color-border);
+        }
+
+        .user-table th {
+            font-weight: 600;
+            font-size: 14px;
+            color: var(--color-text-secondary);
+        }
+
+        .role-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .role-badge.admin {
+            background: rgba(192, 21, 47, 0.1);
+            color: var(--color-error);
+            border: 1px solid rgba(192, 21, 47, 0.2);
+        }
+
+        .role-badge.moderator {
+            background: rgba(33, 141, 141, 0.1);
+            color: var(--color-primary);
+            border: 1px solid rgba(33, 141, 141, 0.2);
+        }
+
+        .role-badge.user {
+            background: rgba(119, 124, 124, 0.1);
+            color: var(--color-text-secondary);
+            border: 1px solid rgba(119, 124, 124, 0.2);
+        }
+
+        .parts-list {
+            background: rgba(33, 141, 141, 0.05);
+            border: 1px solid rgba(33, 141, 141, 0.15);
+            border-radius: var(--radius-base);
+            padding: 12px;
+            margin-top: 8px;
+        }
+
+        .parts-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--color-text);
+            margin-bottom: 8px;
+        }
+
+        .parts-text {
+            font-size: 13px;
+            color: var(--color-text-secondary);
+            line-height: 1.5;
+            white-space: pre-line;
+        }
+
+        .modal-content.wide { max-width: 700px; }
+
+        .image-gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        .gallery-item {
+            position: relative;
+            aspect-ratio: 1;
+            border-radius: var(--radius-base);
+            overflow: hidden;
+            cursor: pointer;
+            border: 1px solid var(--color-border);
+            background: var(--color-bg-primary);
+        }
+
+        .gallery-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .gallery-item-delete {
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            background: rgba(192, 21, 47, 0.9);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .gallery-item:hover .gallery-item-delete { opacity: 1; }
+
+        .upload-zone {
+            border: 2px dashed var(--color-border);
+            border-radius: var(--radius-base);
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .upload-zone:hover {
+            border-color: var(--color-primary);
+            background: rgba(33, 141, 141, 0.05);
+        }
+
+        .upload-zone.drag-over {
+            border-color: var(--color-primary);
+            background: rgba(33, 141, 141, 0.1);
+        }
+
+        .upload-zone input[type="file"] { display: none; }
+
+        .image-count {
+            font-size: 12px;
+            color: var(--color-text-secondary);
+            margin-top: 4px;
+        }
+
+        .lightbox {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .lightbox.active { display: flex; }
+
+        .lightbox-content {
+            position: relative;
+            max-width: 90%;
+            max-height: 90%;
+        }
+
+        .lightbox-img {
+            max-width: 100%;
+            max-height: 100%;
+            border-radius: var(--radius-lg);
+        }
+
+        .lightbox-close {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+
+        /* Inklapbare admin-acties */
+        .admin-actions-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            position: relative;
+        }
+
+        .admin-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .admin-toggle-btn {
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            .admin-actions {
+                position: absolute;
+                top: 110%;
+                right: 0;
+                background: var(--color-surface);
+                border: 1px solid var(--color-border);
+                border-radius: var(--radius-base);
+                box-shadow: var(--shadow-md);
+                padding: 8px;
+                flex-direction: column;
+                gap: 4px;
+                min-width: 180px;
+                display: none;
+                z-index: 10;
+            }
+
+            .admin-actions.open {
+                display: flex;
+            }
+
+            #adminBtn,
+            #addSystemBtn {
+                width: 100%;
+            }
+
+            .admin-toggle-btn {
+                display: inline-flex;
+            }
+        }
+    </style>
 </head>
 <body>
-  <!-- Auth Container -->
-  <div id="authContainer" class="auth-container hidden">
-    <div class="auth-card">
-      <h1 class="auth-title">De Onderhoud Centrale</h1>
-      <p class="auth-subtitle">Log in om afstelinstructies te bekijken</p>
-      <form id="loginForm">
-        <div class="form-group">
-          <label for="email">E-mail</label>
-          <input type="email" id="email" class="form-control" required placeholder="jouw@email.nl">
-        </div>
-        <div class="form-group">
-          <label for="password">Wachtwoord</label>
-          <input type="password" id="password" class="form-control" required>
-        </div>
-        <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 16px;">Inloggen</button>
-      </form>
-      <p style="margin-top: 12px; font-size: 14px; text-align: center;">
-        Nog geen account? 
-        <button type="button" class="btn" style="padding: 4px 8px; font-size: 13px;" onclick="openRegisterModal()">Registreren</button>
-      </p>
+    <div id="authContainer" class="auth-container hidden">
+        <div class="auth-card">
+            <h1 class="auth-title">De Onderhoud Centrale</h1>
+            <p class="auth-subtitle">Log in om afstelinstructies te bekijken</p>
+            <form id="loginForm">
+    <div class="form-group">
+        <label for="email">E-mail</label>
+        <input type="email" id="email" class="form-control" required placeholder="jouw@email.nl">
     </div>
-  </div>
+    <div class="form-group">
+        <label for="password">Wachtwoord</label>
+        <input type="password" id="password" class="form-control" required placeholder="••••••••">
+    </div>
+    <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 16px;">Inloggen</button>
+</form>
+<p style="margin-top: 12px; font-size: 14px; text-align: center;">
+    Nog geen account?
+    <button type="button" class="btn" style="padding: 4px 8px; font-size: 13px;" onclick="openRegisterModal()">
+        Registreren
+    </button>
+</p>
+        </div>
+    </div>
 
-  <!-- App Container -->
-  <div id="appContainer" class="hidden">
-    <div class="header">
-      <div class="container">
-        <div class="header-content">
-          <div class="header-title">
-            <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-            </svg>
-            <div>
-              <h1>De Onderhoud Centrale</h1>
-              <div class="header-subtitle">Afstelinstructies en doelwaarden voor CV-ketels, Warmtepompen en WTW/MV</div>
+    <div id="appContainer" class="hidden">
+        <div class="header">
+            <div class="container header-content">
+                <div class="header-title">
+                    <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                    </svg>
+                    <div>
+                        <h1>De Onderhoud Centrale</h1>
+                        <div class="header-subtitle">Afstelinstructies en doelwaarden voor CV-ketels, Warmtepompen en WTW/MV</div>
+                    </div>
+                </div>
+                <div class="header-actions">
+                    <button class="btn icon-btn" id="themeToggle" title="Wissel dark/light mode">
+                        <svg class="icon" id="themeIcon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
+                        </svg>
+                    </button>
+
+                    <div class="admin-actions-wrapper">
+                        <button class="btn icon-btn admin-toggle-btn" id="adminToggleBtn" type="button" style="display:none;" title="Beheer">
+                            <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                      d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0l.284 1.174a1 1 0 00.97.758h1.518a1 1 0 01.894.553l.76 1.52a1 1 0 01-.116 1.034l-.96 1.28a1 1 0 000 1.2l.96 1.28a1 1 0 01.116 1.034l-.76 1.52a1 1 0 01-.894.553h-1.518a1 1 0 00-.97.758l-.284 1.174c-.426 1.756-2.924 1.756-3.35 0l-.284-1.174a1 1 0 00-.97-.758H7.253a1 1 0 01-.894-.553l-.76-1.52a1 1 0 01.116-1.034l.96-1.28a1 1 0 000-1.2l-.96-1.28a1 1 0 01-.116-1.034l.76-1.52a1 1 0 01.894-.553h1.518a1 1 0 00.97-.758l.284-1.174z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                      d="M12 9a3 3 0 100 6 3 3 0 000-6z" />
+                            </svg>
+                        </button>
+
+                        <div class="admin-actions" id="adminActions">
+                            <button class="btn" id="adminBtn" style="display: none;">
+                                <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                                </svg>
+                                Gebruikersbeheer
+                            </button>
+                            <button class="btn" id="addSystemBtn" style="display: none;">
+                                <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                                </svg>
+                                Systeem toevoegen
+                            </button>
+                        </div>
+                    </div>
+
+                    <span id="userEmail" style="font-size: 14px; color: var(--color-text-secondary);"></span>
+                    <button class="btn" id="logoutBtn">
+                        <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+                        </svg>
+                        Uitloggen
+                    </button>
+                </div>
             </div>
-          </div>
-          <div class="header-actions">
-            <button class="btn icon-btn" id="themeToggle" title="Wissel dark/light mode">
-              <svg class="icon" id="themeIcon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
-              </svg>
-            </button>
-            <div class="admin-actions-wrapper">
-              <button class="btn icon-btn admin-toggle-btn" id="adminToggleBtn" type="button" style="display: none;" title="Beheer">
-                <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0l.284 1.174a1 1 0 00.97.758h1.518a1 1 0 01.894.553l.76 1.52a1 1 0 01-.116 1.034l-.96 1.28a1 1 0 000 1.2l.96 1.28a1 1 0 01.116 1.034l-.76 1.52a1 1 0 01-.894.553h-1.518a1 1 0 00-.97.758l-.284 1.174c-.426 1.756-2.924 1.756-3.35 0l-.284-1.174a1 1 0 00-.97-.758H7.253a1 1 0 01-.894-.553l-.76-1.52a1 1 0 01.116-1.034l.96-1.28a1 1 0 000-1.2l-.96-1.28a1 1 0 01-.116-1.034l.76-1.52a1 1 0 01.894-.553h1.518a1 1 0 00.97-.758l.284-1.174z"></path>
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9a3 3 0 100 6 3 3 0 000-6z"></path>
-                </svg>
-              </button>
-              <div class="admin-actions" id="adminActions">
-                <button class="btn" id="adminBtn" style="display: none;">
-                  <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
-                  </svg>
-                  Gebruikersbeheer
+        </div>
+
+        <div class="container">
+            <div class="filters">
+                <div class="filters-row">
+                    <div class="form-group">
+                        <select id="systemTypeFilter" class="form-control">
+                            <option value="cv-ketel">CV-ketels</option>
+                            <option value="warmtepomp">Warmtepompen</option>
+                            <option value="wtw-mv">WTW / MV</option>
+                        </select>
+                    </div>
+                    <div class="form-group search-input">
+                        <svg class="search-icon icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                        </svg>
+                        <input type="text" id="searchInput" class="form-control" placeholder="Zoek op merk of model...">
+                    </div>
+                    <div class="form-group">
+                        <select id="brandFilter" class="form-control">
+                            <option value="all">Alle merken</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <select id="favoritesFilter" class="form-control">
+                            <option value="all">Alle systemen</option>
+                            <option value="favorites">Alleen favorieten</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="results-count" id="resultsCount">Laden...</div>
+            </div>
+
+            <div id="loadingState" class="loading">
+                <p>Systemen laden...</p>
+            </div>
+            <div id="cardsGrid" class="cards-grid hidden"></div>
+            <div id="emptyState" class="empty-state hidden">
+                <p>Geen systemen gevonden met de opgegeven criteria</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="adminModal" class="modal">
+        <div class="modal-content wide">
+            <div class="modal-header">
+                <h2 class="modal-title">Gebruikersbeheer</h2>
+                <button class="icon-btn" onclick="closeAdminModal()">
+                    <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
                 </button>
-                <button class="btn" id="addSystemBtn" style="display: none;">
-                  <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-                  </svg>
-                  Systeem toevoegen
+            </div>
+            <div class="modal-body">
+                <div class="admin-section">
+                    <h3 style="margin-bottom: 16px;">Gebruikers en rollen</h3>
+                    <table class="user-table" id="usersTable">
+                        <thead>
+                            <tr>
+                                <th>E-mail</th>
+                                <th>Rol</th>
+                                <th>Acties</th>
+                            </tr>
+                        </thead>
+                        <tbody id="usersTableBody">
+                            <tr><td colspan="3" style="text-align: center; padding: 20px;">Laden...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="addModal" class="modal">
+        <div class="modal-content wide">
+            <div class="modal-header">
+                <h2 class="modal-title">Nieuw systeem toevoegen</h2>
+                <button class="icon-btn" onclick="closeAddModal()">
+                    <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
                 </button>
-              </div>
             </div>
-            <span id="userEmail" style="font-size: 14px; color: var(--color-text-secondary);"></span>
-            <button class="btn" id="logoutBtn">
-              <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
-              </svg>
-              Uitloggen
-            </button>
-          </div>
+            <form id="addForm">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label>Systeem Type *</label>
+                        <select id="addSystemType" class="form-control" required onchange="updateAddFieldsForSystemType(this.value)">
+                            <option value="">Selecteer type...</option>
+                            <option value="cv-ketel">CV-ketel</option>
+                            <option value="warmtepomp">Warmtepomp</option>
+                            <option value="wtw-mv">WTW / MV</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Merk *</label>
+                        <input type="text" id="addBrand" class="form-control" required placeholder="Bijv. ATAG, Remeha, Nefit">
+                    </div>
+                    <div class="form-group">
+                        <label>Model *</label>
+                        <input type="text" id="addModel" class="form-control" required placeholder="Bijv. HR Combi 35">
+                    </div>
+                    <div class="form-group">
+                        <label>Logo URL (optioneel)</label>
+                        <input type="url" id="addLogoUrl" class="form-control" placeholder="https://example.com/logo.png">
+                    </div>
+                    <div class="form-group">
+                        <label>Procedure *</label>
+                        <textarea id="addProcedure" class="form-control" rows="6" required placeholder="Stap 1: ...&#10;Stap 2: ..."></textarea>
+                    </div>
+                    
+                    <div id="addCvKetelFields" style="display: none;">
+                        <div class="form-group">
+                            <label>O₂ Laaglast</label>
+                            <input type="text" id="addO2Low" class="form-control" placeholder="Bijv. 8,3 - 8,8%">
+                        </div>
+                        <div class="form-group">
+                            <label>O₂ Hooglast</label>
+                            <input type="text" id="addO2High" class="form-control" placeholder="Bijv. 8,9 - 9,7%">
+                        </div>
+                        <div class="form-group">
+                            <label>CO₂ Laaglast</label>
+                            <input type="text" id="addCO2Low" class="form-control" placeholder="Bijv. 8,5 - 9,0%">
+                        </div>
+                        <div class="form-group">
+                            <label>CO₂ Hooglast</label>
+                            <input type="text" id="addCO2High" class="form-control" placeholder="Bijv. 9,0 - 9,5%">
+                        </div>
+                        <div class="form-group">
+                            <label>Max PPM CO</label>
+                            <input type="text" id="addMaxCO" class="form-control" placeholder="Bijv. 200">
+                        </div>
+
+                        <div class="form-group">
+                            <label>Foto's (max 5) - optioneel</label>
+                            <div class="upload-zone" id="addUploadZone" ondrop="handleDrop(event, 'add')" ondragover="event.preventDefault(); event.currentTarget.classList.add('drag-over')" ondragleave="event.currentTarget.classList.remove('drag-over')" onclick="document.getElementById('addImageInput').click()">
+                                <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 32px; height: 32px; margin: 0 auto;">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                </svg>
+                                <p>Sleep foto's hier of klik om te uploaden</p>
+                                <input type="file" id="addImageInput" accept="image/*" multiple onchange="handleImageSelect(this.files, 'add')">
+                                <div class="image-count" id="addImageCount">0/5 foto's</div>
+                            </div>
+                            <div class="image-gallery" id="addImageGallery"></div>
+                        </div>
+                    </div>
+
+                    <div id="addWarmtepompFields" style="display: none;">
+                        <p style="color: var(--color-text-secondary); font-size: 14px; margin: 16px 0;">
+                            Voor warmtepompen worden geen O₂/CO metingen gedaan - alleen onderhoud
+                        </p>
+                    </div>
+
+                    <div id="addWtwMvFields" style="display: none;">
+                        <p style="color: var(--color-text-secondary); font-size: 14px; margin: 16px 0;">
+                            Voor WTW/MV systemen: alleen filters vervangen
+                        </p>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Benodigde pakkingen/artikelen</label>
+                        <textarea id="addParts" class="form-control" rows="3" placeholder="Bijv:&#10;Pakking set: 12345678&#10;O-ring: 87654321&#10;Filter: 11223344"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Opmerkingen</label>
+                        <textarea id="addNotes" class="form-control" rows="3"></textarea>
+                      <div class="form-group">
+                        <label>Handleiding datum (optioneel)</label>
+                        <input type="date" id="addHandbookDate" class="form-control">
+                      </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn" onclick="closeAddModal()">Annuleren</button>
+                    <button type="submit" class="btn btn-primary">Systeem toevoegen</button>
+                </div>
+            </form>
         </div>
-      </div>
     </div>
 
-    <div class="container">
-      <div class="filters">
-        <div class="filters-row">
-          <div class="form-group">
-            <select id="systemTypeFilter" class="form-control">
-              <option value="">CV-ketels</option>
-              <option value="warmtepomp">Warmtepompen</option>
-              <option value="wtw-mv">WTW/MV</option>
-            </select>
-          </div>
-          <div class="form-group search-input">
-            <svg class="search-icon icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-            </svg>
-            <input type="text" id="searchInput" class="form-control" placeholder="Zoek op merk of model...">
-          </div>
-          <div class="form-group">
-            <select id="brandFilter" class="form-control">
-              <option value="all">Alle merken</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <select id="favoritesFilter" class="form-control">
-              <option value="all">Alle systemen</option>
-              <option value="favorites">Alleen favorieten</option>
-            </select>
-          </div>
-        </div>
-        <div class="results-count" id="resultsCount">Laden...</div>
-      </div>
+    <div id="editModal" class="modal">
+        <div class="modal-content wide">
+            <div class="modal-header">
+                <h2 class="modal-title">Systeem bewerken</h2>
+                <button class="icon-btn" onclick="closeEditModal()">
+                    <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            <form id="editForm">
+                <div class="modal-body">
+                    <input type="hidden" id="editId">
+                    <input type="hidden" id="editSystemType">
+                    <div class="form-group">
+                        <label>Merk</label>
+                        <input type="text" id="editBrand" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Model</label>
+                        <input type="text" id="editModel" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Logo URL (optioneel)</label>
+                        <input type="url" id="editLogoUrl" class="form-control" placeholder="https://example.com/logo.png">
+                    </div>
+                    <div class="form-group">
+                        <label>Procedure</label>
+                        <textarea id="editProcedure" class="form-control" rows="6" required></textarea>
+                    </div>
+                    
+                    <div id="cvKetelFields">
+                        <div class="form-group">
+                            <label>O₂ Laaglast</label>
+                            <input type="text" id="editO2Low" class="form-control" placeholder="Bijv. 8,3 - 8,8%">
+                        </div>
+                        <div class="form-group">
+                            <label>O₂ Hooglast</label>
+                            <input type="text" id="editO2High" class="form-control" placeholder="Bijv. 8,9 - 9,7%">
+                        </div>
+                        <div class="form-group">
+                            <label>CO₂ Laaglast</label>
+                            <input type="text" id="editCO2Low" class="form-control" placeholder="Bijv. 8,5 - 9,0%">
+                        </div>
+                        <div class="form-group">
+                            <label>CO₂ Hooglast</label>
+                            <input type="text" id="editCO2High" class="form-control" placeholder="Bijv. 9,0 - 9,5%">
+                        </div>
+                        <div class="form-group">
+                            <label>Max PPM CO</label>
+                            <input type="text" id="editMaxCO" class="form-control" placeholder="Bijv. 200">
+                        </div>
 
-      <div id="loadingState" class="loading">
-        <p>Systemen laden...</p>
-      </div>
-      <div id="cardsGrid" class="cards-grid hidden"></div>
-      <div id="emptyState" class="empty-state hidden">
-        <p>Geen systemen gevonden met de opgegeven criteria</p>
-      </div>
+                        <div class="form-group">
+                            <label>Foto's (max 5) - optioneel</label>
+                            <div class="upload-zone" id="editUploadZone" ondrop="handleDrop(event, 'edit')" ondragover="event.preventDefault(); event.currentTarget.classList.add('drag-over')" ondragleave="event.currentTarget.classList.remove('drag-over')" onclick="document.getElementById('editImageInput').click()">
+                                <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 32px; height: 32px; margin: 0 auto;">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                </svg>
+                                <p>Sleep foto's hier of klik om te uploaden</p>
+                                <input type="file" id="editImageInput" accept="image/*" multiple onchange="handleImageSelect(this.files, 'edit')">
+                                <div class="image-count" id="editImageCount">0/5 foto's</div>
+                            </div>
+                            <div class="image-gallery" id="editImageGallery"></div>
+                        </div>
+                    </div>
+
+                    <div id="warmtepompFields" style="display: none;">
+                        <p style="color: var(--color-text-secondary); font-size: 14px; margin: 16px 0;">
+                            Voor warmtepompen worden geen O₂/CO metingen gedaan - alleen onderhoud
+                        </p>
+                    </div>
+
+                    <div id="wtwMvFields" style="display: none;">
+                        <p style="color: var(--color-text-secondary); font-size: 14px; margin: 16px 0;">
+                            Voor WTW/MV systemen: alleen filters vervangen
+                        </p>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Benodigde pakkingen/artikelen</label>
+                        <textarea id="editParts" class="form-control" rows="3" placeholder="Bijv:&#10;Pakking set: 12345678&#10;O-ring: 87654321&#10;Filter: 11223344"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Opmerkingen</label>
+                        <textarea id="editNotes" class="form-control" rows="3"></textarea>
+                      <div class="form-group">
+                        <label>Handleiding datum (optioneel)</label>
+                        <input type="date" id="editHandbookDate" class="form-control">
+                      </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn" onclick="closeEditModal()">Annuleren</button>
+                    <button type="submit" class="btn btn-primary">Opslaan</button>
+                </div>
+            </form>
+        </div>
     </div>
-  </div>
-
-  <!-- Admin Modal -->
-  <div id="adminModal" class="modal">
-    <div class="modal-content wide">
-      <div class="modal-header">
-        <h2 class="modal-title">Gebruikersbeheer</h2>
-        <button class="icon-btn" onclick="closeAdminModal()">
-          <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-          </svg>
-        </button>
-      </div>
-      <div class="modal-body">
-        <div class="admin-section">
-          <h3 style="margin-bottom: 16px;">Gebruikers en rollen</h3>
-          <table class="user-table" id="usersTable">
-            <thead>
-              <tr>
-                <th>E-mail</th>
-                <th>Rol</th>
-                <th>Acties</th>
-              </tr>
-            </thead>
-            <tbody id="usersTableBody">
-              <tr><td colspan="3" style="text-align: center; padding: 20px;">Laden...</td></tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Add Modal -->
-  <div id="addModal" class="modal">
-    <div class="modal-content wide">
-      <div class="modal-header">
-        <h2 class="modal-title">Nieuw systeem toevoegen</h2>
-        <button class="icon-btn" onclick="closeAddModal()">
-          <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-          </svg>
-        </button>
-      </div>
-      <form id="addForm">
-        <div class="modal-body">
-          <div class="form-group">
-            <label>Systeem Type</label>
-            <select id="addSystemType" class="form-control" required onchange="updateAddFieldsForSystemType(this.value)">
-              <option value="">Selecteer type...</option>
-              <option value="cv-ketel">CV-ketel</option>
-              <option value="warmtepomp">Warmtepomp</option>
-              <option value="wtw-mv">WTW/MV</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>Merk</label>
-            <input type="text" id="addBrand" class="form-control" required placeholder="Bijv. ATAG, Remeha, Nefit">
-          </div>
-          <div class="form-group">
-            <label>Model</label>
-            <input type="text" id="addModel" class="form-control" required placeholder="Bijv. HR Combi 35...">
-          </div>
-          <div class="form-group">
-            <label>Logo URL (optioneel)</label>
-            <input type="url" id="addLogoUrl" class="form-control" placeholder="https://example.com/logo.png">
-          </div>
-          <div class="form-group">
-            <label>Procedure</label>
-            <textarea id="addProcedure" class="form-control" rows="6" required placeholder="Stap 1: ...&#10;Stap 2: ..."></textarea>
-          </div>
-
-          <div id="addCvKetelFields" style="display: none;">
-            <div class="form-group">
-              <label>O2 Laag/last</label>
-              <input type="text" id="addO2Low" class="form-control" placeholder="Bijv. 8,3 - 8,8">
-            </div>
-            <div class="form-group">
-              <label>O2 Hoog/last</label>
-              <input type="text" id="addO2High" class="form-control" placeholder="Bijv. 8,9 - 9,7">
-            </div>
-            <div class="form-group">
-              <label>CO2 Laag/last</label>
-              <input type="text" id="addCO2Low" class="form-control" placeholder="Bijv. 8,5 - 9,0">
-            </div>
-            <div class="form-group">
-              <label>CO2 Hoog/last</label>
-              <input type="text" id="addCO2High" class="form-control" placeholder="Bijv. 9,0 - 9,5">
-            </div>
-            <div class="form-group">
-              <label>Max PPM CO</label>
-              <input type="text" id="addMaxCO" class="form-control" placeholder="Bijv. 200">
-            </div>
-          </div>
-
-          <div class="form-group">
-            <label>Fotos (max 5 - optioneel)</label>
-            <div class="upload-zone" id="addUploadZone" 
-                 ondrop="handleDrop(event, 'add')"
-                 ondragover="event.preventDefault(); event.currentTarget.classList.add('drag-over')"
-                 ondragleave="event.currentTarget.classList.remove('drag-over')"
-                 onclick="document.getElementById('addImageInput').click()">
-              <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 32px; height: 32px; margin: 0 auto;">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-              </svg>
-              <p>Sleep fotos hier of klik om te uploaden</p>
-              <input type="file" id="addImageInput" accept="image/*" multiple onchange="handleImageSelect(this.files, 'add')">
-              <div class="image-count" id="addImageCount">0/5 fotos</div>
-            </div>
-            <div class="image-gallery" id="addImageGallery"></div>
-          </div>
-
-          <div id="addWarmtepompFields" style="display: none;">
-            <p style="color: var(--color-text-secondary); font-size: 14px; margin: 16px 0;">
-              Voor warmtepompen worden geen O/CO metingen gedaan - alleen onderhoud
-            </p>
-          </div>
-
-          <div id="addWtwMvFields" style="display: none;">
-            <p style="color: var(--color-text-secondary); font-size: 14px; margin: 16px 0;">
-              Voor WTW/MV systemen alleen filters vervangen
-            </p>
-          </div>
-
-          <div class="form-group">
-            <label>Benodigde pakkingen/artikelen</label>
-            <textarea id="addParts" class="form-control" rows="3" placeholder="Bijv.&#10;10x Pakking set 12345678&#10;10x O-ring 87654321&#10;10x Filter 11223344"></textarea>
-          </div>
-          <div class="form-group">
-            <label>Opmerkingen</label>
-            <textarea id="addNotes" class="form-control" rows="3"></textarea>
-          </div>
-          <div class="form-group">
-            <label>Handleiding datum (YYYY-MM-DD)</label>
-            <input type="date" id="addHandbookDate" class="form-control">
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn" onclick="closeAddModal()">Annuleren</button>
-          <button type="submit" class="btn btn-primary">Systeem toevoegen</button>
-        </div>
-      </form>
-    </div>
-  </div>
-
-  <!-- Edit Modal -->
-  <div id="editModal" class="modal">
-    <div class="modal-content wide">
-      <div class="modal-header">
-        <h2 class="modal-title">Systeem bewerken</h2>
-        <button class="icon-btn" onclick="closeEditModal()">
-          <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-          </svg>
-        </button>
-      </div>
-      <form id="editForm">
-        <div class="modal-body">
-          <input type="hidden" id="editId">
-          <input type="hidden" id="editSystemType">
-          <div class="form-group">
-            <label>Merk</label>
-            <input type="text" id="editBrand" class="form-control" required>
-          </div>
-          <div class="form-group">
-            <label>Model</label>
-            <input type="text" id="editModel" class="form-control" required>
-          </div>
-          <div class="form-group">
-            <label>Logo URL (optioneel)</label>
-            <input type="url" id="editLogoUrl" class="form-control" placeholder="https://example.com/logo.png">
-          </div>
-          <div class="form-group">
-            <label>Procedure</label>
-            <textarea id="editProcedure" class="form-control" rows="6" required></textarea>
-          </div>
-
-          <div id="cvKetelFields">
-            <div class="form-group">
-              <label>O2 Laag/last</label>
-              <input type="text" id="editO2Low" class="form-control" placeholder="Bijv. 8,3 - 8,8">
-            </div>
-            <div class="form-group">
-              <label>O2 Hoog/last</label>
-              <input type="text" id="editO2High" class="form-control" placeholder="Bijv. 8,9 - 9,7">
-            </div>
-            <div class="form-group">
-              <label>CO2 Laag/last</label>
-              <input type="text" id="editCO2Low" class="form-control" placeholder="Bijv. 8,5 - 9,0">
-            </div>
-            <div class="form-group">
-              <label>CO2 Hoog/last</label>
-              <input type="text" id="editCO2High" class="form-control" placeholder="Bijv. 9,0 - 9,5">
-            </div>
-            <div class="form-group">
-              <label>Max PPM CO</label>
-              <input type="text" id="editMaxCO" class="form-control" placeholder="Bijv. 200">
-            </div>
-          </div>
-
-          <div class="form-group">
-            <label>Fotos (max 5 - optioneel)</label>
-            <div class="upload-zone" id="editUploadZone" 
-                 ondrop="handleDrop(event, 'edit')"
-                 ondragover="event.preventDefault(); event.currentTarget.classList.add('drag-over')"
-                 ondragleave="event.currentTarget.classList.remove('drag-over')"
-                 onclick="document.getElementById('editImageInput').click()">
-              <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 32px; height: 32px; margin: 0 auto;">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-              </svg>
-              <p>Sleep fotos hier of klik om te uploaden</p>
-              <input type="file" id="editImageInput" accept="image/*" multiple onchange="handleImageSelect(this.files, 'edit')">
-              <div class="image-count" id="editImageCount">0/5 fotos</div>
-            </div>
-            <div class="image-gallery" id="editImageGallery"></div>
-          </div>
-
-          <div id="warmtepompFields" style="display: none;">
-            <p style="color: var(--color-text-secondary); font-size: 14px; margin: 16px 0;">
-              Voor warmtepompen worden geen O/CO metingen gedaan - alleen onderhoud
-            </p>
-          </div>
-
-          <div id="wtwMvFields" style="display: none;">
-            <p style="color: var(--color-text-secondary); font-size: 14px; margin: 16px 0;">
-              Voor WTW/MV systemen alleen filters vervangen
-            </p>
-          </div>
-
-          <div class="form-group">
-            <label>Benodigde pakkingen/artikelen</label>
-            <textarea id="editParts" class="form-control" rows="3"></textarea>
-          </div>
-          <div class="form-group">
-            <label>Opmerkingen</label>
-            <textarea id="editNotes" class="form-control" rows="3"></textarea>
-          </div>
-          <div class="form-group">
-            <label>Handleiding datum (YYYY-MM-DD)</label>
-            <input type="date" id="editHandbookDate" class="form-control">
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn" onclick="closeEditModal()">Annuleren</button>
-          <button type="submit" class="btn btn-primary">Opslaan</button>
-        </div>
-      </form>
-    </div>
-  </div>
-
-  <!-- Register Modal -->
-  <div id="registerModal" class="modal">
+    
+<!-- Register Modal -->
+<div id="registerModal" class="modal">
     <div class="modal-content">
-      <div class="modal-header">
-        <h2 class="modal-title">Nieuw account registreren</h2>
-        <button class="icon-btn" onclick="closeRegisterModal()">
-          <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-          </svg>
-        </button>
-      </div>
-      <form id="registerForm">
-        <div class="modal-body">
-          <div class="form-group">
-            <label for="registerEmail">E-mail</label>
-            <input type="email" id="registerEmail" class="form-control" required placeholder="monteur@bedrijf.nl">
-          </div>
-          <div class="form-group">
-            <label for="registerPassword">Wachtwoord</label>
-            <input type="password" id="registerPassword" class="form-control" required placeholder="Minimaal 6 tekens">
-          </div>
-          <div class="form-group">
-            <label for="registerPassword2">Herhaal wachtwoord</label>
-            <input type="password" id="registerPassword2" class="form-control" required>
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn" onclick="closeRegisterModal()">Annuleren</button>
-          <button type="submit" class="btn btn-primary">Account aanmaken</button>
-        </div>
-      </form>
-    </div>
-  </div>
-
-  <!-- Lightbox -->
-  <div id="lightbox" class="lightbox">
-    <div class="lightbox-content">
-      <img id="lightboxImg" class="lightbox-img" alt="Uitvergrote foto">
-      <button class="lightbox-close" onclick="closeLightbox()">&times;</button>
-    </div>
-  </div>
-
-  <script>
-    const SUPABASE_URL = 'https://srsnjifezttivawxnndu.supabase.co';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNyc25qaWZlenR0aXZhd3hubmR1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQwNzY1MjcsImV4cCI6MjA3OTY1MjUyN30.5RmDp3QgAYX7yDS39KwoRtHc6c9Kp-wGKGYeJctoY7w';
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-    let currentUser = null;
-    let currentUserRole = 'user';
-    let systems = [];
-    let favorites = [];
-    let currentEditingId = null;
-    let allUsers = [];
-    let pendingImages = { add: [], edit: [] };
-
-    async function init() {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        currentUser = session.user;
-        showApp();
-        await loadData();
-      } else {
-        showAuth();
-      }
-      supabase.auth.onAuthStateChange((event, session) => {
-        if (event === 'SIGNED_IN') {
-          currentUser = session.user;
-          showApp();
-          loadData();
-        } else if (event === 'SIGNED_OUT') {
-          currentUser = null;
-          showAuth();
-        }
-      });
-      setupEventListeners();
-      initTheme();
-    }
-
-    function setupEventListeners() {
-      document.getElementById('loginForm').addEventListener('submit', handleLogin);
-      document.getElementById('logoutBtn').addEventListener('click', handleLogout);
-      document.getElementById('themeToggle').addEventListener('click', toggleTheme);
-      document.getElementById('adminBtn').addEventListener('click', openAdminModal);
-      document.getElementById('addSystemBtn').addEventListener('click', openAddModal);
-      document.getElementById('searchInput').addEventListener('input', filterSystems);
-      document.getElementById('systemTypeFilter').addEventListener('change', filterSystems);
-      document.getElementById('brandFilter').addEventListener('change', filterSystems);
-      document.getElementById('favoritesFilter').addEventListener('change', filterSystems);
-      document.getElementById('addForm').addEventListener('submit', handleAddSubmit);
-      document.getElementById('editForm').addEventListener('submit', handleEditSubmit);
-      document.getElementById('registerForm').addEventListener('submit', handleRegister);
-
-      const adminToggleBtn = document.getElementById('adminToggleBtn');
-      const adminActions = document.getElementById('adminActions');
-      adminToggleBtn.addEventListener('click', () => adminActions.classList.toggle('open'));
-    }
-
-    function showAuth() {
-      document.getElementById('authContainer').classList.remove('hidden');
-      document.getElementById('appContainer').classList.add('hidden');
-    }
-
-    async function showApp() {
-      document.getElementById('authContainer').classList.add('hidden');
-      document.getElementById('appContainer').classList.remove('hidden');
-      document.getElementById('userEmail').textContent = currentUser?.email;
-      await loadUserRole();
-      updateUIForRole();
-    }
-
-    async function loadUserRole() {
-      try {
-        const { data, error } = await supabase
-          .from('user_roles')
-          .select('role')
-          .eq('user_id', currentUser.id)
-          .single();
-        if (!error && data) currentUserRole = data.role;
-        else currentUserRole = 'user';
-      } catch {
-        currentUserRole = 'user';
-      }
-    }
-
-    function updateUIForRole() {
-      const canEdit = currentUserRole === 'admin' || currentUserRole === 'moderator';
-      const isAdmin = currentUserRole === 'admin';
-      
-      document.getElementById('addSystemBtn').style.display = canEdit ? 'inline-flex' : 'none';
-      document.getElementById('adminBtn').style.display = isAdmin ? 'inline-flex' : 'none';
-      document.getElementById('adminToggleBtn').style.display = canEdit ? 'inline-flex' : 'none';
-      
-      document.querySelectorAll('.icon-btn[onclick*="openEditModal"]').forEach(btn => {
-        btn.style.display = canEdit ? 'block' : 'none';
-      });
-    }
-
-    async function handleLogin(e) {
-      e.preventDefault();
-      const email = document.getElementById('email').value;
-      const password = document.getElementById('password').value;
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
-      if (error) alert('Login mislukt: ' + error.message);
-    }
-
-    async function handleLogout() {
-      await supabase.auth.signOut();
-    }
-
-    async function loadData() {
-      document.getElementById('loadingState').classList.remove('hidden');
-      document.getElementById('cardsGrid').classList.add('hidden');
-      try {
-        const { data: systemsData, error: systemsError } = await supabase
-          .from('systems')
-          .select('*')
-          .order('brand', { ascending: true })
-          .order('model', { ascending: true });
-        if (systemsError) throw systemsError;
-        systems = systemsData;
-
-        if (currentUser) {
-          const { data: favsData } = await supabase
-            .from('favorites')
-            .select('system_id')
-            .eq('user_id', currentUser.id);
-          favorites = favsData ? favsData.map(f => f.system_id) : [];
-        }
-        updateBrandFilter();
-        filterSystems();
-      } catch (error) {
-        console.error('Error loading data:', error);
-        alert('Fout bij laden van gegevens: ' + error.message);
-      } finally {
-        document.getElementById('loadingState').classList.add('hidden');
-      }
-    }
-
-    function updateBrandFilter() {
-      const brands = [...new Set(systems.map(s => s.brand))].sort();
-      const select = document.getElementById('brandFilter');
-      select.innerHTML = '<option value="all">Alle merken</option>';
-      brands.forEach(brand => {
-        const option = document.createElement('option');
-        option.value = brand;
-        option.textContent = brand;
-        select.appendChild(option);
-      });
-    }
-
-    function filterSystems() {
-      const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-      const selectedType = document.getElementById('systemTypeFilter').value;
-      const selectedBrand = document.getElementById('brandFilter').value;
-      const showFavoritesOnly = document.getElementById('favoritesFilter').value === 'favorites';
-
-      const filtered = systems.filter(system => {
-        const matchesSearch = system.model.toLowerCase().includes(searchTerm) || system.brand.toLowerCase().includes(searchTerm);
-        const matchesType = !selectedType || system.systemtype === selectedType;
-        const matchesBrand = selectedBrand === 'all' || system.brand === selectedBrand;
-        const matchesFavorites = !showFavoritesOnly || favorites.includes(system.id);
-        return matchesSearch && matchesType && matchesBrand && matchesFavorites;
-      });
-
-      renderSystems(filtered);
-      updateResultsCount(filtered.length);
-    }
-
-    function updateResultsCount(count) {
-      const text = count === 1 ? 'systeem gevonden' : 'systemen gevonden';
-      const favText = favorites.length === 0 ? '' : ` | ${favorites.length} favorieten totaal`;
-      document.getElementById('resultsCount').textContent = `${count} ${text}${favText}`;
-    }
-
-    function renderSystems(systemsList) {
-      const grid = document.getElementById('cardsGrid');
-      const emptyState = document.getElementById('emptyState');
-      
-      if (systemsList.length === 0) {
-        grid.classList.add('hidden');
-        emptyState.classList.remove('hidden');
-        return;
-      }
-      
-      grid.classList.remove('hidden');
-      emptyState.classList.add('hidden');
-      grid.innerHTML = systemsList.map(system => createSystemCard(system)).join('');
-    }
-
-    function createSystemCard(system) {
-      const isFavorite = favorites.includes(system.id);
-      const canEdit = currentUserRole === 'admin' || currentUserRole === 'moderator';
-      
-      return `
-        <div class="system-card">
-          <div class="card-header">
-            <div class="card-header-with-logo">
-              ${system.logourl ? `<img src="${escapeHtml(system.logourl)}" alt="${escapeHtml(system.brand)} logo" class="brand-logo" onerror="this.style.display='none'">` : ''}
-              <div>
-                <div class="card-title">${escapeHtml(system.model)}</div>
-                <span class="card-badge">${escapeHtml(system.brand)}</span>
-                ${system.handbook_date ? `<div class="card-meta">📅 Handleiding: ${new Date(system.handbook_date).toLocaleDateString('nl-NL')}</div>` : ''}
-              </div>
-            </div>
-            <div class="card-actions">
-              <button class="icon-btn ${isFavorite ? 'active' : ''}" onclick="toggleFavorite('${system.id}')" title="${isFavorite ? 'Verwijder favoriet' : 'Voeg toe aan favorieten'}">
-                <svg class="icon" fill="${isFavorite ? 'currentColor' : 'none'}" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"></path>
-                </svg>
-              </button>
-              ${canEdit ? `<button class="icon-btn" onclick="openEditModal('${system.id}')" title="Bewerken">
+        <div class="modal-header">
+            <h2 class="modal-title">Nieuw account registreren</h2>
+            <button class="icon-btn" onclick="closeRegisterModal()">
                 <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                 </svg>
-              </button>` : ''}
-            </div>
-          </div>
-          <div class="card-section">
-            <div class="card-section-title">
-              <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-              </svg>
-              Afstelprocedure
-            </div>
-            <div class="procedure-text">${escapeHtml(system.procedure) || 'Geen procedure opgegeven'}</div>
-          </div>
-          ${system.images && system.images.length > 0 ? `
-            <div class="card-section">
-              <div class="card-section-title">Fotos</div>
-              <div class="image-gallery">
-                ${system.images.map((img, idx) => `<div class="gallery-item" onclick="openLightbox('${escapeHtml(img)}')">
-                  <img src="${escapeHtml(img)}" alt="Foto ${idx + 1}">
-                </div>`).join('')}
-              </div>
-            </div>
-          ` : ''}
-          ${(system.o2low || system.o2high || system.co2low || system.co2high || system.maxco) ? `
-            <div class="card-section">
-              <div class="card-section-title">Doelwaarden</div>
-              <div class="values-grid">
-                ${system.o2low ? `<div class="value-item"><span class="value-icon">●</span><div class="value-content"><div class="value-label">O2 Laag/last</div><div class="value-number">${escapeHtml(system.o2low)}</div></div></div>` : ''}
-                ${system.o2high ? `<div class="value-item"><span class="value-icon">●</span><div class="value-content"><div class="value-label">O2 Hoog/last</div><div class="value-number">${escapeHtml(system.o2high)}</div></div></div>` : ''}
-                ${system.co2low ? `<div class="value-item"><span class="value-icon">●</span><div class="value-content"><div class="value-label">CO2 Laag/last</div><div class="value-number">${escapeHtml(system.co2low)}</div></div></div>` : ''}
-                ${system.co2high ? `<div class="value-item"><span class="value-icon">●</span><div class="value-content"><div class="value-label">CO2 Hoog/last</div><div class="value-number">${escapeHtml(system.co2high)}</div></div></div>` : ''}
-                ${system.maxco ? `<div class="value-item"><span class="value-icon">●</span><div class="value-content"><div class="value-label">Max PPM CO</div><div class="value-number">${escapeHtml(system.maxco)}</div></div></div>` : ''}
-              </div>
-            </div>
-          ` : ''}
-          ${system.parts ? `
-            <div class="parts-list">
-              <div class="parts-title">Benodigde pakkingen/artikelen</div>
-              <div class="parts-text">${escapeHtml(system.parts)}</div>
-            </div>
-          ` : ''}
-          ${system.notes ? `
-            <div class="notes-section">
-              <div class="notes-title">Opmerkingen</div>
-              <div class="notes-text">${escapeHtml(system.notes)}</div>
-            </div>
-          ` : ''}
+            </button>
         </div>
-      `;
-    }
+        <form id="registerForm">
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="registerEmail">E-mail *</label>
+                    <input type="email" id="registerEmail" class="form-control" required placeholder="monteur@bedrijf.nl">
+                </div>
+                <div class="form-group">
+                    <label for="registerPassword">Wachtwoord *</label>
+                    <input type="password" id="registerPassword" class="form-control" required placeholder="Minimaal 6 tekens">
+                </div>
+                <div class="form-group">
+                    <label for="registerPassword2">Herhaal wachtwoord *</label>
+                    <input type="password" id="registerPassword2" class="form-control" required>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn" onclick="closeRegisterModal()">Annuleren</button>
+                <button type="submit" class="btn btn-primary">Account aanmaken</button>
+            </div>
+        </form>
+    </div>
+</div>
 
-    function escapeHtml(text) {
-      const div = document.createElement('div');
-      div.textContent = text;
-      return div.innerHTML;
-    }
+    <script>
+        const SUPABASE_URL = 'https://srsnjifezttivawxnndu.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNyc25qaWZlenR0aXZhd3hubmR1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQwNzY1MjcsImV4cCI6MjA3OTY1MjUyN30.5RmDp3QgAYX7yDS39KwoRtHc6c9Kp-wGKGYeJctoY7w';
+        
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    function initTheme() {
-      const savedTheme = localStorage.getItem('theme');
-      if (savedTheme) document.body.setAttribute('data-theme', savedTheme);
-      updateThemeIcon(savedTheme);
-    }
+        let currentUser = null;
+        let currentUserRole = 'user';
+        let systems = [];
+        let favorites = [];
+        let currentEditingId = null;
+        let allUsers = [];
+        let pendingImages = { add: [], edit: [] };
 
-    function toggleTheme() {
-      const currentTheme = document.body.getAttribute('data-theme');
-      const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-      document.body.setAttribute('data-theme', newTheme);
-      localStorage.setItem('theme', newTheme);
-      updateThemeIcon(newTheme);
-    }
+        async function init() {
+            const { data: { session } } = await supabase.auth.getSession();
+            
+            if (session) {
+                currentUser = session.user;
+                showApp();
+                await loadData();
+            } else {
+                showAuth();
+            }
 
-    function updateThemeIcon(theme) {
-      const icon = document.getElementById('themeIcon');
-      if (theme === 'dark') {
-        icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>';
-      } else {
-        icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>';
-      }
-    }
+            supabase.auth.onAuthStateChange((event, session) => {
+                if (event === 'SIGNED_IN' && session) {
+                    currentUser = session.user;
+                    showApp();
+                    loadData();
+                } else if (event === 'SIGNED_OUT') {
+                    currentUser = null;
+                    showAuth();
+                }
+            });
 
-    async function openAdminModal() {
-      document.getElementById('adminModal').classList.add('active');
-      await loadUsers();
-    }
-
-    function closeAdminModal() {
-      document.getElementById('adminModal').classList.remove('active');
-    }
-
-    async function loadUsers() {
-      try {
-        const { data: users, error } = await supabase
-          .from('user_profiles')
-          .select('id, email, role')
-          .order('email', { ascending: true });
-        if (error) throw error;
-
-        const { data: roles } = await supabase.from('user_roles').select('*');
-        const rolesMap = {};
-        roles?.forEach(r => rolesMap[r.user_id] = r.role);
-
-        allUsers = users.map(u => ({
-          id: u.id,
-          email: u.email,
-          role: rolesMap[u.id] || 'user'
-        }));
-        renderUsersTable();
-      } catch (error) {
-        console.error('Error loading users:', error);
-        document.getElementById('usersTableBody').innerHTML = '<tr><td colspan="3" style="text-align: center; color: var(--color-error);">Fout bij laden gebruikers</td></tr>';
-      }
-    }
-
-    function renderUsersTable() {
-      const tbody = document.getElementById('usersTableBody');
-      tbody.innerHTML = allUsers.map(user => `
-        <tr>
-          <td>${escapeHtml(user.email)}</td>
-          <td><span class="role-badge ${user.role}">${user.role}</span></td>
-          <td>
-            <select onchange="updateUserRole('${user.id}', this.value)" class="form-control" style="width: 150px;">
-              <option value="user" ${user.role === 'user' ? 'selected' : ''}>User</option>
-              <option value="moderator" ${user.role === 'moderator' ? 'selected' : ''}>Moderator</option>
-              <option value="admin" ${user.role === 'admin' ? 'selected' : ''}>Admin</option>
-            </select>
-          </td>
-        </tr>
-      `).join('');
-    }
-
-    async function updateUserRole(userId, newRole) {
-      try {
-        const { error } = await supabase
-          .from('user_roles')
-          .upsert({ user_id: userId, role: newRole }, { onConflict: 'user_id' });
-        if (error) throw error;
-        const user = allUsers.find(u => u.id === userId);
-        if (user) user.role = newRole;
-        renderUsersTable();
-        alert('Rol bijgewerkt!');
-      } catch (error) {
-        console.error('Error updating role:', error);
-        alert('Fout bij bijwerken rol: ' + error.message);
-      }
-    }
-
-    async function toggleFavorite(systemId) {
-      if (!currentUser) return;
-      const isFavorite = favorites.includes(systemId);
-      try {
-        if (isFavorite) {
-          const { error } = await supabase
-            .from('favorites')
-            .delete()
-            .eq('user_id', currentUser.id)
-            .eq('system_id', systemId);
-          if (error) throw error;
-          favorites = favorites.filter(id => id !== systemId);
-        } else {
-          const { error } = await supabase
-            .from('favorites')
-            .insert({ user_id: currentUser.id, system_id: systemId });
-          if (error) throw error;
-          favorites.push(systemId);
+            setupEventListeners();
         }
-        filterSystems();
-      } catch (error) {
-        console.error('Error toggling favorite:', error);
-        alert('Fout bij opslaan favoriet: ' + error.message);
-      }
-    }
 
-    function openRegisterModal() {
-      document.getElementById('registerModal').classList.add('active');
-    }
+        function setupEventListeners() {
+            document.getElementById('loginForm').addEventListener('submit', handleLogin);
+            document.getElementById('logoutBtn').addEventListener('click', handleLogout);
+            document.getElementById('themeToggle').addEventListener('click', toggleTheme);
+            document.getElementById('adminBtn').addEventListener('click', openAdminModal);
+            document.getElementById('addSystemBtn').addEventListener('click', openAddModal);
+            document.getElementById('addHandbookDate').value = '';
+            document.getElementById('searchInput').addEventListener('input', filterSystems);
+            document.getElementById('systemTypeFilter').addEventListener('change', filterSystems);
+            document.getElementById('brandFilter').addEventListener('change', filterSystems);
+            document.getElementById('favoritesFilter').addEventListener('change', filterSystems);
+            document.getElementById('addForm').addEventListener('submit', handleAddSubmit);
+            document.getElementById('editForm').addEventListener('submit', handleEditSubmit);
+            document.getElementById('registerForm').addEventListener('submit', handleRegister);
+            
+            const adminToggleBtn = document.getElementById('adminToggleBtn');
+            const adminActions = document.getElementById('adminActions');
+            adminToggleBtn.addEventListener('click', () => {
+                adminActions.classList.toggle('open');
+            });
 
-    function closeRegisterModal() {
-      document.getElementById('registerModal').classList.remove('active');
-    }
+            initTheme();
+        }
 
-    async function handleRegister(e) {
-      e.preventDefault();
-      const email = document.getElementById('registerEmail').value.trim();
-      const password = document.getElementById('registerPassword').value;
-      const password2 = document.getElementById('registerPassword2').value;
-      
-      if (password !== password2) {
+        function showAuth() {
+            document.getElementById('authContainer').classList.remove('hidden');
+            document.getElementById('appContainer').classList.add('hidden');
+        }
+
+        async function showApp() {
+            document.getElementById('authContainer').classList.add('hidden');
+            document.getElementById('appContainer').classList.remove('hidden');
+            document.getElementById('userEmail').textContent = currentUser?.email || '';
+            
+            await loadUserRole();
+            updateUIForRole();
+        }
+
+        async function loadUserRole() {
+            try {
+                const { data, error } = await supabase
+                    .from('user_roles')
+                    .select('role')
+                    .eq('user_id', currentUser.id)
+                    .single();
+                
+                if (!error && data) {
+                    currentUserRole = data.role;
+                } else {
+                    currentUserRole = 'user';
+                }
+            } catch {
+                currentUserRole = 'user';
+            }
+        }
+
+        function updateUIForRole() {
+            const canEdit = currentUserRole === 'admin' || currentUserRole === 'moderator';
+            const isAdmin = currentUserRole === 'admin';
+            
+            document.getElementById('addSystemBtn').style.display = canEdit ? 'inline-flex' : 'none';
+            document.getElementById('adminBtn').style.display = isAdmin ? 'inline-flex' : 'none';
+
+            const adminToggleBtn = document.getElementById('adminToggleBtn');
+            adminToggleBtn.style.display = canEdit ? 'inline-flex' : 'none';
+            
+            document.querySelectorAll('.icon-btn[onclick^="openEditModal"]').forEach(btn => {
+                btn.style.display = canEdit ? 'block' : 'none';
+            });
+        }
+
+        async function handleLogin(e) {
+            e.preventDefault();
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            const { error } = await supabase.auth.signInWithPassword({ email, password });
+
+            if (error) {
+                alert('Login mislukt: ' + error.message);
+            }
+        }
+
+        async function handleLogout() {
+            await supabase.auth.signOut();
+        }
+
+        async function loadData() {
+            document.getElementById('loadingState').classList.remove('hidden');
+            document.getElementById('cardsGrid').classList.add('hidden');
+
+            try {
+                const { data: systemsData, error: systemsError } = await supabase
+                    .from('systems')
+                    .select('*')
+                    .order('brand', { ascending: true })
+                    .order('model', { ascending: true });
+
+                if (systemsError) throw systemsError;
+                systems = systemsData || [];
+
+                if (currentUser) {
+                    const { data: favsData } = await supabase
+                        .from('favorites')
+                        .select('system_id')
+                        .eq('user_id', currentUser.id);
+                    
+                    favorites = favsData ? favsData.map(f => f.system_id) : [];
+                }
+
+                updateBrandFilter();
+                filterSystems();
+            } catch (error) {
+                console.error('Error loading data:', error);
+                alert('Fout bij laden van gegevens: ' + error.message);
+            } finally {
+                document.getElementById('loadingState').classList.add('hidden');
+            }
+        }
+
+        function updateBrandFilter() {
+            const brands = [...new Set(systems.map(s => s.brand))].sort();
+            const select = document.getElementById('brandFilter');
+            select.innerHTML = '<option value="all">Alle merken</option>';
+            brands.forEach(brand => {
+                const option = document.createElement('option');
+                option.value = brand;
+                option.textContent = brand;
+                select.appendChild(option);
+            });
+        }
+
+        function filterSystems() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const selectedType = document.getElementById('systemTypeFilter').value;
+            const selectedBrand = document.getElementById('brandFilter').value;
+            const showFavoritesOnly = document.getElementById('favoritesFilter').value === 'favorites';
+
+            const filtered = systems.filter(system => {
+                const matchesSearch = system.model.toLowerCase().includes(searchTerm) || 
+                                     system.brand.toLowerCase().includes(searchTerm);
+                const matchesType = system.system_type === selectedType;
+                const matchesBrand = selectedBrand === 'all' || system.brand === selectedBrand;
+                const matchesFavorites = !showFavoritesOnly || favorites.includes(system.id);
+
+                return matchesSearch && matchesType && matchesBrand && matchesFavorites;
+            });
+
+            renderSystems(filtered);
+            updateResultsCount(filtered.length);
+        }
+
+        function updateResultsCount(count) {
+            const text = `${count} ${count === 1 ? 'systeem' : 'systemen'} gevonden`;
+            const favText = favorites.length > 0 ? ` (${favorites.length} favorieten totaal)` : '';
+            document.getElementById('resultsCount').textContent = text + favText;
+        }
+
+        function renderSystems(systemsList) {
+            const grid = document.getElementById('cardsGrid');
+            const emptyState = document.getElementById('emptyState');
+
+            if (systemsList.length === 0) {
+                grid.classList.add('hidden');
+                emptyState.classList.remove('hidden');
+                return;
+            }
+
+            grid.classList.remove('hidden');
+            emptyState.classList.add('hidden');
+
+            grid.innerHTML = systemsList.map(system => createSystemCard(system)).join('');
+        }
+
+        function createSystemCard(system) {
+            const isFavorite = favorites.includes(system.id);
+            const canEdit = currentUserRole === 'admin' || currentUserRole === 'moderator';
+
+            return `
+                <div class="system-card">
+                    <div class="card-header">
+                        <div class="card-header-with-logo">
+                            ${system.logo_url ? `<img src="${escapeHtml(system.logo_url)}" alt="${escapeHtml(system.brand)} logo" class="brand-logo" onerror="this.style.display='none'">` : ''}
+                            <div>
+                                <div class="card-title">${escapeHtml(system.model)}</div>
+                                <span class="card-badge">${escapeHtml(system.brand)}</span>
+                                ${system.handbook_date ? `<div style="font-size:13px;color:var(--color-warning);margin-top:4px;font-style:italic;">📅 Handleiding: ${new Date(system.handbook_date).toLocaleDateString('nl-NL')}</div>` : ''}
+                            </div>
+                        </div>
+                        <div class="card-actions">
+                            <button class="icon-btn ${isFavorite ? 'active' : ''}" onclick="toggleFavorite('${system.id}')">
+                                <svg class="icon" fill="${isFavorite ? 'currentColor' : 'none'}" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"></path>
+                                </svg>
+                            </button>
+                            ${canEdit ? `
+                            <button class="icon-btn" onclick="openEditModal('${system.id}')">
+                                <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                </svg>
+                            </button>
+                            ` : ''}
+                        </div>
+                    </div>
+
+                    <div class="card-section">
+                        <div class="card-section-title">
+                            <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            Afstelprocedure
+                        </div>
+                        <div class="procedure-text">${escapeHtml(system.procedure || 'Geen procedure opgegeven')}</div>
+                    </div>
+
+                    ${system.images && system.images.length > 0 ? `
+                    <div class="card-section">
+                        <div class="card-section-title">📸 Foto's</div>
+                        <div class="image-gallery">
+                            ${system.images.map((img, idx) => `
+                                <div class="gallery-item" onclick="openLightbox('${img}')">
+                                    <img src="${escapeHtml(img)}" alt="Foto ${idx + 1}">
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                    ` : ''}
+
+                    ${system.o2_low || system.o2_high || system.co2_low || system.co2_high || system.max_co ? `
+                    <div class="card-section">
+                        <div class="card-section-title">Doelwaarden</div>
+                        <div class="values-grid">
+                            ${system.o2_low ? `
+                            <div class="value-item">
+                                <span class="value-icon">💧</span>
+                                <div class="value-content">
+                                    <div class="value-label">O₂ Laaglast</div>
+                                    <div class="value-number">${escapeHtml(system.o2_low)}</div>
+                                </div>
+                            </div>
+                            ` : ''}
+                            ${system.o2_high ? `
+                            <div class="value-item">
+                                <span class="value-icon">💧</span>
+                                <div class="value-content">
+                                    <div class="value-label">O₂ Hooglast</div>
+                                    <div class="value-number">${escapeHtml(system.o2_high)}</div>
+                                </div>
+                            </div>
+                            ` : ''}
+                            ${system.co2_low ? `
+                            <div class="value-item">
+                                <span class="value-icon">🔴</span>
+                                <div class="value-content">
+                                    <div class="value-label">CO₂ Laaglast</div>
+                                    <div class="value-number">${escapeHtml(system.co2_low)}</div>
+                                </div>
+                            </div>
+                            ` : ''}
+                            ${system.co2_high ? `
+                            <div class="value-item">
+                                <span class="value-icon">🔴</span>
+                                <div class="value-content">
+                                    <div class="value-label">CO₂ Hooglast</div>
+                                    <div class="value-number">${escapeHtml(system.co2_high)}</div>
+                                </div>
+                            </div>
+                            ` : ''}
+                            ${system.max_co ? `
+                            <div class="value-item">
+                                <span class="value-icon">🔥</span>
+                                <div class="value-content">
+                                    <div class="value-label">Max PPM CO</div>
+                                    <div class="value-number">${escapeHtml(system.max_co)}</div>
+                                </div>
+                            </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                    ` : ''}
+
+                    ${system.parts ? `
+                    <div class="parts-list">
+                        <div class="parts-title">📦 Benodigde pakkingen/artikelen</div>
+                        <div class="parts-text">${escapeHtml(system.parts)}</div>
+                    </div>
+                    ` : ''}
+
+                    ${system.notes ? `
+                    <div class="notes-section">
+                        <div class="notes-title">Opmerkingen</div>
+                        <div class="notes-text">${escapeHtml(system.notes)}</div>
+                    </div>
+                    ` : ''}
+                </div>
+            `;
+        }
+
+        function initTheme() {
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme) {
+                document.body.setAttribute('data-theme', savedTheme);
+                updateThemeIcon(savedTheme);
+            }
+        }
+
+        function toggleTheme() {
+            const currentTheme = document.body.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            document.body.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            updateThemeIcon(newTheme);
+        }
+
+        function updateThemeIcon(theme) {
+            const icon = document.getElementById('themeIcon');
+            if (theme === 'dark') {
+                icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>';
+            } else {
+                icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>';
+            }
+        }
+
+        async function openAdminModal() {
+            document.getElementById('adminModal').classList.add('active');
+            await loadUsers();
+        }
+
+        function closeAdminModal() {
+            document.getElementById('adminModal').classList.remove('active');
+        }
+
+        async function loadUsers() {
+            try {
+                const { data: users, error } = await supabase
+                  .from('user_profiles')
+                  .select('id, email, role')
+                  .order('email', { ascending: true });
+                
+                if (error) throw error;
+
+                const { data: roles } = await supabase
+                    .from('user_roles')
+                    .select('*');
+
+                const rolesMap = {};
+                roles?.forEach(r => rolesMap[r.user_id] = r.role);
+
+                allUsers = (users || []).map(u => ({
+                id: u.id,
+                email: u.email,
+                role: u.role || 'user'
+                }));
+
+                renderUsersTable();
+            } catch (error) {
+                console.error('Error loading users:', error);
+                document.getElementById('usersTableBody').innerHTML = 
+                    '<tr><td colspan="3" style="text-align: center; color: var(--color-error);">Fout bij laden gebruikers</td></tr>';
+            }
+        }
+
+        function renderUsersTable() {
+            const tbody = document.getElementById('usersTableBody');
+            tbody.innerHTML = allUsers.map(user => `
+                <tr>
+                    <td>${escapeHtml(user.email)}</td>
+                    <td><span class="role-badge ${user.role}">${user.role}</span></td>
+                    <td>
+                        <select onchange="updateUserRole('${user.id}', this.value)" class="form-control" style="width: 150px;">
+                            <option value="user" ${user.role === 'user' ? 'selected' : ''}>User</option>
+                            <option value="moderator" ${user.role === 'moderator' ? 'selected' : ''}>Moderator</option>
+                            <option value="admin" ${user.role === 'admin' ? 'selected' : ''}>Admin</option>
+                        </select>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        async function updateUserRole(userId, newRole) {
+            try {
+                const { error } = await supabase
+                    .from('user_roles')
+                    .upsert({ user_id: userId, role: newRole }, { onConflict: 'user_id' });
+
+                if (error) throw error;
+
+                const user = allUsers.find(u => u.id === userId);
+                if (user) user.role = newRole;
+                
+                renderUsersTable();
+                alert('Rol bijgewerkt!');
+            } catch (error) {
+                console.error('Error updating role:', error);
+                alert('Fout bij bijwerken rol: ' + error.message);
+            }
+        }
+
+        async function toggleFavorite(systemId) {
+            if (!currentUser) return;
+
+            const isFavorite = favorites.includes(systemId);
+
+            try {
+                if (isFavorite) {
+                    const { error } = await supabase
+                        .from('favorites')
+                        .delete()
+                        .eq('user_id', currentUser.id)
+                        .eq('system_id', systemId);
+                    
+                    if (error) throw error;
+                    favorites = favorites.filter(id => id !== systemId);
+                } else {
+                    const { error } = await supabase
+                        .from('favorites')
+                        .insert({ user_id: currentUser.id, system_id: systemId });
+                    
+                    if (error) throw error;
+                    favorites.push(systemId);
+                }
+
+                filterSystems();
+            } catch (error) {
+                console.error('Error toggling favorite:', error);
+                alert('Fout bij opslaan favoriet: ' + error.message);
+            }
+        }
+
+        function openRegisterModal() {
+    document.getElementById('registerModal').classList.add('active');
+}
+
+function closeRegisterModal() {
+    document.getElementById('registerModal').classList.remove('active');
+}
+
+        async function handleRegister(e) {
+    e.preventDefault();
+    const email = document.getElementById('registerEmail').value.trim();
+    const password = document.getElementById('registerPassword').value;
+    const password2 = document.getElementById('registerPassword2').value;
+
+    if (password !== password2) {
         alert('Wachtwoorden komen niet overeen.');
         return;
-      }
-      
-      try {
+    }
+
+    try {
         // 1. User aanmaken in Supabase auth
-        const { data, error } = await supabase.auth.signUp({ email, password });
+        const { data, error } = await supabase.auth.signUp({
+            email,
+            password
+        });
+
         if (error) throw error;
-        
+
         // 2. user_roles rij met rol 'user'
         const newUserId = data.user?.id;
         if (newUserId) {
-          const { error: roleError } = await supabase
-            .from('user_roles')
-            .insert({ user_id: newUserId, role: 'user' });
-          if (roleError) console.error('Fout bij opslaan rol:', roleError);
+            const { error: roleError } = await supabase
+                .from('user_roles')
+                .insert({ user_id: newUserId, role: 'user' });
+
+            if (roleError) {
+                console.error('Fout bij opslaan rol:', roleError);
+            }
         }
-        
+
         alert('Account aangemaakt. Controleer je e-mail (indien bevestiging nodig) en log daarna in.');
         closeRegisterModal();
-      } catch (err) {
+    } catch (err) {
         console.error('Fout bij registreren:', err);
         alert('Registratie mislukt: ' + err.message);
-      }
     }
+}
 
-    function openEditModal(systemId) {
-      const system = systems.find(s => s.id === systemId);
-      if (!system) return;
-      
-      currentEditingId = systemId;
-      document.getElementById('editId').value = systemId;
-      document.getElementById('editSystemType').value = system.systemtype;
-      document.getElementById('editBrand').value = system.brand;
-      document.getElementById('editModel').value = system.model;
-      document.getElementById('editLogoUrl').value = system.logourl || '';
-      document.getElementById('editProcedure').value = system.procedure;
-      document.getElementById('editO2Low').value = system.o2low || '';
-      document.getElementById('editO2High').value = system.o2high || '';
-      document.getElementById('editCO2Low').value = system.co2low || '';
-      document.getElementById('editCO2High').value = system.co2high || '';
-      document.getElementById('editMaxCO').value = system.maxco || '';
-      document.getElementById('editParts').value = system.parts || '';
-      document.getElementById('editNotes').value = system.notes || '';
-      document.getElementById('editHandbookDate').value = system.handbook_date || '';
-      
-      pendingImages.edit = system.images || [];
-      renderImagePreview('edit');
-      updateFieldsForSystemType(system.systemtype);
-      document.getElementById('editModal').classList.add('active');
-    }
+        function openEditModal(systemId) {
+            const system = systems.find(s => s.id === systemId);
+            if (!system) return;
 
-    function updateFieldsForSystemType(type) {
-      const cvFields = document.getElementById('cvKetelFields');
-      const wpFields = document.getElementById('warmtepompFields');
-      const wtwFields = document.getElementById('wtwMvFields');
-      
-      cvFields.style.display = type === 'cv-ketel' ? 'block' : 'none';
-      wpFields.style.display = type === 'warmtepomp' ? 'block' : 'none';
-      wtwFields.style.display = type === 'wtw-mv' ? 'block' : 'none';
-    }
+            currentEditingId = systemId;
+            document.getElementById('editId').value = systemId;
+            document.getElementById('editSystemType').value = system.system_type;
+            document.getElementById('editBrand').value = system.brand || '';
+            document.getElementById('editModel').value = system.model || '';
+            document.getElementById('editLogoUrl').value = system.logo_url || '';
+            document.getElementById('editProcedure').value = system.procedure || '';
+            document.getElementById('editO2Low').value = system.o2_low || '';
+            document.getElementById('editO2High').value = system.o2_high || '';
+            document.getElementById('editCO2Low').value = system.co2_low || '';
+            document.getElementById('editCO2High').value = system.co2_high || '';
+            document.getElementById('editMaxCO').value = system.max_co || '';
+            document.getElementById('editParts').value = system.parts || '';
+            document.getElementById('editNotes').value = system.notes || '';
+            document.getElementById('editHandbookDate').value = system.handbook_date || '';
 
-    function closeEditModal() {
-      document.getElementById('editModal').classList.remove('active');
-      currentEditingId = null;
-    }
+            pendingImages.edit = system.images || [];
+            renderImagePreview('edit');
 
-    function openAddModal() {
-      document.getElementById('addModal').classList.add('active');
-      document.getElementById('addForm').reset();
-      pendingImages.add = [];
-      document.getElementById('addHandbookDate').value = '';
-      renderImagePreview('add');
-      updateAddFieldsForSystemType();
-    }
+            updateFieldsForSystemType(system.system_type);
 
-    function closeAddModal() {
-      document.getElementById('addModal').classList.remove('active');
-    }
-
-    function updateAddFieldsForSystemType(type = '') {
-      const cvFields = document.getElementById('addCvKetelFields');
-      const wpFields = document.getElementById('addWarmtepompFields');
-      const wtwFields = document.getElementById('addWtwMvFields');
-      
-      cvFields.style.display = type === 'cv-ketel' ? 'block' : 'none';
-      wpFields.style.display = type === 'warmtepomp' ? 'block' : 'none';
-      wtwFields.style.display = type === 'wtw-mv' ? 'block' : 'none';
-    }
-
-    async function handleAddSubmit(e) {
-      e.preventDefault();
-      const systemType = document.getElementById('addSystemType').value;
-      const newSystem = {
-        systemtype: systemType,
-        brand: document.getElementById('addBrand').value,
-        model: document.getElementById('addModel').value,
-        logourl: document.getElementById('addLogoUrl').value || null,
-        procedure: document.getElementById('addProcedure').value,
-        parts: document.getElementById('addParts').value || null,
-        notes: document.getElementById('addNotes').value || null,
-        handbook_date: document.getElementById('addHandbookDate').value || null
-      };
-
-      if (systemType === 'cv-ketel') {
-        newSystem.o2low = document.getElementById('addO2Low').value || null;
-        newSystem.o2high = document.getElementById('addO2High').value || null;
-        newSystem.co2low = document.getElementById('addCO2Low').value || null;
-        newSystem.co2high = document.getElementById('addCO2High').value || null;
-        newSystem.maxco = document.getElementById('addMaxCO').value || null;
-      } else {
-        newSystem.o2low = null;
-        newSystem.o2high = null;
-        newSystem.co2low = null;
-        newSystem.co2high = null;
-        newSystem.maxco = null;
-      }
-
-      try {
-        let imageUrls = [];
-        if (pendingImages.add.length > 0) {
-          imageUrls = await uploadImages(`temp-${Date.now()}`, pendingImages.add);
-        }
-        newSystem.images = imageUrls;
-
-        const { data, error } = await supabase
-          .from('systems')
-          .insert([newSystem])
-          .select();
-        if (error) throw error;
-        if (data && data.length > 0) {
-          systems.push(data[0]);
-        }
-        pendingImages.add = [];
-        closeAddModal();
-        updateBrandFilter();
-        filterSystems();
-        alert('Systeem succesvol toegevoegd!');
-      } catch (error) {
-        console.error('Error adding system:', error);
-        alert('Fout bij toevoegen systeem: ' + error.message);
-      }
-    }
-
-    async function handleEditSubmit(e) {
-      e.preventDefault();
-      const systemType = document.getElementById('editSystemType').value;
-      const updates = {
-        brand: document.getElementById('editBrand').value,
-        model: document.getElementById('editModel').value,
-        logourl: document.getElementById('editLogoUrl').value || null,
-        procedure: document.getElementById('editProcedure').value,
-        parts: document.getElementById('editParts').value || null,
-        notes: document.getElementById('editNotes').value || null,
-        handbook_date: document.getElementById('editHandbookDate').value || null
-      };
-
-      if (systemType === 'cv-ketel') {
-        updates.o2low = document.getElementById('editO2Low').value || null;
-        updates.o2high = document.getElementById('editO2High').value || null;
-        updates.co2low = document.getElementById('editCO2Low').value || null;
-        updates.co2high = document.getElementById('editCO2High').value || null;
-        updates.maxco = document.getElementById('editMaxCO').value || null;
-      } else {
-        updates.o2low = null;
-        updates.o2high = null;
-        updates.co2low = null;
-        updates.co2high = null;
-        updates.maxco = null;
-      }
-
-      try {
-        let imageUrls = pendingImages.edit;
-        if (pendingImages.edit.length === 0 && systems.find(s => s.id === currentEditingId)?.images) {
-          imageUrls = systems.find(s => s.id === currentEditingId).images;
+            document.getElementById('editModal').classList.add('active');
         }
 
-        const { error } = await supabase
-          .from('systems')
-          .update(updates)
-          .eq('id', currentEditingId);
-        if (error) throw error;
-
-        const systemIndex = systems.findIndex(s => s.id === currentEditingId);
-        if (systemIndex !== -1) {
-          systems[systemIndex] = { ...systems[systemIndex], ...updates, images: imageUrls };
+        function updateFieldsForSystemType(type) {
+            const cvFields = document.getElementById('cvKetelFields');
+            const wpFields = document.getElementById('warmtepompFields');
+            const wtwFields = document.getElementById('wtwMvFields');
+            
+            cvFields.style.display = type === 'cv-ketel' ? 'block' : 'none';
+            wpFields.style.display = type === 'warmtepomp' ? 'block' : 'none';
+            wtwFields.style.display = type === 'wtw-mv' ? 'block' : 'none';
         }
-        pendingImages.edit = [];
-        closeEditModal();
-        filterSystems();
-        alert('Systeem succesvol bijgewerkt!');
-      } catch (error) {
-        console.error('Error editing system:', error);
-        alert('Fout bij bewerken systeem: ' + error.message);
-      }
-    }
 
-    // Image handling functions
-    function handleDrop(e, mode) {
-      e.preventDefault();
-      e.currentTarget.classList.remove('drag-over');
-      const files = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'));
-      handleImageSelect(files, mode);
-    }
+        function closeEditModal() {
+            document.getElementById('editModal').classList.remove('active');
+            currentEditingId = null;
+        }
 
-    function handleImageSelect(files, mode) {
-      const maxFiles = 5;
-      pendingImages[mode] = Array.from(files).slice(0, maxFiles - pendingImages[mode].length);
-      renderImagePreview(mode);
-    }
+        function openAddModal() {
+            document.getElementById('addModal').classList.add('active');
+            document.getElementById('addForm').reset();
+            pendingImages.add = [];
+            renderImagePreview('add');
+            updateAddFieldsForSystemType('');
+        }
 
-    function renderImagePreview(mode) {
-      const gallery = document.getElementById(mode === 'add' ? 'addImageGallery' : 'editImageGallery');
-      const count = document.getElementById(mode === 'add' ? 'addImageCount' : 'editImageCount');
-      
-      gallery.innerHTML = pendingImages[mode].map((file, idx) => `
-        <div class="gallery-item">
-          <img src="${URL.createObjectURL(file)}" alt="Preview ${idx + 1}">
-          <button class="gallery-item-delete" onclick="removeImage(${idx}, '${mode}')">&times;</button>
+        function closeAddModal() {
+            document.getElementById('addModal').classList.remove('active');
+        }
+
+        function updateAddFieldsForSystemType(type) {
+            const cvFields = document.getElementById('addCvKetelFields');
+            const wpFields = document.getElementById('addWarmtepompFields');
+            const wtwFields = document.getElementById('addWtwMvFields');
+            
+            cvFields.style.display = type === 'cv-ketel' ? 'block' : 'none';
+            wpFields.style.display = type === 'warmtepomp' ? 'block' : 'none';
+            wtwFields.style.display = type === 'wtw-mv' ? 'block' : 'none';
+        }
+
+        async function handleAddSubmit(e) {
+            e.preventDefault();
+
+            const systemType = document.getElementById('addSystemType').value;
+            const newSystem = {
+                system_type: systemType,
+                brand: document.getElementById('addBrand').value,
+                model: document.getElementById('addModel').value,
+                logo_url: document.getElementById('addLogoUrl').value || null,
+                procedure: document.getElementById('addProcedure').value,
+                parts: document.getElementById('addParts').value || null,
+                notes: document.getElementById('addNotes').value || null
+                handbook_date: document.getElementById('addHandbookDate').value || null,
+            };
+
+            if (systemType === 'cv-ketel') {
+                newSystem.o2_low = document.getElementById('addO2Low').value || null;
+                newSystem.o2_high = document.getElementById('addO2High').value || null;
+                newSystem.co2_low = document.getElementById('addCO2Low').value || null;
+                newSystem.co2_high = document.getElementById('addCO2High').value || null;
+                newSystem.max_co = document.getElementById('addMaxCO').value || null;
+            } else {
+                newSystem.o2_low = null;
+                newSystem.o2_high = null;
+                newSystem.co2_low = null;
+                newSystem.co2_high = null;
+                newSystem.max_co = null;
+            }
+
+            try {
+                let imageUrls = [];
+                if (pendingImages.add.length > 0) {
+                    imageUrls = await uploadImages('temp-' + Date.now(), pendingImages.add);
+                }
+                newSystem.images = imageUrls;
+
+                const { data, error } = await supabase
+                    .from('systems')
+                    .insert([newSystem])
+                    .select();
+
+                if (error) throw error;
+
+                if (data && data.length > 0) {
+                    systems.push(data[0]);
+                }
+
+                pendingImages.add = [];
+                closeAddModal();
+                updateBrandFilter();
+                filterSystems();
+                
+                alert('Systeem succesvol toegevoegd!');
+            } catch (error) {
+                console.error('Error adding system:', error);
+                alert('Fout bij toevoegen systeem: ' + error.message);
+            }
+        }
+
+        async function handleEditSubmit(e) {
+            e.preventDefault();
+
+            const systemType = document.getElementById('editSystemType').value;
+            const updates = {
+                brand: document.getElementById('editBrand').value,
+                model: document.getElementById('editModel').value,
+                logo_url: document.getElementById('editLogoUrl').value || null,
+                procedure: document.getElementById('editProcedure').value,
+                parts: document.getElementById('editParts').value || null,
+                notes: document.getElementById('editNotes').value || null
+                handbook_date: document.getElementById('editHandbookDate').value || null,
+            };
+
+            if (systemType === 'cv-ketel') {
+                updates.o2_low = document.getElementById('editO2Low').value || null;
+                updates.o2_high = document.getElementById('editO2High').value || null;
+                updates.co2_low = document.getElementById('editCO2Low').value || null;
+                updates.co2_high = document.getElementById('editCO2High').value || null;
+                updates.max_co = document.getElementById('editMaxCO').value || null;
+            } else {
+                updates.o2_low = null;
+                updates.o2_high = null;
+                updates.co2_low = null;
+                updates.co2_high = null;
+                updates.max_co = null;
+            }
+
+            try {
+                const newImages = pendingImages.edit.filter(img => img.startsWith('data:'));
+                const existingImages = pendingImages.edit.filter(img => !img.startsWith('data:'));
+                
+                let uploadedUrls = [];
+                if (newImages.length > 0) {
+                    uploadedUrls = await uploadImages(currentEditingId, newImages);
+                }
+                
+                updates.images = [...existingImages, ...uploadedUrls];
+
+                const { error } = await supabase
+                    .from('systems')
+                    .update(updates)
+                    .eq('id', currentEditingId);
+
+                if (error) throw error;
+
+                const index = systems.findIndex(s => s.id === currentEditingId);
+                if (index !== -1) {
+                    systems[index] = { ...systems[index], ...updates };
+                }
+
+                pendingImages.edit = [];
+                closeEditModal();
+                filterSystems();
+            } catch (error) {
+                console.error('Error updating system:', error);
+                alert('Fout bij opslaan: ' + error.message);
+            }
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        async function compressImage(file) {
+            return new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        let width = img.width;
+                        let height = img.height;
+                        
+                        if (width > 800) {
+                            height = (height * 800) / width;
+                            width = 800;
+                        }
+                        
+                        canvas.width = width;
+                        canvas.height = height;
+                        canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+                        
+                        canvas.toBlob(resolve, 'image/jpeg', 0.8);
+                    };
+                    img.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
+        async function handleImageSelect(files, mode) {
+            const fileArray = Array.from(files);
+            const maxImages = 5;
+            const currentCount = pendingImages[mode].length;
+            
+            if (currentCount + fileArray.length > maxImages) {
+                alert(`Maximaal ${maxImages} foto's toegestaan. Je hebt er al ${currentCount}.`);
+                return;
+            }
+
+            for (const file of fileArray) {
+                if (!file.type.startsWith('image/')) {
+                    alert('Alleen afbeeldingen zijn toegestaan');
+                    continue;
+                }
+
+                const compressed = await compressImage(file);
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    pendingImages[mode].push(e.target.result);
+                    renderImagePreview(mode);
+                };
+                reader.readAsDataURL(compressed);
+            }
+        }
+
+        function handleDrop(e, mode) {
+            e.preventDefault();
+            e.currentTarget.classList.remove('drag-over');
+            handleImageSelect(e.dataTransfer.files, mode);
+        }
+
+        function renderImagePreview(mode) {
+            const gallery = document.getElementById(`${mode}ImageGallery`);
+            const count = document.getElementById(`${mode}ImageCount`);
+            
+            if (count) count.textContent = `${pendingImages[mode].length}/5 foto's`;
+            
+            if (gallery) {
+                gallery.innerHTML = pendingImages[mode].map((img, idx) => `
+                    <div class="gallery-item">
+                        <img src="${img}" alt="Preview ${idx + 1}">
+                        <button class="gallery-item-delete" onclick="removeImage('${mode}', ${idx})" type="button">×</button>
+                    </div>
+                `).join('');
+            }
+        }
+
+        function removeImage(mode, index) {
+            pendingImages[mode].splice(index, 1);
+            renderImagePreview(mode);
+        }
+
+        async function uploadImages(systemId, images) {
+            const uploadedUrls = [];
+            
+            for (let i = 0; i < images.length; i++) {
+                const base64 = images[i];
+                const blob = await (await fetch(base64)).blob();
+                const fileName = `${systemId}_${Date.now()}_${i}.jpg`;
+                
+                try {
+                    const { data, error } = await supabase.storage
+                        .from('system-images')
+                        .upload(fileName, blob, { contentType: 'image/jpeg' });
+                    
+                    if (error) throw error;
+                    
+                    const { data: pubData } = supabase.storage
+                        .from('system-images')
+                        .getPublicUrl(fileName);
+                    
+                    uploadedUrls.push(pubData.publicUrl);
+                } catch (error) {
+                    console.error('Error uploading image:', error);
+                }
+            }
+            
+            return uploadedUrls;
+        }
+
+        function openLightbox(imageSrc) {
+            document.getElementById('lightbox').classList.add('active');
+            document.getElementById('lightboxImg').src = imageSrc;
+        }
+
+        function closeLightbox() {
+            document.getElementById('lightbox').classList.remove('active');
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closeLightbox();
+        });
+
+        init();
+    </script>
+
+    <div id="lightbox" class="lightbox" onclick="closeLightbox()">
+        <div class="lightbox-content" onclick="event.stopPropagation()">
+            <button class="lightbox-close" onclick="closeLightbox()">×</button>
+            <img id="lightboxImg" class="lightbox-img" src="" alt="Foto">
         </div>
-      `).join('');
-      count.textContent = `${pendingImages[mode].length}/5 fotos`;
-    }
-
-    function removeImage(index, mode) {
-      pendingImages[mode].splice(index, 1);
-      renderImagePreview(mode);
-    }
-
-    async function uploadImages(folderName, files) {
-      const urls = [];
-      for (let file of files) {
-        const fileExt = file.name.split('.').pop();
-        const fileName = `${folderName}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}.${fileExt}`;
-        
-        const { data, error } = await supabase.storage
-          .from('systems-images')
-          .upload(fileName, file, { upsert: true });
-        
-        if (error) console.error('Upload error:', error);
-        else urls.push(`https://srsnjifezttivawxnndu.supabase.co/storage/v1/object/public/systems-images/${fileName}`);
-      }
-      return urls;
-    }
-
-    function openLightbox(imageUrl) {
-      document.getElementById('lightbox').classList.add('active');
-      document.getElementById('lightboxImg').src = imageUrl;
-    }
-
-    function closeLightbox() {
-      document.getElementById('lightbox').classList.remove('active');
-    }
-
-    // Initialize app
-    init();
-  </script>
+    </div>
 </body>
 </html>
