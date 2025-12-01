@@ -1502,7 +1502,9 @@
       document.getElementById('editMaxCO').value = system.maxco || '';
       document.getElementById('editParts').value = system.parts || '';
       document.getElementById('editNotes').value = system.notes || '';
-      document.getElementById('editHandbookDate').value = system.handbook_date || '';
+      if (document.getElementById('editHandbookDate')) {
+        document.getElementById('editHandbookDate').value = system.handbook_date || '';
+      }
       pendingImages.edit = system.images || [];
       renderImagePreview('edit');
       updateFieldsForSystemType(system.systemtype);
@@ -1526,7 +1528,6 @@
     function openAddModal() {
       document.getElementById('addModal').classList.add('active');
       document.getElementById('addForm').reset();
-      document.getElementById('addHandbookDate').value = '';
       pendingImages.add = [];
       renderImagePreview('add');
       updateAddFieldsForSystemType();
@@ -1555,9 +1556,9 @@
         logo_url: document.getElementById('addLogoUrl').value || null,
         procedure: document.getElementById('addProcedure').value,
         parts: document.getElementById('addParts').value || null,
-        notes: document.getElementById('addNotes').value || null,
-        handbook_date: document.getElementById('addHandbookDate').value || null
+        notes: document.getElementById('addNotes').value || null
       };
+      newSystem.handbook_date = document.getElementById('addHandbookDate').value || null;
 
       if (systemType === 'cv-ketel') {
         newSystem.o2_low = document.getElementById('addO2Low').value || null;
@@ -1608,9 +1609,9 @@
         logo_url: document.getElementById('editLogoUrl').value || null,
         procedure: document.getElementById('editProcedure').value,
         parts: document.getElementById('editParts').value || null,
-        notes: document.getElementById('editNotes').value || null,
-        handbook_date: document.getElementById('editHandbookDate').value || null
+        notes: document.getElementById('editNotes').value || null
       };
+      updates.handbook_date = document.getElementById('editHandbookDate').value || null;
 
       if (systemType === 'cv-ketel') {
         updates.o2_low = document.getElementById('editO2Low').value || null;
