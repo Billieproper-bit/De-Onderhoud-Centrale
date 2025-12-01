@@ -947,19 +947,19 @@
 
           <div id="addCvKetelFields" style="display: none;">
             <div class="form-group">
-              <label>O₂ Laag/last</label>
+              <label>O₂ Laaglast</label>
               <input type="text" id="addO2Low" class="form-control" placeholder="Bijv. 8,3 - 8,8">
             </div>
             <div class="form-group">
-              <label>O₂ Hoog/last</label>
+              <label>O₂ Hooglast</label>
               <input type="text" id="addO2High" class="form-control" placeholder="Bijv. 8,9 - 9,7">
             </div>
             <div class="form-group">
-              <label>CO₂ Laag/last</label>
+              <label>CO₂ Laaglast</label>
               <input type="text" id="addCO2Low" class="form-control" placeholder="Bijv. 8,5 - 9,0">
             </div>
             <div class="form-group">
-              <label>CO₂ Hoog/last</label>
+              <label>CO₂ Hooglast</label>
               <input type="text" id="addCO2High" class="form-control" placeholder="Bijv. 9,0 - 9,5">
             </div>
             <div class="form-group">
@@ -1051,19 +1051,19 @@
 
           <div id="cvKetelFields">
             <div class="form-group">
-              <label>O₂ Laag/last</label>
+              <label>O₂ Laaglast</label>
               <input type="text" id="editO2Low" class="form-control" placeholder="Bijv. 8,3 - 8,8">
             </div>
             <div class="form-group">
-              <label>O₂ Hoog/last</label>
+              <label>O₂ Hooglast</label>
               <input type="text" id="editO2High" class="form-control" placeholder="Bijv. 8,9 - 9,7">
             </div>
             <div class="form-group">
-              <label>CO₂ Laag/last</label>
+              <label>CO₂ Laaglast</label>
               <input type="text" id="editCO2Low" class="form-control" placeholder="Bijv. 8,5 - 9,0">
             </div>
             <div class="form-group">
-              <label>CO₂ Hoog/last</label>
+              <label>CO₂ Hooglast</label>
               <input type="text" id="editCO2High" class="form-control" placeholder="Bijv. 9,0 - 9,5">
             </div>
             <div class="form-group">
@@ -1384,7 +1384,7 @@
             <div class="procedure-text">${escapeHtml(system.procedure) || 'Geen procedure opgegeven'}</div>
           </div>
           ${system.images && system.images.length > 0 ? '<div class="card-section"><div class="card-section-title">Fotos</div><div class="image-gallery">' + system.images.map((img, idx) => '<div class="gallery-item" onclick="openLightbox(\'' + escapeHtml(img) + '\')"><img src="' + escapeHtml(img) + '" alt="Foto ' + (idx + 1) + '"></div>').join('') + '</div></div>' : ''}
-          ${(system.o2_low || system.o2_high || system.co2_low || system.co2_high || system.maxco) ? '<div class="card-section"><div class="card-section-title">Doelwaarden</div><div class="values-grid">' + (system.o2_low ? '<div class="value-item"><span class="value-icon">●</span><div class="value-content"><div class="value-label">O₂ Laag/last</div><div class="value-number">' + escapeHtml(system.o2_low) + '</div></div></div>' : '') + (system.o2_high ? '<div class="value-item"><span class="value-icon">●</span><div class="value-content"><div class="value-label">O₂ Hoog/last</div><div class="value-number">' + escapeHtml(system.o2_high) + '</div></div></div>' : '') + (system.co2_low ? '<div class="value-item"><span class="value-icon">●</span><div class="value-content"><div class="value-label">CO₂ Laag/last</div><div class="value-number">' + escapeHtml(system.co2_low) + '</div></div></div>' : '') + (system.co2_high ? '<div class="value-item"><span class="value-icon">●</span><div class="value-content"><div class="value-label">CO₂ Hoog/last</div><div class="value-number">' + escapeHtml(system.co2_high) + '</div></div></div>' : '') + (system.maxco ? '<div class="value-item"><span class="value-icon">●</span><div class="value-content"><div class="value-label">Max PPM CO</div><div class="value-number">' + escapeHtml(system.maxco) + '</div></div></div>' : '') + '</div></div>' : ''}
+          ${(system.o2_low || system.o2_high || system.co2_low || system.co2_high || system.maxco) ? '<div class="card-section"><div class="card-section-title">Doelwaarden</div><div class="values-grid">' + (system.o2_low ? '<div class="value-item"><span class="value-icon" style="color: var(--color-error);">●</span><div class="value-content"><div class="value-label">O₂ Laaglast</div><div class="value-number">' + escapeHtml(system.o2_low) + '</div></div></div>' : '') + (system.o2_high ? '<div class="value-item"><span class="value-icon" style="color: var(--color-error);">●</span><div class="value-content"><div class="value-label">O₂ Hooglast</div><div class="value-number">' + escapeHtml(system.o2_high) + '</div></div></div>' : '') + (system.co2_low ? '<div class="value-item"><span class="value-icon" style="color: var(--color-primary);">💧</span><div class="value-content"><div class="value-label">CO₂ Laaglast</div><div class="value-number">' + escapeHtml(system.co2_low) + '</div></div></div>' : '') + (system.co2_high ? '<div class="value-item"><span class="value-icon" style="color: var(--color-primary);">💧</span><div class="value-content"><div class="value-label">CO₂ Hooglast</div><div class="value-number">' + escapeHtml(system.co2_high) + '</div></div></div>' : '') + (system.maxco ? '<div class="value-item"><span class="value-icon" style="color: var(--color-warning);">⚡</span><div class="value-content"><div class="value-label">Max PPM CO</div><div class="value-number">' + escapeHtml(system.maxco) + '</div></div></div>' : '') + '</div></div>' : ''}
           ${system.parts ? '<div class="parts-list"><div class="parts-title">Benodigde pakkingen/artikelen</div><div class="parts-text">' + escapeHtml(system.parts) + '</div></div>' : ''}
           ${system.notes ? '<div class="notes-section"><div class="notes-title">Opmerkingen</div><div class="notes-text">' + escapeHtml(system.notes) + '</div></div>' : ''}
         </div>
@@ -1481,19 +1481,23 @@
 
     async function loadUsers() {
       try {
-        const { data: users, error } = await supabase
-          .from('user_profiles')
-          .select('id, email, role')
+        // Gebruik de RPC-functie om gebruikers + rollen op te halen
+        const { data, error } = await supabase
+          .rpc('get_all_users_with_roles')
           .order('email', { ascending: true });
+        
         if (error) throw error;
-        const { data: roles } = await supabase.from('user_roles').select('*');
-        const rolesMap = {};
-        roles?.forEach(r => rolesMap[r.user_id] = r.role);
-        allUsers = users.map(u => ({ id: u.id, email: u.email, role: rolesMap[u.id] || 'user' }));
+        
+        allUsers = (data || []).map(u => ({
+          id: u.user_id,
+          email: u.email,
+          role: u.role || 'user'
+        }));
+        
         renderUsersTable();
       } catch (error) {
         console.error('Error loading users:', error);
-        document.getElementById('usersTableBody').innerHTML = '<tr><td colspan="3" style="text-align: center; color: var(--color-error);">Fout bij laden gebruikers</td></tr>';
+        document.getElementById('usersTableBody').innerHTML = '<tr><td colspan="3" style="text-align: center; color: var(--color-error);">Fout bij laden gebruikers. Zorg ervoor dat de RPC-functie "get_all_users_with_roles" bestaat.</td></tr>';
       }
     }
 
