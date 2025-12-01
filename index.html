@@ -1273,7 +1273,7 @@
                             <div>
                                 <div class="card-title">${escapeHtml(system.model)}</div>
                                 <span class="card-badge">${escapeHtml(system.brand)}</span>
-                                ${system.handbook_date ? `<div style="font-size:13px;color:var(--color-warning);margin-top:4px;font-style:italic;">📅 Handleiding: ${new Date(system.handbook_date).toLocaleDateString('nl-NL')}</div>` : ''}
+                                ${system.handbook_date ? '<div style="font-size:13px;color:var(--color-warning);margin-top:4px;font-style:italic;">📅 Handleiding: ' + new Date(system.handbook_date).toLocaleDateString('nl-NL') + '</div>' : ''}
                             </div>
                         </div>
                         <div class="card-actions">
@@ -1886,3 +1886,4 @@ function closeRegisterModal() {
     </div>
 </body>
 </html>
+
