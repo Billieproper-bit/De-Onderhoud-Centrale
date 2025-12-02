@@ -803,15 +803,14 @@
     </div>
 
     <div class="container">
-      <div class="filters">
-        <div class="filters-row">
-          <div class="form-group">
-            <select id="systemTypeFilter" class="form-control">
-              <option value="">CV-ketels</option>
-              <option value="warmtepomp">Warmtepompen</option>
-              <option value="wtw-mv">WTW/MV</option>
-            </select>
-          </div>
+      <div class="filters">          <div class="filters-row">
+            <div class="form-group">
+              <select id="systemTypeFilter" class="form-control">
+                <option value="">CV-ketels</option>
+                <option value="warmtepomp">Warmtepompen</option>
+                <option value="mv-wtw">MV/WTW</option>
+              </select>
+            </div>
           <div class="form-group search-input">
             <svg class="search-icon icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
@@ -1316,13 +1315,17 @@
 
     function filterSystems() {
       const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-      const selectedType = document.getElementById('systemTypeFilter').value;
+      let selectedType = document.getElementById('systemTypeFilter').value;
+      if (selectedType === 'warmtepomp') selectedType = 'warmtepomp';
+      if (selectedType === 'mv-wtw') selectedType = 'mv-wtw';
       const selectedBrand = document.getElementById('brandFilter').value;
       const showFavoritesOnly = document.getElementById('favoritesFilter').value === 'favorites';
 
       const filtered = systems.filter(system => {
         const matchesSearch = system.model.toLowerCase().includes(searchTerm) || system.brand.toLowerCase().includes(searchTerm);
-        const matchesType = !selectedType || system.systemtype === selectedType;
+        let matchesType = !selectedType;
+        if (selectedType === 'warmtepomp') matchesType = system.systemtype === 'warmtepomp';
+        if (selectedType === 'mv-wtw') matchesType = system.systemtype === 'mv-wtw' || system.systemtype === 'wtw-mv';
         const matchesBrand = selectedBrand === 'all' || system.brand === selectedBrand;
         const matchesFavorites = !showFavoritesOnly || favorites.includes(system.id);
         return matchesSearch && matchesType && matchesBrand && matchesFavorites;
@@ -1379,12 +1382,12 @@
               <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
               </svg>
-              Afstelprocedure
+              ${system.systemtype === 'cv-ketel' ? 'Afstelprocedure' : 'Onderhoudsprocedure'}
             </div>
             <div class="procedure-text">${escapeHtml(system.procedure) || 'Geen procedure opgegeven'}</div>
           </div>
-          ${system.images && system.images.length > 0 ? '<div class="card-section"><div class="card-section-title">Fotos</div><div class="image-gallery">' + system.images.map((img, idx) => '<div class="gallery-item" onclick="openLightbox(\'' + escapeHtml(img) + '\')"><img src="' + escapeHtml(img) + '" alt="Foto ' + (idx + 1) + '"></div>').join('') + '</div></div>' : ''}
           ${(system.o2_low || system.o2_high || system.co2_low || system.co2_high || system.maxco) ? '<div class="card-section"><div class="card-section-title">Doelwaarden</div><div class="values-grid">' + (system.o2_low ? '<div class="value-item"><span class="value-icon" style="color: var(--color-error);">●</span><div class="value-content"><div class="value-label">O₂ Laaglast</div><div class="value-number">' + escapeHtml(system.o2_low) + '</div></div></div>' : '') + (system.o2_high ? '<div class="value-item"><span class="value-icon" style="color: var(--color-error);">●</span><div class="value-content"><div class="value-label">O₂ Hooglast</div><div class="value-number">' + escapeHtml(system.o2_high) + '</div></div></div>' : '') + (system.co2_low ? '<div class="value-item"><span class="value-icon" style="color: var(--color-primary);">💧</span><div class="value-content"><div class="value-label">CO₂ Laaglast</div><div class="value-number">' + escapeHtml(system.co2_low) + '</div></div></div>' : '') + (system.co2_high ? '<div class="value-item"><span class="value-icon" style="color: var(--color-primary);">💧</span><div class="value-content"><div class="value-label">CO₂ Hooglast</div><div class="value-number">' + escapeHtml(system.co2_high) + '</div></div></div>' : '') + (system.maxco ? '<div class="value-item"><span class="value-icon" style="color: var(--color-warning);">⚡</span><div class="value-content"><div class="value-label">Max PPM CO</div><div class="value-number">' + escapeHtml(system.maxco) + '</div></div></div>' : '') + '</div></div>' : ''}
+          ${system.images && system.images.length > 0 ? '<div class="card-section"><div class="card-section-title">Fotos</div><div class="image-gallery">' + system.images.map((img, idx) => '<div class="gallery-item" onclick="openLightbox(\'' + escapeHtml(img) + '\')"><img src="' + escapeHtml(img) + '" alt="Foto ' + (idx + 1) + '"></div>').join('') + '</div></div>' : ''}
           ${system.parts ? '<div class="parts-list"><div class="parts-title">Benodigde pakkingen/artikelen</div><div class="parts-text">' + escapeHtml(system.parts) + '</div></div>' : ''}
           ${system.notes ? '<div class="notes-section"><div class="notes-title">Opmerkingen</div><div class="notes-text">' + escapeHtml(system.notes) + '</div></div>' : ''}
         </div>
@@ -1693,7 +1696,7 @@
       try {
         let imageUrls = [];
         if (pendingImages.add.length > 0) {
-          imageUrls = await uploadImages('temp-' + Date.now(), pendingImages.add);
+          imageUrls = await uploadImages(systemType + '-' + Date.now(), pendingImages.add);
         }
         newSystem.images = imageUrls;
 
@@ -1746,9 +1749,15 @@
 
       try {
         let imageUrls = pendingImages.edit;
+        if (pendingImages.edit.some(img => img instanceof File)) {
+          const newFiles = pendingImages.edit.filter(img => img instanceof File);
+          const uploadedUrls = await uploadImages(systemType + '-' + Date.now(), newFiles);
+          const existingUrls = pendingImages.edit.filter(img => typeof img === 'string');
+          imageUrls = existingUrls.concat(uploadedUrls);
+        }
         const { error } = await supabase
           .from('systems')
-          .update(updates)
+          .update({ ...updates, images: imageUrls })
           .eq('id', currentEditingId);
         if (error) throw error;
         const systemIndex = systems.findIndex(s => s.id === currentEditingId);
