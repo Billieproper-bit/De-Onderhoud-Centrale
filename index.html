@@ -804,13 +804,14 @@
 
     <div class="container">
       <div class="filters">          <div class="filters-row">
-            <div class="form-group">
-              <select id="systemTypeFilter" class="form-control">
-                <option value="">CV-ketels</option>
-                <option value="warmtepomp">Warmtepompen</option>
-                <option value="mv-wtw">MV/WTW</option>
-              </select>
-            </div>
+        <div class="form-group">
+          <select id="systemTypeFilter" class="form-control">
+            <option value="">Alle systemen</option>
+            <option value="cv-ketel">CV-ketels</option>
+            <option value="warmtepomp">Warmtepompen</option>
+            <option value="mv-wtw">MV/WTW</option>
+        </select>
+      </div>
           <div class="form-group search-input">
             <svg class="search-icon icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
@@ -1315,19 +1316,33 @@
 
     function filterSystems() {
       const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-      let selectedType = document.getElementById('systemTypeFilter').value;
-      if (selectedType === 'warmtepomp') selectedType = 'warmtepomp';
-      if (selectedType === 'mv-wtw') selectedType = 'mv-wtw';
+      const selectedType = document.getElementById('systemTypeFilter').value; // Nu correcte waardes
       const selectedBrand = document.getElementById('brandFilter').value;
       const showFavoritesOnly = document.getElementById('favoritesFilter').value === 'favorites';
 
       const filtered = systems.filter(system => {
-        const matchesSearch = system.model.toLowerCase().includes(searchTerm) || system.brand.toLowerCase().includes(searchTerm);
-        let matchesType = !selectedType;
-        if (selectedType === 'warmtepomp') matchesType = system.systemtype === 'warmtepomp';
-        if (selectedType === 'mv-wtw') matchesType = system.systemtype === 'mv-wtw' || system.systemtype === 'wtw-mv';
+        // 1. Zoekterm filter
+        const matchesSearch = system.model.toLowerCase().includes(searchTerm) || 
+                            system.brand.toLowerCase().includes(searchTerm);
+        
+        // 2. Type filter (Gefikst)
+        let matchesType = true;
+        if (selectedType) { // Als er een type is geselecteerd (niet leeg)
+            if (selectedType === 'mv-wtw') {
+                // Check voor beide schrijfwijzen die in je DB kunnen staan
+                matchesType = system.systemtype === 'mv-wtw' || system.systemtype === 'wtw-mv';
+            } else {
+                // Exacte match voor 'cv-ketel' of 'warmtepomp'
+                matchesType = system.systemtype === selectedType;
+            }
+        }
+
+        // 3. Merk filter
         const matchesBrand = selectedBrand === 'all' || system.brand === selectedBrand;
+        
+        // 4. Favorieten filter
         const matchesFavorites = !showFavoritesOnly || favorites.includes(system.id);
+
         return matchesSearch && matchesType && matchesBrand && matchesFavorites;
       });
 
@@ -1357,11 +1372,36 @@
     function createSystemCard(system) {
       const isFavorite = favorites.includes(system.id);
       const canEdit = currentUserRole === 'admin' || currentUserRole === 'moderator';
+      
+      // Veilige manier om de waarden sectie te bouwen
+      let valuesHtml = '';
+      if (system.o2_low || system.o2_high || system.co2_low || system.co2_high || system.maxco) {
+        valuesHtml = '<div class="card-section"><div class="card-section-title">Doelwaarden</div><div class="values-grid">' +
+          (system.o2_low ? '<div class="value-item"><span class="value-icon" style="color: var(--color-error);">●</span><div class="value-content"><div class="value-label">O₂ Laaglast</div><div class="value-number">' + escapeHtml(system.o2_low) + '</div></div></div>' : '') +
+          (system.o2_high ? '<div class="value-item"><span class="value-icon" style="color: var(--color-error);">●</span><div class="value-content"><div class="value-label">O₂ Hooglast</div><div class="value-number">' + escapeHtml(system.o2_high) + '</div></div></div>' : '') +
+          (system.co2_low ? '<div class="value-item"><span class="value-icon" style="color: var(--color-primary);">💧</span><div class="value-content"><div class="value-label">CO₂ Laaglast</div><div class="value-number">' + escapeHtml(system.co2_low) + '</div></div></div>' : '') +
+          (system.co2_high ? '<div class="value-item"><span class="value-icon" style="color: var(--color-primary);">💧</span><div class="value-content"><div class="value-label">CO₂ Hooglast</div><div class="value-number">' + escapeHtml(system.co2_high) + '</div></div></div>' : '') +
+          (system.maxco ? '<div class="value-item"><span class="value-icon" style="color: var(--color-warning);">⚡</span><div class="value-content"><div class="value-label">Max PPM CO</div><div class="value-number">' + escapeHtml(system.maxco) + '</div></div></div>' : '') +
+          '</div></div>';
+      }
+
+      // Veilige manier om de galerij te bouwen
+      let galleryHtml = '';
+      if (system.images && system.images.length > 0) {
+        const imagesList = system.images.map((img, idx) => 
+          // We gebruiken nu onclick="openLightbox(this.querySelector('img').src)" om string-problemen te voorkomen
+          `<div class="gallery-item" onclick="openLightbox(this.querySelector('img').src)">
+             <img src="${escapeHtml(img)}" alt="Foto ${idx + 1}" loading="lazy">
+           </div>`
+        ).join('');
+        galleryHtml = `<div class="card-section"><div class="card-section-title">Fotos</div><div class="image-gallery">${imagesList}</div></div>`;
+      }
+
       return `
         <div class="system-card">
           <div class="card-header">
             <div class="card-header-with-logo">
-              ${system.logo_url ? '<img src="' + escapeHtml(system.logo_url) + '" alt="' + escapeHtml(system.brand) + ' logo" class="brand-logo" onerror="this.style.display=\'none\'">' : ''}
+              ${system.logo_url ? '<img src="' + escapeHtml(system.logo_url) + '" alt="logo" class="brand-logo" onerror="this.style.display=\'none\'">' : ''}
               <div>
                 <div class="card-title">${escapeHtml(system.model)}</div>
                 <span class="card-badge">${escapeHtml(system.brand)}</span>
@@ -1369,12 +1409,12 @@
               </div>
             </div>
             <div class="card-actions">
-              <button class="icon-btn ${isFavorite ? 'active' : ''}" onclick="toggleFavorite('${system.id}')" title="${isFavorite ? 'Verwijder favoriet' : 'Voeg toe aan favorieten'}">
+              <button class="icon-btn ${isFavorite ? 'active' : ''}" onclick="toggleFavorite('${system.id}')">
                 <svg class="icon" fill="${isFavorite ? 'currentColor' : 'none'}" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"></path>
                 </svg>
               </button>
-              ${canEdit ? '<button class="icon-btn" onclick="openEditModal(\'' + system.id + '\')" title="Bewerken"><svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg></button>' : ''}
+              ${canEdit ? '<button class="icon-btn" onclick="openEditModal(\'' + system.id + '\')"><svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg></button>' : ''}
             </div>
           </div>
           <div class="card-section">
@@ -1386,8 +1426,8 @@
             </div>
             <div class="procedure-text">${escapeHtml(system.procedure) || 'Geen procedure opgegeven'}</div>
           </div>
-          ${(system.o2_low || system.o2_high || system.co2_low || system.co2_high || system.maxco) ? '<div class="card-section"><div class="card-section-title">Doelwaarden</div><div class="values-grid">' + (system.o2_low ? '<div class="value-item"><span class="value-icon" style="color: var(--color-error);">●</span><div class="value-content"><div class="value-label">O₂ Laaglast</div><div class="value-number">' + escapeHtml(system.o2_low) + '</div></div></div>' : '') + (system.o2_high ? '<div class="value-item"><span class="value-icon" style="color: var(--color-error);">●</span><div class="value-content"><div class="value-label">O₂ Hooglast</div><div class="value-number">' + escapeHtml(system.o2_high) + '</div></div></div>' : '') + (system.co2_low ? '<div class="value-item"><span class="value-icon" style="color: var(--color-primary);">💧</span><div class="value-content"><div class="value-label">CO₂ Laaglast</div><div class="value-number">' + escapeHtml(system.co2_low) + '</div></div></div>' : '') + (system.co2_high ? '<div class="value-item"><span class="value-icon" style="color: var(--color-primary);">💧</span><div class="value-content"><div class="value-label">CO₂ Hooglast</div><div class="value-number">' + escapeHtml(system.co2_high) + '</div></div></div>' : '') + (system.maxco ? '<div class="value-item"><span class="value-icon" style="color: var(--color-warning);">⚡</span><div class="value-content"><div class="value-label">Max PPM CO</div><div class="value-number">' + escapeHtml(system.maxco) + '</div></div></div>' : '') + '</div></div>' : ''}
-          ${system.images && system.images.length > 0 ? '<div class="card-section"><div class="card-section-title">Fotos</div><div class="image-gallery">' + system.images.map((img, idx) => '<div class="gallery-item" onclick="openLightbox(\'' + escapeHtml(img) + '\')"><img src="' + escapeHtml(img) + '" alt="Foto ' + (idx + 1) + '"></div>').join('') + '</div></div>' : ''}
+          ${valuesHtml}
+          ${galleryHtml}
           ${system.parts ? '<div class="parts-list"><div class="parts-title">Benodigde pakkingen/artikelen</div><div class="parts-text">' + escapeHtml(system.parts) + '</div></div>' : ''}
           ${system.notes ? '<div class="notes-section"><div class="notes-title">Opmerkingen</div><div class="notes-text">' + escapeHtml(system.notes) + '</div></div>' : ''}
         </div>
@@ -1833,3 +1873,4 @@
   </script>
 </body>
 </html>
+
