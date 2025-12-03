@@ -1145,7 +1145,9 @@
 
           <div class="form-group">
             <label>Benodigde pakkingen/artikelen</label>
-            <textarea id="editParts" class="form-control" rows="3"></textarea>
+            <div id="editPartsContainer"></div>
+              <button type="button" class="btn" style="font-size: 12px; margin-top: 4px;" onclick="addPartRow('edit')">+ Regel toevoegen</button>
+              <input type="hidden" id="editParts">
           </div>
           <div class="form-group">
             <label>Opmerkingen</label>
@@ -2097,6 +2099,7 @@
 </script>  
 </body>
 </html>
+
 
 
 
