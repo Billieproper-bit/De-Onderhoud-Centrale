@@ -1854,7 +1854,6 @@
         const fileExt = file.name.split('.').pop();
         const fileName = folderName + '-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9) + '.' + fileExt;
         
-        // 1. HIER STOND DE FOUT: 'systems-images' -> 'system-images'
         const { data, error } = await supabase.storage
           .from('system-images') 
           .upload(fileName, file, { upsert: true });
@@ -1863,7 +1862,6 @@
           console.error('Upload error:', error);
           alert('Fout bij uploaden foto: ' + error.message);
         } else {
-          // 2. EN HIER OOK: 'systems-images' -> 'system-images'
           urls.push('https://srsnjifezttivawxnndu.supabase.co/storage/v1/object/public/system-images/' + fileName);
         }
       }
@@ -1883,5 +1881,6 @@
   </script>
 </body>
 </html>
+
 
 
