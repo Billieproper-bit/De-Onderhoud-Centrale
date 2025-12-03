@@ -1405,23 +1405,25 @@
       const isFavorite = favorites.includes(system.id);
       const canEdit = currentUserRole === 'admin' || currentUserRole === 'moderator';
       
-      // Veilige manier om de waarden sectie te bouwen
       let valuesHtml = '';
       if (system.o2_low || system.o2_high || system.co2_low || system.co2_high || system.maxco) {
         valuesHtml = '<div class="card-section"><div class="card-section-title">Doelwaarden</div><div class="values-grid">' +
-          (system.o2_low ? '<div class="value-item"><span class="value-icon" style="color: var(--color-error);">●</span><div class="value-content"><div class="value-label">O₂ Laaglast</div><div class="value-number">' + escapeHtml(system.o2_low) + '</div></div></div>' : '') +
-          (system.o2_high ? '<div class="value-item"><span class="value-icon" style="color: var(--color-error);">●</span><div class="value-content"><div class="value-label">O₂ Hooglast</div><div class="value-number">' + escapeHtml(system.o2_high) + '</div></div></div>' : '') +
-          (system.co2_low ? '<div class="value-item"><span class="value-icon" style="color: var(--color-primary);">💧</span><div class="value-content"><div class="value-label">CO₂ Laaglast</div><div class="value-number">' + escapeHtml(system.co2_low) + '</div></div></div>' : '') +
-          (system.co2_high ? '<div class="value-item"><span class="value-icon" style="color: var(--color-primary);">💧</span><div class="value-content"><div class="value-label">CO₂ Hooglast</div><div class="value-number">' + escapeHtml(system.co2_high) + '</div></div></div>' : '') +
-          (system.maxco ? '<div class="value-item"><span class="value-icon" style="color: var(--color-warning);">⚡</span><div class="value-content"><div class="value-label">Max PPM CO</div><div class="value-number">' + escapeHtml(system.maxco) + '</div></div></div>' : '') +
+          // O2 = Groen Vinkje (Positief)
+          (system.o2_low ? '<div class="value-item"><span class="value-icon" style="color: var(--color-success);"><svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></span><div class="value-content"><div class="value-label">O₂ Laaglast</div><div class="value-number">' + escapeHtml(system.o2_low) + '</div></div></div>' : '') +
+          (system.o2_high ? '<div class="value-item"><span class="value-icon" style="color: var(--color-success);"><svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></span><div class="value-content"><div class="value-label">O₂ Hooglast</div><div class="value-number">' + escapeHtml(system.o2_high) + '</div></div></div>' : '') +
+          
+          // CO2 = Wolkje (Rookgas) - Blauw/Grijs
+          (system.co2_low ? '<div class="value-item"><span class="value-icon" style="color: var(--color-text-secondary);"><svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z"></path></svg></span><div class="value-content"><div class="value-label">CO₂ Laaglast</div><div class="value-number">' + escapeHtml(system.co2_low) + '</div></div></div>' : '') +
+          (system.co2_high ? '<div class="value-item"><span class="value-icon" style="color: var(--color-text-secondary);"><svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z"></path></svg></span><div class="value-content"><div class="value-label">CO₂ Hooglast</div><div class="value-number">' + escapeHtml(system.co2_high) + '</div></div></div>' : '') +
+          
+          // Max CO = Gevarendriehoek (Waarschuwing) - Oranje
+          (system.maxco ? '<div class="value-item"><span class="value-icon" style="color: var(--color-warning);"><svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg></span><div class="value-content"><div class="value-label">Max PPM CO</div><div class="value-number">' + escapeHtml(system.maxco) + '</div></div></div>' : '') +
           '</div></div>';
       }
 
-      // Veilige manier om de galerij te bouwen
       let galleryHtml = '';
       if (system.images && system.images.length > 0) {
         const imagesList = system.images.map((img, idx) => 
-          // We gebruiken nu onclick="openLightbox(this.querySelector('img').src)" om string-problemen te voorkomen
           `<div class="gallery-item" onclick="openLightbox(this.querySelector('img').src)">
              <img src="${escapeHtml(img)}" alt="Foto ${idx + 1}" loading="lazy">
            </div>`
@@ -1467,7 +1469,17 @@
           </div>
           ${valuesHtml}
           ${galleryHtml}
-          ${system.parts ? '<div class="parts-list"><div class="parts-title">Benodigde pakkingen/artikelen</div><div class="parts-text">' + escapeHtml(system.parts) + '</div></div>' : ''}
+          ${system.parts ? `
+            <div class="parts-list">
+                <div class="parts-title" style="display:flex; align-items:center; gap:8px;">
+                    <!-- Pakkingen = Doosje icoon -->
+                    <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+                    </svg>
+                    Benodigde pakkingen/artikelen
+                </div>
+                <div class="parts-text">${escapeHtml(system.parts)}</div>
+            </div>` : ''}
           ${system.notes ? '<div class="notes-section"><div class="notes-title">Opmerkingen</div><div class="notes-text">' + escapeHtml(system.notes) + '</div></div>' : ''}
         </div>
       `;
@@ -1957,6 +1969,7 @@
 </script>  
 </body>
 </html>
+
 
 
 
