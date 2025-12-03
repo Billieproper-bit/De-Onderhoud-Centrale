@@ -1762,7 +1762,8 @@
 
     async function handleEditSubmit(e) {
       e.preventDefault();
-      const systemType = document.getElementById('editSystemType').value;
+      const systemType = document.getElementById('editSystemType').value || 'update';
+      
       const updates = {
         brand: document.getElementById('editBrand').value,
         model: document.getElementById('editModel').value,
@@ -1771,6 +1772,7 @@
         parts: document.getElementById('editParts').value || null,
         notes: document.getElementById('editNotes').value || null
       };
+      
       updates.handbook_date = document.getElementById('editHandbookDate').value || null;
 
       if (systemType === 'cv-ketel') {
@@ -1881,6 +1883,7 @@
   </script>
 </body>
 </html>
+
 
 
 
