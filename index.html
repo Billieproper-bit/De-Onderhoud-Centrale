@@ -1162,6 +1162,12 @@
     </div>
   </div>
 
+  <button id="scrollTopBtn" class="btn btn-primary" style="position:fixed; bottom:20px; right:20px; display:none; border-radius:50%; width:50px; height:50px; padding:0; z-index:99; justify-content:center; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+    <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width:24px; height:24px;">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"></path>
+    </svg>
+  </button>
+  
   <script>
     const SUPABASE_URL = 'https://srsnjifezttivawxnndu.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNyc25qaWZlenR0aXZhd3hubmR1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQwNzY1MjcsImV4cCI6MjA3OTY1MjUyN30.5RmDp3QgAYX7yDS39KwoRtHc6c9Kp-wGKGYeJctoY7w';
@@ -1201,25 +1207,51 @@
     }
 
     function setupEventListeners() {
-      document.getElementById('loginForm').addEventListener('submit', handleLogin);
-      document.getElementById('logoutBtn').addEventListener('click', handleLogout);
-      document.getElementById('themeToggle').addEventListener('click', toggleTheme);
-      document.getElementById('adminBtn').addEventListener('click', openAdminModal);
-      document.getElementById('addSystemBtn').addEventListener('click', openAddModal);
-      document.getElementById('auditBtn').addEventListener('click', openAuditModal);
-      document.getElementById('auditSearchInput')?.addEventListener('input', filterAuditLogs);
-      document.getElementById('searchInput').addEventListener('input', filterSystems);
-      document.getElementById('systemTypeFilter').addEventListener('change', filterSystems);
-      document.getElementById('brandFilter').addEventListener('change', filterSystems);
-      document.getElementById('favoritesFilter').addEventListener('change', filterSystems);
-      document.getElementById('addForm').addEventListener('submit', handleAddSubmit);
-      document.getElementById('editForm').addEventListener('submit', handleEditSubmit);
-      document.getElementById('registerForm').addEventListener('submit', handleRegister);
+    document.getElementById('loginForm').addEventListener('submit', handleLogin);
+    document.getElementById('logoutBtn').addEventListener('click', handleLogout);
+    document.getElementById('themeToggle').addEventListener('click', toggleTheme);
+    document.getElementById('adminBtn').addEventListener('click', openAdminModal);
+    document.getElementById('addSystemBtn').addEventListener('click', openAddModal);
+    document.getElementById('auditBtn').addEventListener('click', openAuditModal);
+    document.getElementById('auditSearchInput')?.addEventListener('input', filterAuditLogs);
+    
+    document.getElementById('searchInput').addEventListener('input', filterSystems);
+    document.getElementById('searchInput').addEventListener('keyup', function(e) {
+        if (e.key === 'Enter') {
+            this.blur(); 
+        }
+    });
 
-      const adminToggleBtn = document.getElementById('adminToggleBtn');
-      const adminActions = document.getElementById('adminActions');
-      adminToggleBtn.addEventListener('click', () => adminActions.classList.toggle('open'));
+    document.getElementById('systemTypeFilter').addEventListener('change', filterSystems);
+    document.getElementById('brandFilter').addEventListener('change', filterSystems);
+    document.getElementById('favoritesFilter').addEventListener('change', filterSystems);
+    document.getElementById('addForm').addEventListener('submit', handleAddSubmit);
+    document.getElementById('editForm').addEventListener('submit', handleEditSubmit);
+    document.getElementById('registerForm').addEventListener('submit', handleRegister);
+      
+    const adminToggleBtn = document.getElementById('adminToggleBtn');
+    const adminActions = document.getElementById('adminActions');
+    if (adminToggleBtn) { 
+        adminToggleBtn.addEventListener('click', () => adminActions.classList.toggle('open'));
+    } 
+    const scrollBtn = document.getElementById('scrollTopBtn');
+      if (scrollBtn) {
+        window.addEventListener('scroll', () => {
+            if (document.body.scrollTop > 300 || document.documentElement.scrollTop > 300) {
+                scrollBtn.style.display = "flex";
+            } else {
+                scrollBtn.style.display = "none";
+            }
+        });
+
+        scrollBtn.addEventListener('click', () => {
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+        });
     }
+}
 
     function showAuth() {
       document.getElementById('authContainer').classList.remove('hidden');
@@ -1409,12 +1441,19 @@
               </div>
             </div>
             <div class="card-actions">
-              <button class="icon-btn ${isFavorite ? 'active' : ''}" onclick="toggleFavorite('${system.id}')">
+              <button class="icon-btn ${isFavorite ? 'active' : ''}" onclick="toggleFavorite('${system.id}')" title="${isFavorite ? 'Verwijder favoriet' : 'Voeg toe aan favorieten'}">
                 <svg class="icon" fill="${isFavorite ? 'currentColor' : 'none'}" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"></path>
                 </svg>
               </button>
-              ${canEdit ? '<button class="icon-btn" onclick="openEditModal(\'' + system.id + '\')"><svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg></button>' : ''}
+              ${canEdit ? `
+                <button class="icon-btn" onclick="openEditModal('${system.id}')" title="Bewerken">
+                  <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                </button>
+                <button class="icon-btn" onclick="deleteSystem('${system.id}')" title="Verwijderen" style="color: var(--color-error);">
+                  <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                </button>
+              ` : ''}
             </div>
           </div>
           <div class="card-section">
@@ -1582,6 +1621,35 @@
       }
     }
 
+    async function deleteSystem(systemId) {
+      if (!confirm('Weet je zeker dat je dit systeem wilt verwijderen? Dit kan niet ongedaan worden gemaakt.')) {
+        return;
+      }
+
+      try {
+        // 1. Verwijder uit database
+        const { error } = await supabase
+          .from('systems')
+          .delete()
+          .eq('id', systemId);
+
+        if (error) throw error;
+
+        // 2. Log de actie
+        const system = systems.find(s => s.id === systemId);
+        await logAuditEvent('system_deleted', `Systeem verwijderd: ${system ? system.brand + ' ' + system.model : systemId}`);
+
+        // 3. Update de lijst lokaal (zodat je niet hoeft te refreshen)
+        systems = systems.filter(s => s.id !== systemId);
+        filterSystems(); // Lijst opnieuw tekenen
+
+        alert('Systeem verwijderd.');
+      } catch (error) {
+        console.error('Error deleting system:', error);
+        alert('Fout bij verwijderen: ' + error.message);
+      }
+    }
+    
     async function toggleFavorite(systemId) {
       if (!currentUser) return;
       const isFavorite = favorites.includes(systemId);
@@ -1885,9 +1953,11 @@
     }
 
     init();
-  </script>
+        
+</script>  
 </body>
 </html>
+
 
 
 
