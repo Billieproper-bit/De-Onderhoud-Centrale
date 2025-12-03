@@ -1849,6 +1849,8 @@
 
     async function uploadImages(folderName, files) {
       const urls = [];
+      console.log("Start uploaden naar bucket: system-images"); // Debug regel
+
       for (let file of files) {
         if (!(file instanceof File)) continue;
         
@@ -1856,6 +1858,7 @@
         const fileExt = file.name.split('.').pop();
         const fileName = folderName + '-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9) + '.' + fileExt;
         
+        // LET OP: Hieronder staat nu 'system-images' (zonder s)
         const { data, error } = await supabase.storage
           .from('system-images') 
           .upload(fileName, file, { upsert: true });
@@ -1864,6 +1867,8 @@
           console.error('Upload error:', error);
           alert('Fout bij uploaden foto: ' + error.message);
         } else {
+          console.log("Upload gelukt:", fileName); // Debug regel
+          // LET OP: Hieronder ook 'system-images' (zonder s)
           urls.push('https://srsnjifezttivawxnndu.supabase.co/storage/v1/object/public/system-images/' + fileName);
         }
       }
@@ -1883,6 +1888,7 @@
   </script>
 </body>
 </html>
+
 
 
 
