@@ -773,11 +773,26 @@
 
     .part-input-row {
       display: grid;
-      grid-template-columns: 2fr 1fr 1fr auto;
+      grid-template-columns: 80px 1fr 1fr auto; 
       gap: 8px;
       margin-bottom: 8px;
       align-items: center;
     }
+
+    @media (max-width: 600px) {
+      .part-input-row {
+        grid-template-columns: 1fr auto; /* Code + Verwijder knop */
+        grid-template-rows: auto auto auto;
+      }
+      .part-input-row .fault-cause-input,
+      .part-input-row .fault-sol-input {
+        grid-column: 1 / -1; /* Oorzaak en Oplossing pakken volle breedte */
+      }
+    }
+
+    .fault-detail-item { margin-bottom: 4px; }
+    .fault-label { font-weight: 600; color: var(--color-text-secondary); font-size: 12px; text-transform: uppercase; margin-right: 4px; }
+    
     .remove-part-btn {
       color: var(--color-error);
       background: none;
@@ -1567,12 +1582,20 @@
         try {
             const faults = JSON.parse(system.faults);
             if (Array.isArray(faults) && faults.length > 0) {
-                faultsContent = faults.map(f => `
+                faultsContent = faults.map(f => {
+                    // Fallback voor als je nog oude data hebt (zodat er niks verdwijnt)
+                    const cause = f.cause || '';
+                    const solution = f.solution || f.sol || '';
+
+                    return `
                     <div class="fault-row">
                         <div class="fault-code">${escapeHtml(f.code)}</div>
-                        <div style="font-size:13px; color:var(--color-text);">${escapeHtml(f.sol)}</div>
+                        <div style="font-size:13px; color:var(--color-text);">
+                            ${cause ? `<div class="fault-detail-item"><span class="fault-label">Oorzaak:</span>${escapeHtml(cause)}</div>` : ''}
+                            ${solution ? `<div class="fault-detail-item"><span class="fault-label">Oplossing:</span>${escapeHtml(solution)}</div>` : ''}
+                        </div>
                     </div>
-                `).join('');
+                `}).join('');
             } else {
                 faultsContent = '<div style="padding:20px; text-align:center; color:var(--color-text-secondary);">Geen storingen bekend.</div>';
             }
@@ -1580,45 +1603,6 @@
       } else {
         faultsContent = '<div style="padding:20px; text-align:center; color:var(--color-text-secondary);">Nog geen storingen toegevoegd aan dit systeem.</div>';
       }
-
-      return `
-        <div class="system-card" id="card-${system.id}">
-          <div class="card-header">
-            <div class="card-header-with-logo">
-              ${system.logo_url ? '<img src="' + escapeHtml(system.logo_url) + '" alt="logo" class="brand-logo" onerror="this.style.display=\'none\'">' : ''}
-              <div>
-                <div class="card-title">${escapeHtml(system.model)}</div>
-                <span class="card-badge">${escapeHtml(system.brand)}</span>
-                ${system.handbook_date ? '<div class="card-meta">📅 Handleiding: ' + new Date(system.handbook_date).toLocaleDateString('nl-NL') + '</div>' : ''}
-              </div>
-            </div>
-            <div class="card-actions">
-              <button class="icon-btn ${isFavorite ? 'active' : ''}" onclick="toggleFavorite('${system.id}')">
-                <svg class="icon" fill="${isFavorite ? 'currentColor' : 'none'}" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"></path></svg>
-              </button>
-              ${canEdit ? `
-                <button class="icon-btn" onclick="openEditModal('${system.id}')"><svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg></button>
-                <button class="icon-btn" onclick="deleteSystem('${system.id}')" style="color: var(--color-error);"><svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button>
-              ` : ''}
-            </div>
-          </div>
-
-          <!-- TABS NAVIGATIE -->
-          <div class="tabs-nav">
-            <button class="tab-btn active" data-tab="maint" onclick="switchTab('${system.id}', 'maint')">Onderhoud</button>
-            <button class="tab-btn" data-tab="faults" onclick="switchTab('${system.id}', 'faults')">Storingen</button>
-          </div>
-
-          <!-- TABS CONTENT -->
-          <div id="content-maint-${system.id}" class="tab-content active">
-             ${maintenanceContent}
-          </div>
-          <div id="content-faults-${system.id}" class="tab-content">
-             ${faultsContent}
-          </div>
-        </div>
-      `;
-    }
 
     function escapeHtml(text) {
       const div = document.createElement('div');
@@ -2130,13 +2114,14 @@
     }
 
     // 2. Invoer regel toevoegen (voor Modal)
-    function addFaultRow(mode, code = '', sol = '') {
+    function addFaultRow(mode, code = '', cause = '', solution = '') {
       const container = document.getElementById(mode + 'FaultsContainer');
       const div = document.createElement('div');
-      div.className = 'part-input-row'; // We hergebruiken de CSS van parts
+      div.className = 'part-input-row';
       div.innerHTML = `
-        <input type="text" placeholder="Code" class="form-control fault-code-input" style="width:80px;" value="${escapeInput(code)}">
-        <input type="text" placeholder="Oorzaak / Oplossing" class="form-control fault-sol-input" value="${escapeInput(sol)}">
+        <input type="text" placeholder="Code" class="form-control fault-code-input" value="${escapeInput(code)}">
+        <input type="text" placeholder="Oorzaak" class="form-control fault-cause-input" value="${escapeInput(cause)}">
+        <input type="text" placeholder="Oplossing" class="form-control fault-sol-input" value="${escapeInput(solution)}">
         <button type="button" class="remove-part-btn" onclick="this.parentElement.remove()">&times;</button>
       `;
       container.appendChild(div);
@@ -2149,8 +2134,13 @@
       const faults = [];
       rows.forEach(row => {
         const code = row.querySelector('.fault-code-input').value.trim();
-        const sol = row.querySelector('.fault-sol-input').value.trim();
-        if (code || sol) faults.push({ code, sol });
+        const cause = row.querySelector('.fault-cause-input').value.trim();
+        const solution = row.querySelector('.fault-sol-input').value.trim();
+        
+        // Opslaan als er tenminste iets is ingevuld
+        if (code || cause || solution) {
+            faults.push({ code, cause, solution });
+        }
       });
       return faults.length > 0 ? JSON.stringify(faults) : null;
     }
@@ -2163,13 +2153,16 @@
       try {
         const faults = JSON.parse(jsonString);
         if (Array.isArray(faults)) {
-          faults.forEach(f => addFaultRow(mode, f.code, f.sol));
+          faults.forEach(f => {
+              // HIER ZIT DE TRUC: 
+              // We kijken of 'cause' bestaat. Zo niet, is het misschien oude data?
+              // Oude data had 'sol'. Die stoppen we dan in 'solution' zodat er niks kwijtraakt.
+              const cause = f.cause || '';
+              const solution = f.solution || f.sol || ''; 
+              addFaultRow(mode, f.code, cause, solution);
+          });
         }
       } catch (e) { console.error('Fout bij laden storingen', e); }
-    }
-    
-    function escapeInput(str) {
-      return str ? str.replace(/"/g, '&quot;') : '';
     }
 
     // Deze functie verzamelt alle data uit de inputs en maakt er JSON van voor de database
@@ -2226,6 +2219,7 @@
 </script>  
 </body>
 </html>
+
 
 
 
