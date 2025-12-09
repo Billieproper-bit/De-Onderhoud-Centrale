@@ -1527,7 +1527,18 @@
                   const badgeClass = p.supp === 'Rensa' ? 'supplier-rensa' : (p.supp === 'Wasco' ? 'supplier-wasco' : 'supplier-other');
                   return `<tr>
                     <td>${escapeHtml(p.desc)}</td>
-                    <td style="font-family:monospace;">${escapeHtml(p.art)}</td>
+                    <td style="font-family:monospace;">
+                      ${(() => {
+                       const artNr = escapeHtml(p.art);
+                       if (p.supp === 'Rensa') {
+                       return `<a href="https://www.rensa.nl/zoeken?q=${artNr}" target="_blank" style="color:var(--color-primary); text-decoration:none; border-bottom:1px dotted;">${artNr} ↗</a>`;
+                       } else if (p.supp === 'Wasco') {
+                       return `<a href="https://www.wasco.nl/zoeken?q=${artNr}" target="_blank" style="color:var(--color-primary); text-decoration:none; border-bottom:1px dotted;">${artNr} ↗</a>`;
+                       } else {
+                       return artNr;
+                       }
+                      })()}
+                    </td>
                     <td><span class="supplier-badge ${badgeClass}">${escapeHtml(p.supp)}</span></td>
                   </tr>`;
                 }).join('');
@@ -2100,6 +2111,7 @@
 </script>  
 </body>
 </html>
+
 
 
 
