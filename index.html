@@ -1811,6 +1811,7 @@
 
         // 3. Update de lijst lokaal (zodat je niet hoeft te refreshen)
         systems = systems.filter(s => s.id !== systemId);
+        updateBrandFilter();
         filterSystems(); // Lijst opnieuw tekenen
 
         alert('Systeem verwijderd.');
@@ -2053,6 +2054,7 @@
         }
         pendingImages.edit = [];
         closeEditModal();
+        updateBrandFilter();
         filterSystems();
         alert('Systeem succesvol bijgewerkt!');
       } catch (error) {
@@ -2262,6 +2264,7 @@
 </script>  
 </body>
 </html>
+
 
 
 
