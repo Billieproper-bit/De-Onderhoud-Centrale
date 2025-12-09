@@ -1531,9 +1531,9 @@
                       ${(() => {
                        const artNr = escapeHtml(p.art);
                        if (p.supp === 'Rensa') {
-                       return `<a href="https://www.rensa.nl/zoeken?q=${artNr}" target="_blank" style="color:var(--color-primary); text-decoration:none; border-bottom:1px dotted;">${artNr} ↗</a>`;
+                       return `<a href="https://rensa.nl/Search?criteria=${artNr}" target="_blank" style="color:var(--color-primary); text-decoration:none; border-bottom:1px dotted;">${artNr} ↗</a>`;
                        } else if (p.supp === 'Wasco') {
-                       return `<a href="https://www.wasco.nl/zoeken?q=${artNr}" target="_blank" style="color:var(--color-primary); text-decoration:none; border-bottom:1px dotted;">${artNr} ↗</a>`;
+                       return `<a href="https://www.wasco.nl/artikel/{artNr}" target="_blank" style="color:var(--color-primary); text-decoration:none; border-bottom:1px dotted;">${artNr} ↗</a>`;
                        } else {
                        return artNr;
                        }
@@ -2111,6 +2111,7 @@
 </script>  
 </body>
 </html>
+
 
 
 
