@@ -1569,7 +1569,7 @@
         maintenanceContent += `<div class="card-section"><div class="card-section-title">Fotos</div><div class="image-gallery">${imagesList}</div></div>`;
       }
 
-      // Onderdelen toevoegen (Slimme versie + JUISTE LINKS)
+      // Onderdelen toevoegen (Rensa/Wasco links)
       if (system.parts) {
          let partsHtml = '';
          try {
@@ -1580,11 +1580,9 @@
                const badgeClass = p.supp === 'Rensa' ? 'supplier-rensa' : (p.supp === 'Wasco' ? 'supplier-wasco' : 'supplier-other');
                const artNr = escapeHtml(p.art);
                
-               // === DE JUISTE LINKS ===
                const link = p.supp === 'Rensa' 
                  ? `https://rensa.nl/Product/${artNr}` 
                  : (p.supp === 'Wasco' ? `https://www.wasco.nl/artikel/${artNr}` : null);
-               // =======================
 
                const displayArt = link ? `<a href="${link}" target="_blank" style="color:var(--color-primary); text-decoration:none; border-bottom:1px dotted;">${artNr} ↗</a>` : artNr;
                
@@ -1609,7 +1607,6 @@
             const faults = JSON.parse(system.faults);
             if (Array.isArray(faults) && faults.length > 0) {
                 faultsContent = faults.map(f => {
-                    // Fallback voor als je nog oude data hebt (zodat er niks verdwijnt)
                     const cause = f.cause || '';
                     const solution = f.solution || f.sol || '';
 
@@ -1630,20 +1627,17 @@
         faultsContent = '<div style="padding:20px; text-align:center; color:var(--color-text-secondary);">Nog geen storingen toegevoegd aan dit systeem.</div>';
       }
 
+      // HIER GING HET MIS BIJ JE VORIGE POGING:
       return `
         <div class="system-card" id="card-${system.id}">
           <div class="card-header">
             <div class="card-header-with-logo">
               ${system.logo_url ? '<img src="' + escapeHtml(system.logo_url) + '" alt="logo" class="brand-logo" onerror="this.style.display=\'none\'">' : ''}
-              
-              <!-- HIER BEGINT DE NIEUWE TEKST SECTIE -->
               <div class="card-header-text">
                 <div class="brand-label">${escapeHtml(system.brand)}</div>
                 <div class="model-label">${escapeHtml(system.model)}</div>
                 ${system.handbook_date ? '<div class="card-meta">📅 Handleiding: ' + new Date(system.handbook_date).toLocaleDateString('nl-NL') + '</div>' : ''}
               </div>
-              <!-- HIER EINDIGT HIJ -->
-
             </div>
             
             <div class="card-actions">
@@ -1656,9 +1650,24 @@
               ` : ''}
             </div>
           </div>
+
+          <!-- TABS NAVIGATIE -->
+          <div class="tabs-nav">
+            <button class="tab-btn active" data-tab="maint" onclick="switchTab('${system.id}', 'maint')">Onderhoud</button>
+            <button class="tab-btn" data-tab="faults" onclick="switchTab('${system.id}', 'faults')">Storingen</button>
+          </div>
+
+          <!-- TABS CONTENT -->
+          <div id="content-maint-${system.id}" class="tab-content active">
+             ${maintenanceContent}
+          </div>
+          <div id="content-faults-${system.id}" class="tab-content">
+             ${faultsContent}
+          </div>
+        </div>
       `;
     }
-
+    
     function escapeHtml(text) {
       const div = document.createElement('div');
       div.textContent = text;
@@ -2280,6 +2289,7 @@
 </script>  
 </body>
 </html>
+
 
 
 
