@@ -2130,6 +2130,11 @@
 
     async function handleAddSubmit(e) {
       e.preventDefault();
+      
+      // 1. DIT MOET ECHT DE EERSTE REGEL ZIJN:
+      const systemType = document.getElementById('addSystemType').value;
+      
+      // 2. Daarna pas de checks verwerken (inclusief foto uploads)
       const checksJson = await processChecksData('add');
 
       const newSystem = {
@@ -2140,9 +2145,11 @@
         procedure: document.getElementById('addProcedure').value,
         parts: collectPartsData('add'),
         faults: collectFaultsData('add'),
-        checks: checksJson, // <--- DE NIEUWE KOLOM
+        checks: checksJson, // <--- De nieuwe kolom voor controles
         notes: document.getElementById('addNotes').value || null
       };
+      
+      newSystem.handbook_date = document.getElementById('addHandbookDate').value || null;
 
       if (systemType === 'cv-ketel') {
         newSystem.o2_low = document.getElementById('addO2Low').value || null;
@@ -2160,6 +2167,7 @@
 
       try {
         let imageUrls = [];
+        // Hier wordt systemType gebruikt voor de bestandsnaam van de hoofdfoto's
         if (pendingImages.add.length > 0) {
           imageUrls = await uploadImages(systemType + '-' + Date.now(), pendingImages.add);
         }
@@ -2169,11 +2177,14 @@
           .from('systems')
           .insert([newSystem])
           .select();
+          
         if (error) throw error;
+        
         if (data && data.length > 0) {
           systems.push(data[0]);
           await logAuditEvent('system_created', `Systeem ${newSystem.brand} ${newSystem.model} (${systemType}) aangemaakt`);
         }
+        
         pendingImages.add = [];
         closeAddModal();
         updateBrandFilter();
@@ -2188,11 +2199,10 @@
     async function handleEditSubmit(e) {
       e.preventDefault();
       
-      // HIER ZAT HET PROBLEEM: Deze regel ontbrak waarschijnlijk
+      // 1. DIT MOET ECHT DE EERSTE REGEL ZIJN (NA PREVENTDEFAULT):
       const systemType = document.getElementById('editSystemType').value || 'update';
       
-      // Eerst de checks verwerken (inclusief foto uploads)
-      // We gebruiken await omdat het uploaden even duurt
+      // 2. Daarna pas de rest...
       const checksJson = await processChecksData('edit');
 
       const updates = {
@@ -2202,12 +2212,13 @@
         procedure: document.getElementById('editProcedure').value,
         parts: collectPartsData('edit'),
         faults: collectFaultsData('edit'),
-        checks: checksJson, // De nieuwe kolom voor controles
+        checks: checksJson, 
         notes: document.getElementById('editNotes').value || null
       };
       
       updates.handbook_date = document.getElementById('editHandbookDate').value || null;
 
+      // Hier wordt systemType voor het eerst gebruikt:
       if (systemType === 'cv-ketel') {
         updates.o2_low = document.getElementById('editO2Low').value || null;
         updates.o2_high = document.getElementById('editO2High').value || null;
@@ -2226,7 +2237,7 @@
         let imageUrls = pendingImages.edit;
         if (pendingImages.edit.some(img => img instanceof File)) {
           const newFiles = pendingImages.edit.filter(img => img instanceof File);
-          // Hier wordt systemType gebruikt voor de bestandsnaam
+          // Hier wordt systemType voor de tweede keer gebruikt:
           const uploadedUrls = await uploadImages(systemType + '-' + Date.now(), newFiles);
           const existingUrls = pendingImages.edit.filter(img => typeof img === 'string');
           imageUrls = existingUrls.concat(uploadedUrls);
@@ -2237,7 +2248,6 @@
           .eq('id', currentEditingId);
         if (error) throw error;
         
-        // Update de lokale lijst
         const systemIndex = systems.findIndex(s => s.id === currentEditingId);
         if (systemIndex !== -1) {
           systems[systemIndex] = Object.assign({}, systems[systemIndex], updates, { images: imageUrls });
@@ -2456,6 +2466,7 @@
 </script>  
 </body>
 </html>
+
 
 
 
