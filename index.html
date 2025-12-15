@@ -2187,6 +2187,12 @@
 
     async function handleEditSubmit(e) {
       e.preventDefault();
+      
+      // HIER ZAT HET PROBLEEM: Deze regel ontbrak waarschijnlijk
+      const systemType = document.getElementById('editSystemType').value || 'update';
+      
+      // Eerst de checks verwerken (inclusief foto uploads)
+      // We gebruiken await omdat het uploaden even duurt
       const checksJson = await processChecksData('edit');
 
       const updates = {
@@ -2196,7 +2202,7 @@
         procedure: document.getElementById('editProcedure').value,
         parts: collectPartsData('edit'),
         faults: collectFaultsData('edit'),
-        checks: checksJson, // <--- DE NIEUWE KOLOM
+        checks: checksJson, // De nieuwe kolom voor controles
         notes: document.getElementById('editNotes').value || null
       };
       
@@ -2220,6 +2226,7 @@
         let imageUrls = pendingImages.edit;
         if (pendingImages.edit.some(img => img instanceof File)) {
           const newFiles = pendingImages.edit.filter(img => img instanceof File);
+          // Hier wordt systemType gebruikt voor de bestandsnaam
           const uploadedUrls = await uploadImages(systemType + '-' + Date.now(), newFiles);
           const existingUrls = pendingImages.edit.filter(img => typeof img === 'string');
           imageUrls = existingUrls.concat(uploadedUrls);
@@ -2229,11 +2236,14 @@
           .update({ ...updates, images: imageUrls })
           .eq('id', currentEditingId);
         if (error) throw error;
+        
+        // Update de lokale lijst
         const systemIndex = systems.findIndex(s => s.id === currentEditingId);
         if (systemIndex !== -1) {
           systems[systemIndex] = Object.assign({}, systems[systemIndex], updates, { images: imageUrls });
           await logAuditEvent('system_updated', `Systeem ${updates.brand} ${updates.model} bijgewerkt`);
         }
+        
         pendingImages.edit = [];
         closeEditModal();
         updateBrandFilter();
@@ -2244,7 +2254,7 @@
         alert('Fout bij bewerken systeem: ' + error.message);
       }
     }
-
+    
     function handleDrop(e, mode) {
       e.preventDefault();
       e.currentTarget.classList.remove('drag-over');
@@ -2446,6 +2456,7 @@
 </script>  
 </body>
 </html>
+
 
 
 
