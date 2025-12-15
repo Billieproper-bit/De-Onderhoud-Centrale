@@ -1668,7 +1668,8 @@
       const isFavorite = favorites.includes(system.id);
       const canEdit = currentUserRole === 'admin' || currentUserRole === 'moderator';
       
-      // 1. Content: ONDERHOUD
+      // 1. Content: AFSTELLING (Onderhoud)
+      // Hier halen we de parts-logica WEG
       let maintenanceContent = `
           <div class="card-section">
             <div class="card-section-title">
@@ -1681,6 +1682,7 @@
           </div>
       `;
 
+      // Waardes
       if (system.o2_low || system.o2_high || system.co2_low || system.co2_high || system.maxco) {
         maintenanceContent += '<div class="card-section"><div class="card-section-title">Doelwaarden</div><div class="values-grid">' +
           (system.o2_low ? '<div class="value-item"><span class="value-icon" style="color: var(--color-success);"><svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></span><div class="value-content"><div class="value-label">O₂ Laaglast</div><div class="value-number">' + escapeHtml(system.o2_low) + '</div></div></div>' : '') +
@@ -1691,6 +1693,7 @@
           '</div></div>';
       }
 
+      // Fotos (blijven bij onderhoud staan, of wil je die ook apart?)
       if (system.images && system.images.length > 0) {
         const imagesList = system.images.map((img, idx) => 
           `<div class="gallery-item" onclick="openLightbox(this.querySelector('img').src)">
@@ -1700,30 +1703,38 @@
         maintenanceContent += `<div class="card-section"><div class="card-section-title">Fotos</div><div class="image-gallery">${imagesList}</div></div>`;
       }
 
+      // Opmerkingen (blijven ook op de hoofdpagina)
+      if (system.notes) {
+        maintenanceContent += `<div class="notes-section"><div class="notes-title">Opmerkingen</div><div class="notes-text">${escapeHtml(system.notes)}</div></div>`;
+      }
+
+      // 2. Content: MATERIALEN (NIEUW APART TABBLAD)
+      let materialsContent = '';
       if (system.parts) {
-         let partsHtml = '';
          try {
            const parts = JSON.parse(system.parts);
-           if (Array.isArray(parts)) {
-             partsHtml = '<table class="parts-table"><thead><tr><th>Artikel</th><th>Art. nr.</th><th>Lev.</th></tr></thead><tbody>';
-             partsHtml += parts.map(p => {
+           if (Array.isArray(parts) && parts.length > 0) {
+             materialsContent = '<div class="parts-list"><div class="parts-title" style="display:flex; align-items:center; gap:8px;"><svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>Benodigde pakkingen/artikelen</div><table class="parts-table"><thead><tr><th>Artikel</th><th>Art. nr.</th><th>Lev.</th></tr></thead><tbody>';
+             materialsContent += parts.map(p => {
                const badgeClass = p.supp === 'Rensa' ? 'supplier-rensa' : (p.supp === 'Wasco' ? 'supplier-wasco' : 'supplier-other');
                const artNr = escapeHtml(p.art);
                const link = p.supp === 'Rensa' ? `https://rensa.nl/Product/${artNr}` : (p.supp === 'Wasco' ? `https://www.wasco.nl/artikel/${artNr}` : null);
                const displayArt = link ? `<a href="${link}" target="_blank" style="color:var(--color-primary); text-decoration:none; border-bottom:1px dotted;">${artNr} ↗</a>` : artNr;
                return `<tr><td>${escapeHtml(p.desc)}</td><td style="font-family:monospace;">${displayArt}</td><td><span class="supplier-badge ${badgeClass}">${escapeHtml(p.supp)}</span></td></tr>`;
              }).join('');
-             partsHtml += '</tbody></table>';
+             materialsContent += '</tbody></table></div>';
+           } else {
+             materialsContent = '<div style="padding:20px; text-align:center; color:var(--color-text-secondary);">Geen materialenlijst beschikbaar.</div>';
            }
-         } catch(e) { partsHtml = `<div class="parts-text">${escapeHtml(system.parts)}</div>`; }
-         maintenanceContent += `<div class="parts-list"><div class="parts-title" style="display:flex; align-items:center; gap:8px;"><svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>Benodigde pakkingen/artikelen</div>${partsHtml}</div>`;
+         } catch(e) { 
+             // Fallback voor oude tekst data
+             materialsContent = `<div class="parts-list"><div class="parts-title">Benodigde materialen</div><div class="parts-text">${escapeHtml(system.parts)}</div></div>`; 
+         }
+      } else {
+         materialsContent = '<div style="padding:20px; text-align:center; color:var(--color-text-secondary);">Geen materialen toegevoegd aan dit systeem.</div>';
       }
 
-      if (system.notes) {
-        maintenanceContent += `<div class="notes-section"><div class="notes-title">Opmerkingen</div><div class="notes-text">${escapeHtml(system.notes)}</div></div>`;
-      }
-
-      // 2. Content: CONTROLE (CHECKS) - NIEUW
+      // 3. Content: CONTROLE
       let checksContent = '';
       if (system.checks) {
         try {
@@ -1751,7 +1762,7 @@
         checksContent = '<div style="padding:20px; text-align:center; color:var(--color-text-secondary);">Nog geen aandachtspunten toegevoegd.</div>';
       }
 
-      // 3. Content: STORINGEN
+      // 4. Content: STORINGEN
       let faultsContent = '';
       if (system.faults) {
         try {
@@ -1800,9 +1811,10 @@
             </div>
           </div>
 
-          <!-- TABS NAVIGATIE (NU MET 3 KNOPPEN) -->
+          <!-- TABS NAVIGATIE (NU 4 KNOPPEN) -->
           <div class="tabs-nav">
             <button class="tab-btn active" data-tab="maint" onclick="switchTab('${system.id}', 'maint')">Afstelling</button>
+            <button class="tab-btn" data-tab="parts" onclick="switchTab('${system.id}', 'parts')">Materialen</button>
             <button class="tab-btn" data-tab="checks" onclick="switchTab('${system.id}', 'checks')">Controle</button>
             <button class="tab-btn" data-tab="faults" onclick="switchTab('${system.id}', 'faults')">Storingen</button>
           </div>
@@ -1810,6 +1822,9 @@
           <!-- TABS CONTENT -->
           <div id="content-maint-${system.id}" class="tab-content active">
              ${maintenanceContent}
+          </div>
+          <div id="content-parts-${system.id}" class="tab-content">
+             ${materialsContent}
           </div>
           <div id="content-checks-${system.id}" class="tab-content">
              ${checksContent}
@@ -2466,6 +2481,7 @@
 </script>  
 </body>
 </html>
+
 
 
 
