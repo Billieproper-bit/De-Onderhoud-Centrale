@@ -757,6 +757,43 @@
     .fault-code { font-weight: 700; color: var(--color-error); font-family: monospace; font-size: 14px; }
     .fault-row { display: grid; grid-template-columns: 60px 1fr; gap: 12px; padding: 8px 0; border-bottom: 1px solid var(--color-card-border); }
     .fault-row:last-child { border-bottom: none; }
+
+    .check-card {
+      background: var(--color-bg-primary);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-base);
+      padding: 12px;
+      margin-bottom: 12px;
+    }
+    .check-title {
+      font-weight: 700;
+      color: var(--color-primary);
+      text-transform: uppercase;
+      font-size: 13px;
+      margin-bottom: 8px;
+      border-bottom: 1px solid var(--color-border);
+      padding-bottom: 4px;
+    }
+    .check-row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 4px;
+      font-size: 14px;
+    }
+    .check-label {
+      font-weight: 600;
+      min-width: 80px;
+      color: var(--color-text-secondary);
+    }
+    .check-img {
+      margin-top: 8px;
+      max-width: 100%;
+      border-radius: 4px;
+      border: 1px solid var(--color-border);
+      max-height: 200px;
+      object-fit: cover;
+      cursor: pointer;
+    }
     
     .supplier-badge {
       display: inline-block;
@@ -1116,6 +1153,12 @@
               <input type="hidden" id="addParts">
           </div>
 
+            <div class="form-group" style="margin-top: 16px; border-top: 1px solid var(--color-border); padding-top: 16px;">
+            <label>Aandachtspunten / Controle</label>
+            <div id="addChecksContainer"></div>
+            <button type="button" class="btn" style="font-size: 12px; margin-top: 4px;" onclick="addCheckRow('add')">+ Controlepunt toevoegen</button>
+          </div>
+               
           <div class="form-group" style="margin-top: 16px; border-top: 1px solid var(--color-border); padding-top: 16px;">
             <label>Storingscodes & Oplossingen</label>
             <div id="addFaultsContainer"></div>
@@ -1229,6 +1272,12 @@
             <input type="hidden" id="editParts">
           </div>
 
+          <div class="form-group" style="margin-top: 16px; border-top: 1px solid var(--color-border); padding-top: 16px;">
+            <label>Aandachtspunten / Controle</label>
+            <div id="editChecksContainer"></div>
+            <button type="button" class="btn" style="font-size: 12px; margin-top: 4px;" onclick="addCheckRow('edit')">+ Controlepunt toevoegen</button>
+          </div>
+          
           <div class="form-group" style="margin-top: 16px; border-top: 1px solid var(--color-border); padding-top: 16px;">
             <label>Storingscodes & Oplossingen</label>
             <div id="editFaultsContainer"></div>
@@ -1531,11 +1580,95 @@
       grid.innerHTML = systemsList.map(system => createSystemCard(system)).join('');
     }
 
+    // 1. Invulregel toevoegen (Met foto upload mogelijkheid)
+    function addCheckRow(mode, subject = '', problem = '', solution = '', imgUrl = '') {
+      const container = document.getElementById(mode + 'ChecksContainer');
+      const div = document.createElement('div');
+      div.className = 'part-input-row';
+      div.style.display = 'block'; // Overschrijf grid voor meer ruimte
+      div.style.border = '1px solid var(--color-border)';
+      div.style.padding = '8px';
+      div.style.borderRadius = '8px';
+      
+      div.innerHTML = `
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px; margin-bottom:8px;">
+            <input type="text" placeholder="Onderwerp (bijv. Sifon)" class="form-control check-subject" value="${escapeInput(subject)}">
+            <input type="file" class="form-control check-file" accept="image/*">
+        </div>
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px; margin-bottom:8px;">
+            <textarea placeholder="Wat kan er mis zijn?" class="form-control check-problem" rows="2">${escapeInput(problem)}</textarea>
+            <textarea placeholder="Oplossing" class="form-control check-solution" rows="2">${escapeInput(solution)}</textarea>
+        </div>
+        
+        <!-- Verborgen veld om oude URL te onthouden bij bewerken -->
+        <input type="hidden" class="check-existing-url" value="${imgUrl}">
+        ${imgUrl ? `<div style="font-size:12px; color:green;">✓ Huidige foto: <a href="${imgUrl}" target="_blank">Bekijk</a></div>` : ''}
+        
+        <button type="button" class="btn" style="width:100%; margin-top:4px; color:var(--color-error); border-color:var(--color-error);" onclick="this.parentElement.remove()">Verwijder dit controlepunt</button>
+      `;
+      container.appendChild(div);
+    }
+
+    // 2. Formulier vullen (bij bewerken)
+    function populateChecksForm(mode, jsonString) {
+      const container = document.getElementById(mode + 'ChecksContainer');
+      container.innerHTML = '';
+      if (!jsonString) return;
+      try {
+        const checks = JSON.parse(jsonString);
+        if (Array.isArray(checks)) {
+          checks.forEach(c => addCheckRow(mode, c.subject, c.problem, c.solution, c.imgUrl));
+        }
+      } catch (e) { console.error('Fout bij laden checks', e); }
+    }
+
+     // Deze functie is 'async' omdat hij moet wachten op uploads
+    async function processChecksData(mode) {
+      const container = document.getElementById(mode + 'ChecksContainer');
+      const rows = Array.from(container.children); // Maak er een array van
+      const checks = [];
+
+      for (const row of rows) {
+        const subject = row.querySelector('.check-subject').value.trim();
+        const problem = row.querySelector('.check-problem').value.trim();
+        const solution = row.querySelector('.check-solution').value.trim();
+        const fileInput = row.querySelector('.check-file');
+        const existingUrl = row.querySelector('.check-existing-url').value;
+
+        if (!subject && !problem) continue; // Lege regels overslaan
+
+        let finalImageUrl = existingUrl;
+
+        // Als er een nieuwe foto is gekozen, uploaden we die nu direct
+        if (fileInput.files.length > 0) {
+           const file = fileInput.files[0];
+           const fileExt = file.name.split('.').pop();
+           const fileName = 'check-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9) + '.' + fileExt;
+           
+           try {
+             const { data, error } = await supabase.storage
+               .from('system-images')
+               .upload(fileName, file, { upsert: true });
+               
+             if (!error) {
+               finalImageUrl = 'https://srsnjifezttivawxnndu.supabase.co/storage/v1/object/public/system-images/' + fileName;
+             }
+           } catch(err) {
+             console.error('Foto upload fout bij controlepunt', err);
+           }
+        }
+
+        checks.push({ subject, problem, solution, imgUrl: finalImageUrl });
+      }
+
+      return checks.length > 0 ? JSON.stringify(checks) : null;
+    }
+    
     function createSystemCard(system) {
       const isFavorite = favorites.includes(system.id);
       const canEdit = currentUserRole === 'admin' || currentUserRole === 'moderator';
       
-      // 1. Content voor Tabblad Onderhoud
+      // 1. Content: ONDERHOUD
       let maintenanceContent = `
           <div class="card-section">
             <div class="card-section-title">
@@ -1548,7 +1681,6 @@
           </div>
       `;
 
-      // Waardes toevoegen
       if (system.o2_low || system.o2_high || system.co2_low || system.co2_high || system.maxco) {
         maintenanceContent += '<div class="card-section"><div class="card-section-title">Doelwaarden</div><div class="values-grid">' +
           (system.o2_low ? '<div class="value-item"><span class="value-icon" style="color: var(--color-success);"><svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></span><div class="value-content"><div class="value-label">O₂ Laaglast</div><div class="value-number">' + escapeHtml(system.o2_low) + '</div></div></div>' : '') +
@@ -1559,7 +1691,6 @@
           '</div></div>';
       }
 
-      // Fotos toevoegen
       if (system.images && system.images.length > 0) {
         const imagesList = system.images.map((img, idx) => 
           `<div class="gallery-item" onclick="openLightbox(this.querySelector('img').src)">
@@ -1569,7 +1700,6 @@
         maintenanceContent += `<div class="card-section"><div class="card-section-title">Fotos</div><div class="image-gallery">${imagesList}</div></div>`;
       }
 
-      // Onderdelen toevoegen (Rensa/Wasco links)
       if (system.parts) {
          let partsHtml = '';
          try {
@@ -1579,28 +1709,49 @@
              partsHtml += parts.map(p => {
                const badgeClass = p.supp === 'Rensa' ? 'supplier-rensa' : (p.supp === 'Wasco' ? 'supplier-wasco' : 'supplier-other');
                const artNr = escapeHtml(p.art);
-               
-               const link = p.supp === 'Rensa' 
-                 ? `https://rensa.nl/Product/${artNr}` 
-                 : (p.supp === 'Wasco' ? `https://www.wasco.nl/artikel/${artNr}` : null);
-
+               const link = p.supp === 'Rensa' ? `https://rensa.nl/Product/${artNr}` : (p.supp === 'Wasco' ? `https://www.wasco.nl/artikel/${artNr}` : null);
                const displayArt = link ? `<a href="${link}" target="_blank" style="color:var(--color-primary); text-decoration:none; border-bottom:1px dotted;">${artNr} ↗</a>` : artNr;
-               
                return `<tr><td>${escapeHtml(p.desc)}</td><td style="font-family:monospace;">${displayArt}</td><td><span class="supplier-badge ${badgeClass}">${escapeHtml(p.supp)}</span></td></tr>`;
              }).join('');
              partsHtml += '</tbody></table>';
            }
          } catch(e) { partsHtml = `<div class="parts-text">${escapeHtml(system.parts)}</div>`; }
-         
          maintenanceContent += `<div class="parts-list"><div class="parts-title" style="display:flex; align-items:center; gap:8px;"><svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>Benodigde pakkingen/artikelen</div>${partsHtml}</div>`;
       }
 
-      // Opmerkingen toevoegen
       if (system.notes) {
         maintenanceContent += `<div class="notes-section"><div class="notes-title">Opmerkingen</div><div class="notes-text">${escapeHtml(system.notes)}</div></div>`;
       }
 
-      // 2. Content voor Tabblad Storingen
+      // 2. Content: CONTROLE (CHECKS) - NIEUW
+      let checksContent = '';
+      if (system.checks) {
+        try {
+            const checks = JSON.parse(system.checks);
+            if (Array.isArray(checks) && checks.length > 0) {
+                checksContent = checks.map(c => `
+                    <div class="check-card">
+                        <div class="check-title">${escapeHtml(c.subject)}</div>
+                        <div class="check-row">
+                            <div class="check-label">Probleem:</div>
+                            <div>${escapeHtml(c.problem)}</div>
+                        </div>
+                        <div class="check-row">
+                            <div class="check-label">Oplossing:</div>
+                            <div>${escapeHtml(c.solution)}</div>
+                        </div>
+                        ${c.imgUrl ? `<img src="${c.imgUrl}" class="check-img" onclick="openLightbox(this.src)" loading="lazy" alt="Foto bij ${escapeHtml(c.subject)}">` : ''}
+                    </div>
+                `).join('');
+            } else {
+                checksContent = '<div style="padding:20px; text-align:center; color:var(--color-text-secondary);">Geen aandachtspunten bekend.</div>';
+            }
+        } catch(e) { checksContent = 'Data error'; }
+      } else {
+        checksContent = '<div style="padding:20px; text-align:center; color:var(--color-text-secondary);">Nog geen aandachtspunten toegevoegd.</div>';
+      }
+
+      // 3. Content: STORINGEN
       let faultsContent = '';
       if (system.faults) {
         try {
@@ -1609,7 +1760,6 @@
                 faultsContent = faults.map(f => {
                     const cause = f.cause || '';
                     const solution = f.solution || f.sol || '';
-
                     return `
                     <div class="fault-row">
                         <div class="fault-code">${escapeHtml(f.code)}</div>
@@ -1624,10 +1774,9 @@
             }
         } catch(e) { faultsContent = 'Data error'; }
       } else {
-        faultsContent = '<div style="padding:20px; text-align:center; color:var(--color-text-secondary);">Nog geen storingen toegevoegd aan dit systeem.</div>';
+        faultsContent = '<div style="padding:20px; text-align:center; color:var(--color-text-secondary);">Nog geen storingen toegevoegd.</div>';
       }
 
-      // HIER GING HET MIS BIJ JE VORIGE POGING:
       return `
         <div class="system-card" id="card-${system.id}">
           <div class="card-header">
@@ -1651,15 +1800,19 @@
             </div>
           </div>
 
-          <!-- TABS NAVIGATIE -->
+          <!-- TABS NAVIGATIE (NU MET 3 KNOPPEN) -->
           <div class="tabs-nav">
-            <button class="tab-btn active" data-tab="maint" onclick="switchTab('${system.id}', 'maint')">Onderhoud</button>
+            <button class="tab-btn active" data-tab="maint" onclick="switchTab('${system.id}', 'maint')">Afstelling</button>
+            <button class="tab-btn" data-tab="checks" onclick="switchTab('${system.id}', 'checks')">Controle</button>
             <button class="tab-btn" data-tab="faults" onclick="switchTab('${system.id}', 'faults')">Storingen</button>
           </div>
 
           <!-- TABS CONTENT -->
           <div id="content-maint-${system.id}" class="tab-content active">
              ${maintenanceContent}
+          </div>
+          <div id="content-checks-${system.id}" class="tab-content">
+             ${checksContent}
           </div>
           <div id="content-faults-${system.id}" class="tab-content">
              ${faultsContent}
@@ -1925,6 +2078,7 @@
       document.getElementById('editMaxCO').value = system.maxco || '';
       populatePartsForm('edit', system.parts);
       populateFaultsForm('edit', system.faults);
+      populateChecksForm('edit', system.checks);
       document.getElementById('editNotes').value = system.notes || '';
       if (document.getElementById('editHandbookDate')) {
         document.getElementById('editHandbookDate').value = system.handbook_date || '';
@@ -1954,6 +2108,7 @@
       document.getElementById('addFaultsContainer').innerHTML = '';
       document.getElementById('addForm').reset();
       document.getElementById('addPartsContainer').innerHTML = '';
+      document.getElementById('addChecksContainer').innerHTML = '';
       pendingImages.add = [];
       renderImagePreview('add');
       updateAddFieldsForSystemType();
@@ -1975,18 +2130,19 @@
 
     async function handleAddSubmit(e) {
       e.preventDefault();
-      const systemType = document.getElementById('addSystemType').value;
+      const checksJson = await processChecksData('add');
+
       const newSystem = {
         systemtype: systemType,
         brand: document.getElementById('addBrand').value,
         model: document.getElementById('addModel').value,
         logo_url: document.getElementById('addLogoUrl').value || null,
         procedure: document.getElementById('addProcedure').value,
-        parts: collectPartsData('add'),    // <--- Let op de komma hier!
-        faults: collectFaultsData('add'),  // <--- De nieuwe regel
+        parts: collectPartsData('add'),
+        faults: collectFaultsData('add'),
+        checks: checksJson, // <--- DE NIEUWE KOLOM
         notes: document.getElementById('addNotes').value || null
       };
-      newSystem.handbook_date = document.getElementById('addHandbookDate').value || null;
 
       if (systemType === 'cv-ketel') {
         newSystem.o2_low = document.getElementById('addO2Low').value || null;
@@ -2031,15 +2187,16 @@
 
     async function handleEditSubmit(e) {
       e.preventDefault();
-      const systemType = document.getElementById('editSystemType').value || 'update';
-      
+      const checksJson = await processChecksData('edit');
+
       const updates = {
         brand: document.getElementById('editBrand').value,
         model: document.getElementById('editModel').value,
         logo_url: document.getElementById('editLogoUrl').value || null,
         procedure: document.getElementById('editProcedure').value,
-        parts: collectPartsData('edit'),    // <--- Let op de komma hier!
-        faults: collectFaultsData('edit'),  // <--- De nieuwe regel
+        parts: collectPartsData('edit'),
+        faults: collectFaultsData('edit'),
+        checks: checksJson, // <--- DE NIEUWE KOLOM
         notes: document.getElementById('editNotes').value || null
       };
       
@@ -2289,6 +2446,7 @@
 </script>  
 </body>
 </html>
+
 
 
 
