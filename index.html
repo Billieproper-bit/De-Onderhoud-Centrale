@@ -1,9 +1,10 @@
+html
 <!DOCTYPE html>
 <html lang="nl">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>De Onderhoud Centrale - Afstelinstructies en doelwaarden voor CV-ketels, Warmtepompen en WTW/MV</title>
+  <title>De Onderhoud Centrale</title>
   <link rel="icon" type="image/x-icon" href="favicon.ico">
   <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -151,12 +152,20 @@
       grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
       gap: 12px;
       margin-bottom: 12px;
+      align-items: end; /* Zorgt dat labels en inputs netjes uitlijnen */
     }
 
     .form-group {
       display: flex;
       flex-direction: column;
       gap: 4px;
+    }
+    
+    .filter-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--color-text-secondary);
+      margin-left: 2px;
     }
 
     .form-control {
@@ -172,22 +181,6 @@
     .form-control:focus {
       outline: 2px solid var(--color-primary);
       border-color: var(--color-primary);
-    }
-
-    .search-input {
-      position: relative;
-    }
-
-    .search-icon {
-      position: absolute;
-      left: 12px;
-      top: 50%;
-      transform: translateY(-50%);
-      color: var(--color-text-secondary);
-    }
-
-    .search-input input {
-      padding-left: 40px;
     }
 
     .results-count {
@@ -226,24 +219,6 @@
       justify-content: space-between;
       align-items: start;
       margin-bottom: 16px;
-    }
-
-    .card-title {
-      font-size: 18px;
-      font-weight: 600;
-      color: var(--color-text);
-      margin-bottom: 4px;
-    }
-
-    .card-badge {
-      display: inline-block;
-      padding: 4px 12px;
-      border-radius: 16px;
-      font-size: 12px;
-      font-weight: 500;
-      background: rgba(33, 141, 141, 0.1);
-      color: var(--color-primary);
-      border: 1px solid rgba(33, 141, 141, 0.2);
     }
 
     .card-meta {
@@ -951,29 +926,35 @@
     </div>
 
     <div class="container">
-      <div class="filters">          <div class="filters-row">
-        <div class="form-group">
-          <select id="systemTypeFilter" class="form-control">
-            <option value="">Alle systemen</option>
-            <option value="cv-ketel">CV-ketels</option>
-            <option value="warmtepomp">Warmtepompen</option>
-            <option value="mv-wtw">MV/WTW</option>
-        </select>
-      </div>
-          <div class="form-group search-input">
-            <svg class="search-icon icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-            </svg>
-            <input type="text" id="searchInput" class="form-control" placeholder="Zoek op merk of model...">
-          </div>
+      <div class="filters">          
+        <div class="filters-row">
           <div class="form-group">
-            <select id="brandFilter" class="form-control">
-              <option value="all">Alle merken</option>
+            <label class="filter-label">Categorie</label>
+            <select id="systemTypeFilter" class="form-control">
+              <option value="">Alle Categorieën</option>
+              <option value="cv-ketel">CV-ketels</option>
+              <option value="warmtepomp">Warmtepompen</option>
+              <option value="mv-wtw">MV/WTW</option>
+              <option value="waterzijdig">Waterzijdig</option>
+              <option value="overig">Overig</option>
             </select>
           </div>
           <div class="form-group">
+            <label class="filter-label">Merk</label>
+            <select id="brandFilter" class="form-control">
+              <option value="all">Alle Merken</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="filter-label">Model</label>
+            <select id="modelFilter" class="form-control">
+              <option value="all">Alle Modellen</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="filter-label">Favorieten</label>
             <select id="favoritesFilter" class="form-control">
-              <option value="all">Alle systemen</option>
+              <option value="all">Alles tonen</option>
               <option value="favorites">Alleen favorieten</option>
             </select>
           </div>
@@ -1074,6 +1055,8 @@
               <option value="cv-ketel">CV-ketel</option>
               <option value="warmtepomp">Warmtepomp</option>
               <option value="wtw-mv">WTW/MV</option>
+              <option value="waterzijdig">Waterzijdig</option>
+              <option value="overig">Overig</option>
             </select>
           </div>
           <div class="form-group">
@@ -1139,9 +1122,9 @@
             </p>
           </div>
 
-          <div id="addWtwMvFields" style="display: none;">
+          <div id="addOtherFields" style="display: none;">
             <p style="color: var(--color-text-secondary); font-size: 14px; margin: 16px 0;">
-              Voor WTW/MV systemen alleen filters vervangen
+              Voor dit type systeem zijn geen specifieke meetwaardes vereist.
             </p>
           </div>
 
@@ -1149,7 +1132,6 @@
             <label>Benodigde pakkingen/artikelen</label>
             <div id="addPartsContainer"></div>
               <button type="button" class="btn" style="font-size: 12px; margin-top: 4px;" onclick="addPartRow('add')">+ Regel toevoegen</button>
-              <!-- Verborgen input om oude logica niet te breken, we vullen deze met JS -->
               <input type="hidden" id="addParts">
           </div>
 
@@ -1259,9 +1241,9 @@
             </p>
           </div>
 
-          <div id="wtwMvFields" style="display: none;">
+          <div id="otherFields" style="display: none;">
             <p style="color: var(--color-text-secondary); font-size: 14px; margin: 16px 0;">
-              Voor WTW/MV systemen alleen filters vervangen
+              Voor dit type systeem zijn geen specifieke meetwaardes vereist.
             </p>
           </div>
 
@@ -1394,15 +1376,15 @@
     document.getElementById('auditBtn').addEventListener('click', openAuditModal);
     document.getElementById('auditSearchInput')?.addEventListener('input', filterAuditLogs);
     
-    document.getElementById('searchInput').addEventListener('input', filterSystems);
-    document.getElementById('searchInput').addEventListener('keyup', function(e) {
-        if (e.key === 'Enter') {
-            this.blur(); 
-        }
-    });
+    // We gebruiken nu dropdowns, dus search listener is niet meer nodig op input
+    // document.getElementById('searchInput').addEventListener('input', filterSystems); 
 
     document.getElementById('systemTypeFilter').addEventListener('change', filterSystems);
-    document.getElementById('brandFilter').addEventListener('change', filterSystems);
+    document.getElementById('brandFilter').addEventListener('change', () => {
+        updateModelFilter();
+        filterSystems();
+    });
+    document.getElementById('modelFilter').addEventListener('change', filterSystems);
     document.getElementById('favoritesFilter').addEventListener('change', filterSystems);
     document.getElementById('addForm').addEventListener('submit', handleAddSubmit);
     document.getElementById('editForm').addEventListener('submit', handleEditSubmit);
@@ -1504,6 +1486,8 @@
           favorites = favsData ? favsData.map(f => f.system_id) : [];
         }
         updateBrandFilter();
+        // Model filter updaten we pas als er een merk gekozen is, of initieel op 'alles'
+        updateModelFilter(); 
         filterSystems();
       } catch (error) {
         console.error('Error loading data:', error);
@@ -1516,45 +1500,76 @@
     function updateBrandFilter() {
       const brands = [...new Set(systems.map(s => s.brand))].sort();
       const select = document.getElementById('brandFilter');
-      select.innerHTML = '<option value="all">Alle merken</option>';
+      const currentVal = select.value;
+      select.innerHTML = '<option value="all">Alle Merken</option>';
       brands.forEach(brand => {
         const option = document.createElement('option');
         option.value = brand;
         option.textContent = brand;
         select.appendChild(option);
       });
+      // Probeer de oude waarde te herstellen indien mogelijk
+      if(brands.includes(currentVal)) {
+          select.value = currentVal;
+      }
+    }
+
+    function updateModelFilter() {
+        const selectedBrand = document.getElementById('brandFilter').value;
+        const modelSelect = document.getElementById('modelFilter');
+        modelSelect.innerHTML = '<option value="all">Alle Modellen</option>';
+
+        if (selectedBrand === 'all') {
+            // Als alle merken geselecteerd zijn, tonen we geen specifieke modellenlijst (of alles, maar dat wordt een lange lijst)
+            // Laten we het leeg/alles houden voor overzicht.
+            modelSelect.disabled = true;
+        } else {
+            modelSelect.disabled = false;
+            // Filter modellen van dit merk
+            const models = [...new Set(systems
+                .filter(s => s.brand === selectedBrand)
+                .map(s => s.model))]
+                .sort();
+            
+            models.forEach(model => {
+                const option = document.createElement('option');
+                option.value = model;
+                option.textContent = model;
+                modelSelect.appendChild(option);
+            });
+        }
     }
 
     function filterSystems() {
-      const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-      const selectedType = document.getElementById('systemTypeFilter').value; // Nu correcte waardes
+      // Zoekbalk is weg, we gebruiken nu de filters
+      const selectedType = document.getElementById('systemTypeFilter').value; 
       const selectedBrand = document.getElementById('brandFilter').value;
+      const selectedModel = document.getElementById('modelFilter').value;
       const showFavoritesOnly = document.getElementById('favoritesFilter').value === 'favorites';
 
       const filtered = systems.filter(system => {
-        // 1. Zoekterm filter
-        const matchesSearch = system.model.toLowerCase().includes(searchTerm) || 
-                            system.brand.toLowerCase().includes(searchTerm);
         
-        // 2. Type filter (Gefikst)
+        // 1. Type filter
         let matchesType = true;
-        if (selectedType) { // Als er een type is geselecteerd (niet leeg)
+        if (selectedType) { 
             if (selectedType === 'mv-wtw') {
-                // Check voor beide schrijfwijzen die in je DB kunnen staan
                 matchesType = system.systemtype === 'mv-wtw' || system.systemtype === 'wtw-mv';
             } else {
-                // Exacte match voor 'cv-ketel' of 'warmtepomp'
+                // Werkt nu ook voor waterzijdig en overig
                 matchesType = system.systemtype === selectedType;
             }
         }
 
-        // 3. Merk filter
+        // 2. Merk filter
         const matchesBrand = selectedBrand === 'all' || system.brand === selectedBrand;
         
+        // 3. Model filter
+        const matchesModel = selectedModel === 'all' || system.model === selectedModel;
+
         // 4. Favorieten filter
         const matchesFavorites = !showFavoritesOnly || favorites.includes(system.id);
 
-        return matchesSearch && matchesType && matchesBrand && matchesFavorites;
+        return matchesType && matchesBrand && matchesModel && matchesFavorites;
       });
 
       renderSystems(filtered);
@@ -2005,6 +2020,8 @@
         // 3. Update de lijst lokaal (zodat je niet hoeft te refreshen)
         systems = systems.filter(s => s.id !== systemId);
         updateBrandFilter();
+        // Na verwijderen model filter resetten of updaten
+        updateModelFilter();
         filterSystems(); // Lijst opnieuw tekenen
 
         alert('Systeem verwijderd.');
@@ -2108,9 +2125,18 @@
       const cvFields = document.getElementById('cvKetelFields');
       const wpFields = document.getElementById('warmtepompFields');
       const wtwFields = document.getElementById('wtwMvFields');
+      const otherFields = document.getElementById('otherFields');
+      
       cvFields.style.display = type === 'cv-ketel' ? 'block' : 'none';
       wpFields.style.display = type === 'warmtepomp' ? 'block' : 'none';
       wtwFields.style.display = type === 'wtw-mv' ? 'block' : 'none';
+      
+      // Voor waterzijdig en overig tonen we een melding of niets
+      if (type === 'waterzijdig' || type === 'overig') {
+          otherFields.style.display = 'block';
+      } else {
+          otherFields.style.display = 'none';
+      }
     }
 
     function closeEditModal() {
@@ -2138,9 +2164,17 @@
       const cvFields = document.getElementById('addCvKetelFields');
       const wpFields = document.getElementById('addWarmtepompFields');
       const wtwFields = document.getElementById('addWtwMvFields');
+      const otherFields = document.getElementById('addOtherFields');
+      
       cvFields.style.display = type === 'cv-ketel' ? 'block' : 'none';
       wpFields.style.display = type === 'warmtepomp' ? 'block' : 'none';
       wtwFields.style.display = type === 'wtw-mv' ? 'block' : 'none';
+      
+      if (type === 'waterzijdig' || type === 'overig') {
+          otherFields.style.display = 'block';
+      } else {
+          otherFields.style.display = 'none';
+      }
     }
 
     async function handleAddSubmit(e) {
@@ -2203,6 +2237,8 @@
         pendingImages.add = [];
         closeAddModal();
         updateBrandFilter();
+        // Ook model filter updaten na toevoegen
+        updateModelFilter();
         filterSystems();
         alert('Systeem succesvol toegevoegd!');
       } catch (error) {
@@ -2272,6 +2308,7 @@
         pendingImages.edit = [];
         closeEditModal();
         updateBrandFilter();
+        updateModelFilter(); // En ook hier
         filterSystems();
         alert('Systeem succesvol bijgewerkt!');
       } catch (error) {
