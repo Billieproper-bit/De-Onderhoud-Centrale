@@ -1379,10 +1379,10 @@ html
     // We gebruiken nu dropdowns, dus search listener is niet meer nodig op input
     // document.getElementById('searchInput').addEventListener('input', filterSystems); 
 
-    document.getElementById('systemTypeFilter').addEventListener('change', filterSystems);
-    document.getElementById('brandFilter').addEventListener('change', () => {
-        updateModelFilter();
-        filterSystems();
+    document.getElementById('systemTypeFilter').addEventListener('change', () => {
+        updateBrandFilter(); // Eerst merken updaten op basis van categorie
+        updateModelFilter(); // Dan modellen updaten
+        filterSystems();     // Dan de kaartjes filteren
     });
     document.getElementById('modelFilter').addEventListener('change', filterSystems);
     document.getElementById('favoritesFilter').addEventListener('change', filterSystems);
@@ -1498,9 +1498,23 @@ html
     }
 
     function updateBrandFilter() {
-      const brands = [...new Set(systems.map(s => s.brand))].sort();
+      const selectedType = document.getElementById('systemTypeFilter').value;
       const select = document.getElementById('brandFilter');
       const currentVal = select.value;
+      
+      // Eerst filteren we de bron-data op basis van categorie
+      let availableSystems = systems;
+      if (selectedType) {
+          if (selectedType === 'mv-wtw') {
+              availableSystems = systems.filter(s => s.systemtype === 'mv-wtw' || s.systemtype === 'wtw-mv');
+          } else {
+              availableSystems = systems.filter(s => s.systemtype === selectedType);
+          }
+      }
+
+      // Nu pakken we alleen de merken die overblijven
+      const brands = [...new Set(availableSystems.map(s => s.brand))].sort();
+      
       select.innerHTML = '<option value="all">Alle Merken</option>';
       brands.forEach(brand => {
         const option = document.createElement('option');
@@ -1508,35 +1522,57 @@ html
         option.textContent = brand;
         select.appendChild(option);
       });
-      // Probeer de oude waarde te herstellen indien mogelijk
+
+      // Probeer de oude waarde te behouden, anders springt hij op 'all'
       if(brands.includes(currentVal)) {
           select.value = currentVal;
+      } else {
+          select.value = 'all';
       }
     }
 
     function updateModelFilter() {
+        const selectedType = document.getElementById('systemTypeFilter').value;
         const selectedBrand = document.getElementById('brandFilter').value;
         const modelSelect = document.getElementById('modelFilter');
+        
+        // Reset de lijst
         modelSelect.innerHTML = '<option value="all">Alle Modellen</option>';
 
-        if (selectedBrand === 'all') {
-            // Als alle merken geselecteerd zijn, tonen we geen specifieke modellenlijst (of alles, maar dat wordt een lange lijst)
-            // Laten we het leeg/alles houden voor overzicht.
-            modelSelect.disabled = true;
-        } else {
+        // We beginnen met alle systemen
+        let availableSystems = systems;
+
+        // 1. Filter eerst op Type (indien geselecteerd)
+        if (selectedType) {
+            if (selectedType === 'mv-wtw') {
+                availableSystems = availableSystems.filter(s => s.systemtype === 'mv-wtw' || s.systemtype === 'wtw-mv');
+            } else {
+                availableSystems = availableSystems.filter(s => s.systemtype === selectedType);
+            }
+        }
+
+        // 2. Filter daarna op Merk (indien geselecteerd)
+        if (selectedBrand !== 'all') {
+            availableSystems = availableSystems.filter(s => s.brand === selectedBrand);
+        }
+
+        // 3. Haal de modellen uit de overgebleven lijst
+        const models = [...new Set(availableSystems.map(s => s.model))].sort();
+        
+        if (models.length > 0) {
             modelSelect.disabled = false;
-            // Filter modellen van dit merk
-            const models = [...new Set(systems
-                .filter(s => s.brand === selectedBrand)
-                .map(s => s.model))]
-                .sort();
-            
             models.forEach(model => {
                 const option = document.createElement('option');
                 option.value = model;
                 option.textContent = model;
                 modelSelect.appendChild(option);
             });
+        } else {
+            if(selectedBrand === 'all' && !selectedType) {
+                 modelSelect.disabled = true; // Alles en Alles = Te veel modellen, dus dicht
+            } else {
+                 modelSelect.disabled = false;
+            }
         }
     }
 
@@ -2518,3 +2554,4 @@ html
 </script>  
 </body>
 </html>
+
