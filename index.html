@@ -2163,17 +2163,19 @@
       const cvFields = document.getElementById('cvKetelFields');
       const wpFields = document.getElementById('warmtepompFields');
       const wtwFields = document.getElementById('wtwMvFields');
-      const otherFields = document.getElementById('otherFields');
+      const otherFields = document.getElementById('otherFields'); // Let op: in Edit heet deze 'otherFields' (zonder add)
       
-      cvFields.style.display = type === 'cv-ketel' ? 'block' : 'none';
-      wpFields.style.display = type === 'warmtepomp' ? 'block' : 'none';
-      wtwFields.style.display = type === 'wtw-mv' ? 'block' : 'none';
+      // We gebruiken ?. (vraagteken) om crashes te voorkomen als een element mist
+      if(cvFields) cvFields.style.display = type === 'cv-ketel' ? 'block' : 'none';
+      if(wpFields) wpFields.style.display = type === 'warmtepomp' ? 'block' : 'none';
+      if(wtwFields) wtwFields.style.display = type === 'wtw-mv' ? 'block' : 'none';
       
-      // Voor waterzijdig en overig tonen we een melding of niets
-      if (type === 'waterzijdig' || type === 'overig') {
-          otherFields.style.display = 'block';
-      } else {
-          otherFields.style.display = 'none';
+      if (otherFields) {
+          if (type === 'waterzijdig' || type === 'overig') {
+              otherFields.style.display = 'block';
+          } else {
+              otherFields.style.display = 'none';
+          }
       }
     }
 
@@ -2556,3 +2558,4 @@
 </script>  
 </body>
 </html>
+
