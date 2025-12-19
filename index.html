@@ -1,4 +1,3 @@
-html
 <!DOCTYPE html>
 <html lang="nl">
 <head>
@@ -1380,10 +1379,16 @@ html
     // document.getElementById('searchInput').addEventListener('input', filterSystems); 
 
     document.getElementById('systemTypeFilter').addEventListener('change', () => {
-        updateBrandFilter(); // Eerst merken updaten op basis van categorie
-        updateModelFilter(); // Dan modellen updaten
-        filterSystems();     // Dan de kaartjes filteren
+        updateBrandFilter(); // Categorie gewijzigd? -> Merken aanpassen
+        updateModelFilter(); // En daarna Modellen aanpassen
+        filterSystems();     // En kaartjes filteren
     });
+
+    document.getElementById('brandFilter').addEventListener('change', () => {
+        updateModelFilter(); // Merk gewijzigd? -> Modellen aanpassen (HIER GING HET WAARSCHIJNLIJK MIS)
+        filterSystems();     // En kaartjes filteren
+    });
+
     document.getElementById('modelFilter').addEventListener('change', filterSystems);
     document.getElementById('favoritesFilter').addEventListener('change', filterSystems);
     document.getElementById('addForm').addEventListener('submit', handleAddSubmit);
@@ -1500,9 +1505,9 @@ html
     function updateBrandFilter() {
       const selectedType = document.getElementById('systemTypeFilter').value;
       const select = document.getElementById('brandFilter');
-      const currentVal = select.value;
+      const currentVal = select.value; // Onthoud wat er gekozen was
       
-      // Eerst filteren we de bron-data op basis van categorie
+      // Stap 1: Filter alles op basis van categorie
       let availableSystems = systems;
       if (selectedType) {
           if (selectedType === 'mv-wtw') {
@@ -1512,7 +1517,7 @@ html
           }
       }
 
-      // Nu pakken we alleen de merken die overblijven
+      // Stap 2: Maak de lijst met merken
       const brands = [...new Set(availableSystems.map(s => s.brand))].sort();
       
       select.innerHTML = '<option value="all">Alle Merken</option>';
@@ -1523,7 +1528,7 @@ html
         select.appendChild(option);
       });
 
-      // Probeer de oude waarde te behouden, anders springt hij op 'all'
+      // Stap 3: Probeer de oude keuze te herstellen, anders reset naar 'all'
       if(brands.includes(currentVal)) {
           select.value = currentVal;
       } else {
@@ -1539,10 +1544,10 @@ html
         // Reset de lijst
         modelSelect.innerHTML = '<option value="all">Alle Modellen</option>';
 
-        // We beginnen met alle systemen
+        // Stap 1: Begin met alle systemen
         let availableSystems = systems;
 
-        // 1. Filter eerst op Type (indien geselecteerd)
+        // Stap 2: Filter eerst op Categorie (indien gekozen)
         if (selectedType) {
             if (selectedType === 'mv-wtw') {
                 availableSystems = availableSystems.filter(s => s.systemtype === 'mv-wtw' || s.systemtype === 'wtw-mv');
@@ -1551,12 +1556,12 @@ html
             }
         }
 
-        // 2. Filter daarna op Merk (indien geselecteerd)
+        // Stap 3: Filter daarna op Merk (DIT IS CRUCIAAL)
         if (selectedBrand !== 'all') {
             availableSystems = availableSystems.filter(s => s.brand === selectedBrand);
         }
 
-        // 3. Haal de modellen uit de overgebleven lijst
+        // Stap 4: Vul de dropdown met de overgebleven modellen
         const models = [...new Set(availableSystems.map(s => s.model))].sort();
         
         if (models.length > 0) {
@@ -1568,16 +1573,13 @@ html
                 modelSelect.appendChild(option);
             });
         } else {
-            if(selectedBrand === 'all' && !selectedType) {
-                 modelSelect.disabled = true; // Alles en Alles = Te veel modellen, dus dicht
-            } else {
-                 modelSelect.disabled = false;
-            }
+            // Als er geen modellen zijn (of je hebt 'Alle merken' en 'Alle categorieën' en de lijst is te lang)
+            // Laten we hem 'enabled' maar leeg (behalve 'Alle modellen')
+            modelSelect.disabled = false; 
         }
     }
 
     function filterSystems() {
-      // Zoekbalk is weg, we gebruiken nu de filters
       const selectedType = document.getElementById('systemTypeFilter').value; 
       const selectedBrand = document.getElementById('brandFilter').value;
       const selectedModel = document.getElementById('modelFilter').value;
@@ -2554,4 +2556,3 @@ html
 </script>  
 </body>
 </html>
-
