@@ -1071,6 +1071,10 @@
             <input type="url" id="addLogoUrl" class="form-control" placeholder="https://example.com/logo.png">
           </div>
           <div class="form-group">
+            <label>Foto van toestel (voor herkenning)</label>
+            <input type="file" id="addDeviceImage" class="form-control" accept="image/*">
+          </div>
+          <div class="form-group">
             <label>Procedure</label>
             <textarea id="addProcedure" class="form-control" rows="6" required placeholder="Stap 1: ...&#10;Stap 2: ..."></textarea>
           </div>
@@ -1188,6 +1192,11 @@
           <div class="form-group">
             <label>Logo URL (optioneel)</label>
             <input type="url" id="editLogoUrl" class="form-control" placeholder="https://example.com/logo.png">
+          </div>
+          <div class="form-group">
+            <label>Foto van toestel (voor herkenning)</label>
+            <input type="file" id="editDeviceImage" class="form-control" accept="image/*">
+            <div id="editDeviceImagePreview" style="font-size:12px; margin-top:4px; color:var(--color-success);"></div>
           </div>
           <div class="form-group">
             <label>Procedure</label>
@@ -1854,6 +1863,16 @@
             </div>
             
             <div class="card-actions">
+              <!-- NIEUW: Camera Icoon (alleen als er een foto is) -->
+              ${system.device_image_url ? `
+              <button class="icon-btn" onclick="openLightbox('${system.device_image_url}')" title="Bekijk toestel">
+                <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path>
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                </svg>
+              </button>
+              ` : ''}
+
               <button class="icon-btn ${isFavorite ? 'active' : ''}" onclick="toggleFavorite('${system.id}')">
                 <svg class="icon" fill="${isFavorite ? 'currentColor' : 'none'}" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"></path></svg>
               </button>
@@ -2140,6 +2159,18 @@
       document.getElementById('editBrand').value = system.brand;
       document.getElementById('editModel').value = system.model;
       document.getElementById('editLogoUrl').value = system.logo_url || '';
+      
+      const devImgInput = document.getElementById('editDeviceImage');
+      const devImgPreview = document.getElementById('editDeviceImagePreview');
+      devImgInput.value = ''; // Reset input
+      if (system.device_image_url) {
+          devImgInput.dataset.currentUrl = system.device_image_url;
+          devImgPreview.innerHTML = `✓ Huidige foto: <a href="${system.device_image_url}" target="_blank">Bekijk</a>`;
+      } else {
+          devImgInput.dataset.currentUrl = '';
+          devImgPreview.innerHTML = '';
+      }
+      
       document.getElementById('editProcedure').value = system.procedure;
       document.getElementById('editO2Low').value = system.o2_low || '';
       document.getElementById('editO2High').value = system.o2_high || '';
@@ -2187,6 +2218,7 @@
     function openAddModal() {
       document.getElementById('addModal').classList.add('active');
       document.getElementById('addFaultsContainer').innerHTML = '';
+      document.getElementById('addDeviceImage').value = '';
       document.getElementById('addForm').reset();
       document.getElementById('addPartsContainer').innerHTML = '';
       document.getElementById('addChecksContainer').innerHTML = '';
@@ -2220,21 +2252,27 @@
     async function handleAddSubmit(e) {
       e.preventDefault();
       
-      // 1. DIT MOET ECHT DE EERSTE REGEL ZIJN:
       const systemType = document.getElementById('addSystemType').value;
       
-      // 2. Daarna pas de checks verwerken (inclusief foto uploads)
       const checksJson = await processChecksData('add');
+
+      let deviceImgUrl = null;
+      const deviceFile = document.getElementById('addDeviceImage').files[0];
+      if (deviceFile) {
+          try { deviceImgUrl = await uploadSingleFile(deviceFile); } 
+          catch(err) { console.error(err); alert('Fout bij uploaden toestelfoto'); return; }
+      }
 
       const newSystem = {
         systemtype: systemType,
         brand: document.getElementById('addBrand').value,
         model: document.getElementById('addModel').value,
         logo_url: document.getElementById('addLogoUrl').value || null,
+        device_image_url: deviceImgUrl, // <--- NIEUWE REGEL
         procedure: document.getElementById('addProcedure').value,
         parts: collectPartsData('add'),
         faults: collectFaultsData('add'),
-        checks: checksJson, // <--- De nieuwe kolom voor controles
+        checks: checksJson,
         notes: document.getElementById('addNotes').value || null
       };
       
@@ -2290,16 +2328,23 @@
     async function handleEditSubmit(e) {
       e.preventDefault();
       
-      // 1. DIT MOET ECHT DE EERSTE REGEL ZIJN (NA PREVENTDEFAULT):
       const systemType = document.getElementById('editSystemType').value || 'update';
       
-      // 2. Daarna pas de rest...
       const checksJson = await processChecksData('edit');
+
+      let deviceImgUrl = document.getElementById('editDeviceImage').dataset.currentUrl || null;
+      const deviceFile = document.getElementById('editDeviceImage').files[0];
+      
+      if (deviceFile) {
+          try { deviceImgUrl = await uploadSingleFile(deviceFile); } 
+          catch(err) { console.error(err); alert('Fout bij uploaden toestelfoto'); return; }
+      }
 
       const updates = {
         brand: document.getElementById('editBrand').value,
         model: document.getElementById('editModel').value,
         logo_url: document.getElementById('editLogoUrl').value || null,
+        device_image_url: deviceImgUrl, // <--- NIEUWE REGEL
         procedure: document.getElementById('editProcedure').value,
         parts: collectPartsData('edit'),
         faults: collectFaultsData('edit'),
@@ -2309,7 +2354,7 @@
       
       updates.handbook_date = document.getElementById('editHandbookDate').value || null;
 
-      // Hier wordt systemType voor het eerst gebruikt:
+      
       if (systemType === 'cv-ketel') {
         updates.o2_low = document.getElementById('editO2Low').value || null;
         updates.o2_high = document.getElementById('editO2High').value || null;
@@ -2413,6 +2458,15 @@
         }
       }
       return urls;
+    }
+
+    async function uploadSingleFile(file) {
+      if (!file) return null;
+      const fileExt = file.name.split('.').pop();
+      const fileName = 'device-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9) + '.' + fileExt;
+      const { error } = await supabase.storage.from('system-images').upload(fileName, file);
+      if (error) { throw error; }
+      return 'https://srsnjifezttivawxnndu.supabase.co/storage/v1/object/public/system-images/' + fileName;
     }
 
     function escapeInput(str) {
@@ -2558,4 +2612,5 @@
 </script>  
 </body>
 </html>
+
 
