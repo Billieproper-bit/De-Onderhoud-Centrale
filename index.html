@@ -838,7 +838,16 @@
       color: var(--color-text);
       line-height: 1.2;
     }
-    
+
+    .app-footer {
+      margin-top: 40px;
+      padding: 24px 0;
+      border-top: 1px solid var(--color-border);
+      text-align: center;
+      color: var(--color-text-secondary);
+      font-size: 13px;
+    }
+        
   </style>
 </head>
 <body>
@@ -967,6 +976,9 @@
       <div id="cardsGrid" class="cards-grid hidden"></div>
       <div id="emptyState" class="empty-state hidden">
         <p>Geen systemen gevonden met de opgegeven criteria</p>
+      </div>
+      <div class="app-footer">
+        &copy; <span id="currentYear"></span> <strong>[K.W. Diets]</strong>. Alle rechten voorbehouden.
       </div>
     </div>
   </div>
@@ -1336,7 +1348,7 @@
       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"></path>
     </svg>
   </button>
-  
+
   <script>
     const SUPABASE_URL = 'https://srsnjifezttivawxnndu.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNyc25qaWZlenR0aXZhd3hubmR1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQwNzY1MjcsImV4cCI6MjA3OTY1MjUyN30.5RmDp3QgAYX7yDS39KwoRtHc6c9Kp-wGKGYeJctoY7w';
@@ -2606,11 +2618,14 @@
     function closeLightbox() {
       document.getElementById('lightbox').classList.remove('active');
     }
+    
+    document.getElementById('currentYear').textContent = new Date().getFullYear();
 
     init();
         
 </script>  
 </body>
 </html>
+
 
 
