@@ -943,6 +943,7 @@
               <option value="cv-ketel">CV-ketels</option>
               <option value="warmtepomp">Warmtepompen</option>
               <option value="mv-wtw">MV/WTW</option>
+              <option value="collectief">Collectief</option>
               <option value="waterzijdig">Waterzijdig</option>
               <option value="overig">Overig</option>
             </select>
@@ -1066,6 +1067,7 @@
               <option value="cv-ketel">CV-ketel</option>
               <option value="warmtepomp">Warmtepomp</option>
               <option value="wtw-mv">WTW/MV</option>
+              <option value="collectief">Collectief</option>
               <option value="waterzijdig">Waterzijdig</option>
               <option value="overig">Overig</option>
             </select>
@@ -2214,7 +2216,7 @@
       if(wtwFields) wtwFields.style.display = type === 'wtw-mv' ? 'block' : 'none';
       
       if (otherFields) {
-          if (type === 'waterzijdig' || type === 'overig') {
+          if (type === 'waterzijdig' || type === 'overig' || type === 'collectief') {
               otherFields.style.display = 'block';
           } else {
               otherFields.style.display = 'none';
@@ -2254,7 +2256,7 @@
       wpFields.style.display = type === 'warmtepomp' ? 'block' : 'none';
       wtwFields.style.display = type === 'wtw-mv' ? 'block' : 'none';
       
-      if (type === 'waterzijdig' || type === 'overig') {
+      if (type === 'waterzijdig' || type === 'overig' || type === 'collectief') {
           otherFields.style.display = 'block';
       } else {
           otherFields.style.display = 'none';
@@ -2626,6 +2628,7 @@
 </script>  
 </body>
 </html>
+
 
 
 
