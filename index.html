@@ -1173,6 +1173,10 @@
             <label>Handleiding datum (YYYY-MM-DD, optioneel)</label>
             <input type="date" id="addHandbookDate" class="form-control">
           </div>
+          <div class="form-group">
+            <label>Link naar handleiding (URL)</label>
+            <input type="url" id="addManualUrl" class="form-control" placeholder="https://...">
+          </div>
         </div>
         <div class="modal-footer">
           <button type="button" class="btn" onclick="closeAddModal()">Annuleren</button>
@@ -1296,6 +1300,10 @@
           <div class="form-group">
             <label>Handleiding datum (YYYY-MM-DD, optioneel)</label>
             <input type="date" id="editHandbookDate" class="form-control">
+          </div>
+          <div class="form-group">
+            <label>Link naar handleiding (URL)</label>
+            <input type="url" id="editManualUrl" class="form-control" placeholder="https://...">
           </div>
         </div>
         <div class="modal-footer">
@@ -1884,8 +1892,18 @@
               <div class="card-header-text">
                 <div class="brand-label">${escapeHtml(system.brand)}</div>
                 <div class="model-label">${escapeHtml(system.model)}</div>
-                ${system.handbook_date ? '<div class="card-meta">📅 Handleiding: ' + new Date(system.handbook_date).toLocaleDateString('nl-NL') + '</div>' : ''}
-              </div>
+                
+                <!-- DATUM + LINK SECTIE -->
+                <div style="margin-top: 4px; display: flex; flex-direction: column; gap: 2px;">
+                    ${system.handbook_date ? '<div class="card-meta">📅 Handleiding: ' + new Date(system.handbook_date).toLocaleDateString('nl-NL') + '</div>' : ''}
+                    
+                    ${system.manual_url ? `
+                        <a href="${escapeHtml(system.manual_url)}" target="_blank" style="display: inline-flex; align-items: center; gap: 4px; font-size: 13px; color: var(--color-primary); text-decoration: none; font-weight: 500;">
+                            <svg class="icon" style="width:14px; height:14px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+                            Open handleiding
+                        </a>
+                    ` : ''}
+                </div>
             </div>
             
             <div class="card-actions">
@@ -2208,6 +2226,7 @@
       if (document.getElementById('editHandbookDate')) {
         document.getElementById('editHandbookDate').value = system.handbook_date || '';
       }
+        document.getElementById('editManualUrl').value = system.manual_url || '';
       pendingImages.edit = system.images || [];
       renderImagePreview('edit');
       updateFieldsForSystemType(system.systemtype);
@@ -2311,6 +2330,7 @@
       };
       
       newSystem.handbook_date = document.getElementById('addHandbookDate').value || null;
+      newSystem.manual_url = document.getElementById('addManualUrl').value || null;
 
       if (systemType === 'cv-ketel') {
         newSystem.o2_low = document.getElementById('addO2Low').value || null;
@@ -2387,6 +2407,7 @@
       };
       
       updates.handbook_date = document.getElementById('editHandbookDate').value || null;
+      updates.manual_url = document.getElementById('editManualUrl').value || null;
 
       
       if (systemType === 'cv-ketel') {
@@ -2648,6 +2669,7 @@
 </script>  
 </body>
 </html>
+
 
 
 
