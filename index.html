@@ -1753,9 +1753,9 @@
       const isFavorite = favorites.includes(system.id);
       const canEdit = currentUserRole === 'admin' || currentUserRole === 'moderator';
       
-      // --- NIEUWE LOGICA VOOR TAB NAAM ---
-      let tabLabel = 'Afstelling'; // Standaard
-      let procedureTitle = 'Afstelprocedure'; // Standaard
+      // --- TAB NAAM LOGICA ---
+      let tabLabel = 'Afstelling';
+      let procedureTitle = 'Afstelprocedure';
 
       if (['rookgasafvoer', 'appendages', 'waterzijdig', 'collectief', 'overig'].includes(system.systemtype)) {
           tabLabel = 'Inspectie';
@@ -1764,9 +1764,8 @@
           tabLabel = 'Onderhoud';
           procedureTitle = 'Onderhoudsprocedure';
       }
-      // -----------------------------------
 
-      // 1. Content: EERSTE TABBLAD (Dynamische naam)
+      // 1. Content: EERSTE TABBLAD (Onderhoud/Afstelling/Inspectie)
       let maintenanceContent = `
           <div class="card-section">
             <div class="card-section-title">
@@ -1779,7 +1778,7 @@
           </div>
       `;
 
-      // Waardes (alleen tonen als ze er zijn)
+      // Waardes
       if (system.o2_low || system.o2_high || system.co2_low || system.co2_high || system.maxco) {
         maintenanceContent += '<div class="card-section"><div class="card-section-title">Doelwaarden</div><div class="values-grid">' +
           (system.o2_low ? '<div class="value-item"><span class="value-icon" style="color: var(--color-success);"><svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></span><div class="value-content"><div class="value-label">O₂ Laaglast</div><div class="value-number">' + escapeHtml(system.o2_low) + '</div></div></div>' : '') +
@@ -1827,7 +1826,7 @@
              materialsContent = `<div class="parts-list"><div class="parts-title">Benodigde materialen</div><div class="parts-text">${escapeHtml(system.parts)}</div></div>`; 
          }
       } else {
-         materialsContent = '<div style="padding:20px; text-align:center; color:var(--color-text-secondary);">Geen materialen toegevoegd aan dit systeem.</div>';
+         materialsContent = '<div style="padding:20px; text-align:center; color:var(--color-text-secondary);">Geen materialen toegevoegd.</div>';
       }
 
       // 3. Content: CONTROLE
@@ -1889,6 +1888,7 @@
           <div class="card-header">
             <div class="card-header-with-logo">
               ${system.logo_url ? '<img src="' + escapeHtml(system.logo_url) + '" alt="logo" class="brand-logo" onerror="this.style.display=\'none\'">' : ''}
+              
               <div class="card-header-text">
                 <div class="brand-label">${escapeHtml(system.brand)}</div>
                 <div class="model-label">${escapeHtml(system.model)}</div>
@@ -1904,8 +1904,8 @@
                         </a>
                     ` : ''}
                 </div>
-
               </div>
+            </div>
             
             <div class="card-actions">
               ${system.device_image_url ? `
@@ -1926,7 +1926,6 @@
             </div>
           </div>
 
-          <!-- TABS NAVIGATIE (Dynamisch Label) -->
           <div class="tabs-nav">
             <button class="tab-btn active" data-tab="maint" onclick="switchTab('${system.id}', 'maint')">${tabLabel}</button>
             <button class="tab-btn" data-tab="parts" onclick="switchTab('${system.id}', 'parts')">Materialen</button>
@@ -1934,7 +1933,6 @@
             <button class="tab-btn" data-tab="faults" onclick="switchTab('${system.id}', 'faults')">Storingen</button>
           </div>
 
-          <!-- TABS CONTENT -->
           <div id="content-maint-${system.id}" class="tab-content active">
              ${maintenanceContent}
           </div>
@@ -2670,6 +2668,7 @@
 </script>  
 </body>
 </html>
+
 
 
 
