@@ -940,13 +940,15 @@
             <label class="filter-label">Categorie</label>
             <select id="systemTypeFilter" class="form-control">
             <option value="">Alle Categorieën</option>
-            <option value="cv-ketel">CV-ketels</option>
-            <option value="warmtepomp">Warmtepompen</option>
-            <option value="mv-wtw">MV/WTW</option>
-            <option value="waterzijdig">Waterzijdig</option>
             <option value="appendages">Appendages</option>
-            <option value="rookgasafvoer">Rookgasafvoer</option>
             <option value="collectief">Collectief</option>
+            <option value="cv-ketel">CV-ketels</option>
+            <option value="mv-wtw">MV/WTW</option>
+            <option value="overig">Overig</option>
+            <option value="rookgasafvoer">Rookgasafvoer</option>
+            <option value="thermostaten">Thermostaten</option>
+            <option value="warmtepomp">Warmtepompen</option>
+            <option value="waterzijdig">Waterzijdig</option>
             </select>
           </div>
           <div class="form-group">
@@ -1064,13 +1066,15 @@
           <div class="form-group">
             <label>Systeem Type</label>
             <select id="addSystemType" class="form-control" required onchange="updateAddFieldsForSystemType(this.value)">
-              <option value="cv-ketel">CV-ketel</option>
-              <option value="warmtepomp">Warmtepomp</option>
-              <option value="wtw-mv">WTW/MV</option>
-              <option value="waterzijdig">Waterzijdig</option>
               <option value="appendages">Appendages</option>
-              <option value="rookgasafvoer">Rookgasafvoer</option>
               <option value="collectief">Collectief</option>
+              <option value="cv-ketel">CV-ketel</option>
+              <option value="mv-wtw">MV/WTW</option>
+              <option value="overig">Overig</option>
+              <option value="rookgasafvoer">Rookgasafvoer</option>
+              <option value="thermostaten">Thermostaten</option>
+              <option value="warmtepomp">Warmtepomp</option>
+              <option value="waterzijdig">Waterzijdig</option>
             </select>
           </div>
           <div class="form-group">
@@ -1757,7 +1761,7 @@
       let tabLabel = 'Afstelling';
       let procedureTitle = 'Afstelprocedure';
 
-      if (['rookgasafvoer', 'appendages', 'waterzijdig', 'collectief', 'overig'].includes(system.systemtype)) {
+      if (['rookgasafvoer', 'appendages', 'waterzijdig', 'collectief', 'overig', 'thermostaten'].includes(system.systemtype)) {
           tabLabel = 'Inspectie';
           procedureTitle = 'Inspectieprocedure';
       } else if (system.systemtype === 'mv-wtw' || system.systemtype === 'wtw-mv') {
@@ -2238,7 +2242,7 @@
       const wtwFields = document.getElementById('wtwMvFields');
       const otherFields = document.getElementById('otherFields');
       
-      // Veiligheidscheck en reset
+      // Reset alles
       if(cvFields) cvFields.style.display = 'none';
       if(wpFields) wpFields.style.display = 'none';
       if(wtwFields) wtwFields.style.display = 'none';
@@ -2250,7 +2254,7 @@
           if(wpFields) wpFields.style.display = 'block';
       } else if (type === 'wtw-mv' || type === 'mv-wtw') {
           if(wtwFields) wtwFields.style.display = 'block';
-      } else if (['waterzijdig', 'overig', 'collectief', 'appendages', 'rookgasafvoer'].includes(type)) {
+      } else if (['waterzijdig', 'overig', 'collectief', 'appendages', 'rookgasafvoer', 'thermostaten'].includes(type)) {
           if(otherFields) otherFields.style.display = 'block';
       }
     }
@@ -2283,20 +2287,19 @@
       const wtwFields = document.getElementById('addWtwMvFields');
       const otherFields = document.getElementById('addOtherFields');
       
-      // Reset alles eerst naar verborgen
+      // Reset alles
       cvFields.style.display = 'none';
       wpFields.style.display = 'none';
       wtwFields.style.display = 'none';
       otherFields.style.display = 'none';
 
-      // Toon de juiste
       if (type === 'cv-ketel') {
           cvFields.style.display = 'block';
       } else if (type === 'warmtepomp') {
           wpFields.style.display = 'block';
       } else if (type === 'wtw-mv' || type === 'mv-wtw') {
           wtwFields.style.display = 'block';
-      } else if (['waterzijdig', 'overig', 'collectief', 'appendages', 'rookgasafvoer'].includes(type)) {
+      } else if (['waterzijdig', 'overig', 'collectief', 'appendages', 'rookgasafvoer', 'thermostaten'].includes(type)) {
           otherFields.style.display = 'block';
       }
     }
@@ -2668,6 +2671,7 @@
 </script>  
 </body>
 </html>
+
 
 
 
