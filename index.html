@@ -1998,6 +1998,18 @@
     }
 
     function toggleTheme() {
+      // 1. RESET EASTER EGG (Verwijder de geforceerde kleuren)
+      const target = document.body;
+      const propertiesToRemove = [
+        '--color-bg-primary', '--color-surface', '--color-text',
+        '--color-text-secondary', '--color-primary', '--color-border',
+        '--color-card-border', '--color-warning', '--color-success',
+        '--color-error'
+      ];
+      // Loop door de lijst en verwijder ze één voor één
+      propertiesToRemove.forEach(prop => target.style.removeProperty(prop));
+
+      // 2. STANDAARD THEMA WISSELEN (Zoals het was)
       const currentTheme = document.body.getAttribute('data-theme');
       const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
       document.body.setAttribute('data-theme', newTheme);
@@ -2703,6 +2715,7 @@
 </script>  
 </body>
 </html>
+
 
 
 
