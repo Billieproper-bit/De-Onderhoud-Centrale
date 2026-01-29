@@ -982,7 +982,7 @@
         <p>Geen systemen gevonden met de opgegeven criteria</p>
       </div>
       <div class="app-footer">
-        &copy; <span id="currentYear"></span> <strong>K.W. Diets</strong>. Alle rechten voorbehouden.
+          &copy; <span id="currentYear"></span> <strong id="copyrightName" style="cursor: pointer; user-select: none;" title="???">K.W. Diets</strong>. Alle rechten voorbehouden.
       </div>
     </div>
   </div>
@@ -1379,6 +1379,37 @@
     let auditLogs = [];
     let auditFilterTerm = '';
 
+    function activateEasterEgg() {
+      
+      const themes = [
+        { bg: '#6C10F3', text: '#43EDC2' }, // Paars & Teal
+        { bg: '#163C64', text: '#F76648' }, // Donkerblauw & Oranje
+        { bg: '#DFDE2F', text: '#1E1D1C' }  // Geel & Donkergrijs
+      ];
+
+      // Kies een willekeurige (random) set
+      const randomTheme = themes[Math.floor(Math.random() * themes.length)];
+      
+      const root = document.documentElement;
+
+      // Forceer de kleuren over de hele site
+      root.style.setProperty('--color-bg-primary', randomTheme.bg);
+      root.style.setProperty('--color-surface', randomTheme.bg); // Kaarten krijgen dezelfde achtergrondkleur
+      
+      root.style.setProperty('--color-text', randomTheme.text);
+      root.style.setProperty('--color-text-secondary', randomTheme.text); // Subteksten ook in accentkleur
+      
+      root.style.setProperty('--color-primary', randomTheme.text); // Knoppen en iconen
+      root.style.setProperty('--color-border', randomTheme.text);  // Randjes
+      root.style.setProperty('--color-card-border', randomTheme.text);
+      
+      root.style.setProperty('--color-warning', randomTheme.text); 
+      root.style.setProperty('--color-success', randomTheme.text);
+      root.style.setProperty('--color-error', randomTheme.text);
+
+      console.log('🐣 Easter Egg geactiveerd!');
+    }
+    
     async function init() {
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
@@ -1410,6 +1441,7 @@
     document.getElementById('addSystemBtn').addEventListener('click', openAddModal);
     document.getElementById('auditBtn').addEventListener('click', openAuditModal);
     document.getElementById('auditSearchInput')?.addEventListener('input', filterAuditLogs);
+    document.getElementById('copyrightName').addEventListener('click', activateEasterEgg);
     
     // We gebruiken nu dropdowns, dus search listener is niet meer nodig op input
     // document.getElementById('searchInput').addEventListener('input', filterSystems); 
@@ -1421,7 +1453,7 @@
     });
 
     document.getElementById('brandFilter').addEventListener('change', () => {
-        updateModelFilter(); // Merk gewijzigd? -> Modellen aanpassen (HIER GING HET WAARSCHIJNLIJK MIS)
+        updateModelFilter(); // Merk gewijzigd? -> Modellen aanpassen 
         filterSystems();     // En kaartjes filteren
     });
 
@@ -2671,6 +2703,7 @@
 </script>  
 </body>
 </html>
+
 
 
 
