@@ -1386,26 +1386,27 @@
         { bg: '#163C64', text: '#F76648' }, // Donkerblauw & Oranje
         { bg: '#DFDE2F', text: '#1E1D1C' }  // Geel & Donkergrijs
       ];
-
-      // Kies een willekeurige (random) set
+      
       const randomTheme = themes[Math.floor(Math.random() * themes.length)];
+            
+      const target = document.documentElement;
       
-      const root = document.documentElement;
-
-      // Forceer de kleuren over de hele site
-      root.style.setProperty('--color-bg-primary', randomTheme.bg);
-      root.style.setProperty('--color-surface', randomTheme.bg); // Kaarten krijgen dezelfde achtergrondkleur
+      const props = {
+        '--color-bg-primary': randomTheme.bg,
+        '--color-surface': randomTheme.bg,
+        '--color-text': randomTheme.text,
+        '--color-text-secondary': randomTheme.text,
+        '--color-primary': randomTheme.text,
+        '--color-border': randomTheme.text,
+        '--color-card-border': randomTheme.text,
+        '--color-warning': randomTheme.text,
+        '--color-success': randomTheme.text,
+        '--color-error': randomTheme.text
+      };
       
-      root.style.setProperty('--color-text', randomTheme.text);
-      root.style.setProperty('--color-text-secondary', randomTheme.text); // Subteksten ook in accentkleur
-      
-      root.style.setProperty('--color-primary', randomTheme.text); // Knoppen en iconen
-      root.style.setProperty('--color-border', randomTheme.text);  // Randjes
-      root.style.setProperty('--color-card-border', randomTheme.text);
-      
-      root.style.setProperty('--color-warning', randomTheme.text); 
-      root.style.setProperty('--color-success', randomTheme.text);
-      root.style.setProperty('--color-error', randomTheme.text);
+      for (const [key, value] of Object.entries(props)) {
+        target.style.setProperty(key, value, 'important');
+      }
 
       console.log('🐣 Easter Egg geactiveerd!');
     }
@@ -1998,18 +1999,6 @@
     }
 
     function toggleTheme() {
-      // 1. RESET EASTER EGG (Verwijder de geforceerde kleuren)
-      const target = document.body;
-      const propertiesToRemove = [
-        '--color-bg-primary', '--color-surface', '--color-text',
-        '--color-text-secondary', '--color-primary', '--color-border',
-        '--color-card-border', '--color-warning', '--color-success',
-        '--color-error'
-      ];
-      // Loop door de lijst en verwijder ze één voor één
-      propertiesToRemove.forEach(prop => target.style.removeProperty(prop));
-
-      // 2. STANDAARD THEMA WISSELEN (Zoals het was)
       const currentTheme = document.body.getAttribute('data-theme');
       const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
       document.body.setAttribute('data-theme', newTheme);
@@ -2715,6 +2704,7 @@
 </script>  
 </body>
 </html>
+
 
 
 
