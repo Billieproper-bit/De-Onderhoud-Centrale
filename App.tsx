@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from './supabaseClient';
 import { UserProfile } from './types';
-import Auth from './components/Auth.tsx';
-import Dashboard from './components/Dashboard.tsx';
-import PendingApproval from './components/PendingApproval.tsx';
+import Auth from './components/Auth';
+import Dashboard from './components/Dashboard';
+import PendingApproval from './components/PendingApproval';
 
 const App: React.FC = () => {
   const [session, setSession] = useState<any>(null);
