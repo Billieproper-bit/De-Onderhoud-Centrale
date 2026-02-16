@@ -851,25 +851,26 @@
   </style>
 </head>
 <body>
-  <div id="authContainer" class="auth-container hidden">
-    <div class="auth-card">
-      <h1 class="auth-title">De Onderhoud Centrale</h1>
-      <p class="auth-subtitle">Log in om afstelinstructies te bekijken</p>
-      <form id="loginForm">
-        <div class="form-group">
-          <label for="email">E-mail</label>
-          <input type="email" id="email" class="form-control" required placeholder="jouw@email.nl">
-        </div>
-        <div class="form-group">
-          <label for="password">Wachtwoord</label>
-          <input type="password" id="password" class="form-control" required>
-        </div>
-        <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 16px;">Inloggen</button>
+  <div id="authContainer" class="full-screen-center" style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh;">
+    <div style="background: var(--color-surface); padding: 40px; border-radius: 24px; box-shadow: var(--shadow-md); width: 100%; max-width: 400px; text-align: center;">
+      <h1 style="margin-bottom: 10px;">DOC <span>.</span></h1>
+      <p style="color: var(--color-text-secondary); margin-bottom: 30px;">Log in voor toegang</p>
+      <form id="loginForm" style="display: flex; flex-direction: column; gap: 15px;">
+        <input type="email" id="loginEmail" placeholder="E-mailadres" required style="padding: 12px; border: 1px solid var(--color-border); border-radius: 8px; background: var(--color-bg-primary); color: var(--color-text);">
+        <input type="password" id="loginPassword" placeholder="Wachtwoord" required style="padding: 12px; border: 1px solid var(--color-border); border-radius: 8px; background: var(--color-bg-primary); color: var(--color-text);">
+        <button type="submit" class="btn btn-primary" style="padding: 14px; justify-content: center;">Inloggen / Registreren</button>
       </form>
-      <p style="margin-top: 12px; font-size: 14px; text-align: center;">
-        Nog geen account? 
-        <button type="button" class="btn" style="padding: 4px 8px; font-size: 13px;" onclick="openRegisterModal()">Registreren</button>
-      </p>
+      <p id="authError" style="color: var(--color-error); margin-top: 15px; font-size: 14px;"></p>
+    </div>
+  </div>
+
+  <div id="pendingScreen" class="full-screen-center hidden" style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; text-align: center;">
+    <h1 style="font-size: 48px; margin-bottom: 20px;">⏳</h1>
+    <h2>Toegang in afwachting</h2>
+    <p id="pendingMessage" style="color: var(--color-text-secondary); margin: 20px 0; max-width: 400px;"></p>
+    <div style="display: flex; gap: 10px;">
+      <button onclick="location.reload()" class="btn btn-primary">Check status</button>
+      <button onclick="supabase.auth.signOut()" class="btn">Uitloggen</button>
     </div>
   </div>
 
@@ -997,9 +998,18 @@
           </svg>
         </button>
       </div>
+      
       <div class="modal-body">
+        <div class="admin-section" style="border-bottom: 2px solid var(--color-border); margin-bottom: 20px; padding-bottom: 20px;">
+          <h3 style="margin-bottom: 16px; color: var(--color-warning);">⏳ Wacht op goedkeuring</h3>
+          <div id="pendingUsersList">
+             <!-- Hier komen de wachtende gebruikers -->
+             <p style="font-size:13px; color:var(--color-text-secondary);">Laden...</p>
+          </div>
+        </div>
+
         <div class="admin-section">
-          <h3 style="margin-bottom: 16px;">Gebruikers en rollen</h3>
+          <h3 style="margin-bottom: 16px;">Alle gebruikers en rollen</h3>
           <table class="user-table" id="usersTable">
             <thead>
               <tr>
@@ -1014,8 +1024,6 @@
           </table>
         </div>
       </div>
-    </div>
-  </div>
 
   <div id="auditModal" class="modal">
     <div class="modal-content wide">
@@ -1027,6 +1035,7 @@
           </svg>
         </button>
       </div>
+      
       <div class="modal-body">
         <div class="admin-section">
           <h3 style="margin-bottom: 16px;">Activiteitenlogboek</h3>
@@ -1061,6 +1070,7 @@
           </svg>
         </button>
       </div>
+               
       <form id="addForm">
         <div class="modal-body">
           <div class="form-group">
@@ -1411,7 +1421,7 @@
 
       console.log('🐣 Easter Egg geactiveerd!');
     }
-    
+
     async function init() {
       const { data: { session } } = await supabase.auth.getSession();
       
@@ -1429,6 +1439,8 @@
       } else {
         showAuth();
       }
+
+
 
       supabase.auth.onAuthStateChange(async (event, session) => {
         if (event === 'SIGNED_IN') {
@@ -2084,6 +2096,7 @@
     async function openAdminModal() {
       document.getElementById('adminModal').classList.add('active');
       await loadUsers();
+      await loadPendingUsers();
     }
 
     function closeAdminModal() {
@@ -2765,24 +2778,67 @@
     
     document.getElementById('currentYear').textContent = new Date().getFullYear();
 
+// Functie 1: Haal niet-goedgekeurde gebruikers op
+async function loadPendingUsers() {
+  const container = document.getElementById('pendingUsersList');
+  if (!container) return; // Veiligheid
+
+  const { data, error } = await supabase
+    .from('user_roles')
+    .select('*')
+    .eq('is_approved', false);
+
+  container.innerHTML = '';
+
+  if (error) {
+    console.error(error);
+    container.innerHTML = '<p style="color:red">Fout bij laden aanvragen.</p>';
+    return;
+  }
+
+  if (!data || data.length === 0) {
+    container.innerHTML = '<p style="font-size:13px; color:green;">✓ Geen openstaande aanvragen.</p>';
+    return;
+  }
+
+  data.forEach(user => {
+    const row = document.createElement('div');
+    row.style = "display:flex; justify-content:space-between; align-items:center; padding:10px; background:var(--color-bg-primary); border:1px solid var(--color-border); border-radius:8px; margin-bottom:8px;";
+    row.innerHTML = `
+      <span style="font-weight:500;">${user.email}</span>
+      <button onclick="approveUser('${user.user_id}')" class="btn btn-primary" style="padding:4px 12px; font-size:12px;">
+        Toelaten
+      </button>
+    `;
+    container.appendChild(row);
+  });
+}
+
+// Functie 2: Keur een gebruiker goed
+async function approveUser(userId) {
+  if(!confirm('Wil je deze gebruiker toegang geven?')) return;
+
+  const { error } = await supabase
+    .from('user_roles')
+    .update({ is_approved: true })
+    .eq('user_id', userId);
+
+  if (error) {
+    alert("Fout bij goedkeuren: " + error.message);
+  } else {
+    // Ververs beide lijsten
+    loadPendingUsers(); 
+    loadUsers(); 
+    // Log de actie
+    if(typeof logAuditEvent === 'function') {
+        logAuditEvent('user_approved', `Gebruiker ${userId} goedgekeurd`);
+    }
+  }
+}
+    
     init();
         
 </script>  
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
