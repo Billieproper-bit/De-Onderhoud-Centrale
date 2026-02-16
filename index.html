@@ -1414,25 +1414,90 @@
     
     async function init() {
       const { data: { session } } = await supabase.auth.getSession();
+      
       if (session) {
         currentUser = session.user;
-        showApp();
-        await loadData();
+        // Check of de gebruiker is goedgekeurd
+        const isApproved = await checkUserApproval(session.user);
+        
+        if (isApproved) {
+          showApp();
+          await loadData();
+        } else {
+          showPendingScreen(session.user.email);
+        }
       } else {
         showAuth();
       }
-      supabase.auth.onAuthStateChange((event, session) => {
+
+      supabase.auth.onAuthStateChange(async (event, session) => {
         if (event === 'SIGNED_IN') {
           currentUser = session.user;
-          showApp();
-          loadData();
+          const isApproved = await checkUserApproval(session.user);
+          if (isApproved) {
+            showApp();
+            loadData();
+          } else {
+            showPendingScreen(session.user.email);
+          }
         } else if (event === 'SIGNED_OUT') {
           currentUser = null;
           showAuth();
         }
       });
+
       setupEventListeners();
       initTheme();
+    }
+
+    // NIEUW: Deze functie checkt de database
+    async function checkUserApproval(user) {
+      try {
+        const { data, error } = await supabase
+          .from('user_roles')
+          .select('is_approved')
+          .eq('user_id', user.id)
+          .maybeSingle();
+
+        if (error) throw error;
+        
+        // Als er geen rij is, maken we er eentje aan (standaard niet goedgekeurd)
+        if (!data) {
+          await supabase.from('user_roles').insert([
+            { user_id: user.id, email: user.email, is_approved: false }
+          ]);
+          return false;
+        }
+        
+        return data.is_approved;
+      } catch (err) {
+        console.error("Fout bij checken goedkeuring:", err);
+        return false;
+      }
+    }
+
+    // NIEUW: Deze functie toont het 'Wacht' scherm
+    function showPendingScreen(email) {
+      document.getElementById('authContainer').classList.add('hidden');
+      document.getElementById('appContainer').classList.add('hidden');
+      
+      // We maken even een simpel tijdelijk scherm
+      let pendingDiv = document.getElementById('pendingScreen');
+      if (!pendingDiv) {
+        pendingDiv = document.createElement('div');
+        pendingDiv.id = 'pendingScreen';
+        pendingDiv.style = "display:flex; flex-direction:column; align-items:center; justify-content:center; height:100vh; text-align:center; padding:20px; font-family:sans-serif; color:#134252;";
+        document.body.appendChild(pendingDiv);
+      }
+      
+      pendingDiv.innerHTML = `
+        <h1 style="font-size: 24px; margin-bottom: 10px;">Toegang in afwachting ⏳</h1>
+        <p style="margin-bottom: 20px;">Hoi <b>${email}</b>, je account moet nog worden goedgekeurd door de beheerder.</p>
+        <button onclick="location.reload()" style="background:#218D8D; color:white; border:none; padding:10px 20px; border-radius:8px; cursor:pointer; margin-bottom:10px;">Check opnieuw</button>
+        <br>
+        <button onclick="supabase.auth.signOut()" style="background:none; border:none; color:#c0152f; cursor:pointer; text-decoration:underline;">Uitloggen</button>
+      `;
+      pendingDiv.classList.remove('hidden');
     }
 
     function setupEventListeners() {
@@ -2705,6 +2770,7 @@
 </script>  
 </body>
 </html>
+
 
 
 
