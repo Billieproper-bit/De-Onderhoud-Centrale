@@ -1,0 +1,87 @@
+
+import React, { useState, useEffect } from 'react';
+import { supabase } from './supabaseClient';
+import { UserProfile } from './types';
+import Auth from './components/Auth';
+import Dashboard from './components/Dashboard';
+import PendingApproval from './components/PendingApproval';
+
+const App: React.FC = () => {
+  const [session, setSession] = useState<any>(null);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // Check huidige sessie
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      if (session) fetchProfile(session.user.id);
+      else setLoading(false);
+    });
+
+    // Listen naar auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+      if (session) fetchProfile(session.user.id);
+      else {
+        setProfile(null);
+        setLoading(false);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const fetchProfile = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('user_roles')
+        .select('*')
+        .eq('user_id', userId)
+        .maybeSingle(); // maybeSingle voorkomt foutmeldingen als de rij nog niet bestaat
+
+      if (error) {
+        console.error("Error fetching profile:", error);
+      }
+      
+      if (!data && session) {
+        // Fallback: Als er een sessie is maar geen profiel in user_roles, 
+        // maken we er een aan (bijv. voor oude gebruikers)
+        const { data: newProfile, error: insertError } = await supabase
+          .from('user_roles')
+          .insert([{ user_id: userId, email: session.user.email, is_approved: false }])
+          .select()
+          .single();
+          
+        if (!insertError) setProfile(newProfile);
+      } else {
+        setProfile(data);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-teal-600"></div>
+      </div>
+    );
+  }
+
+  if (!session) {
+    return <Auth />;
+  }
+
+  // Als de gebruiker is ingelogd maar nog NIET is goedgekeurd door de admin
+  if (!profile || !profile.is_approved) {
+    return <PendingApproval email={session.user.email} onRefresh={() => fetchProfile(session.user.id)} />;
+  }
+
+  return <Dashboard profile={profile} />;
+};
+
+export default App;
