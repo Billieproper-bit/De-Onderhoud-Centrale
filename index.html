@@ -1430,15 +1430,6 @@
       console.log('🐣 Easter Egg geactiveerd!');
     }
 
-      function openRegisterModal() {
-      document.getElementById('registerModal').classList.add('active');
-    }
-
-    function closeRegisterModal() {
-      document.getElementById('registerModal').classList.remove('active');
-      document.getElementById('registerForm').reset();
-    }
-
     async function init() {
       const { data: { session } } = await supabase.auth.getSession();
       
@@ -2846,12 +2837,24 @@ async function approveUser(userId) {
     }
   }
 }
+
+    function openRegisterModal() {
+      const modal = document.getElementById('registerModal');
+      if (modal) modal.classList.add('active');
+    }
+
+    function closeRegisterModal() {
+      const modal = document.getElementById('registerModal');
+      if (modal) modal.classList.remove('active');
+      document.getElementById('registerForm').reset();
+    }
     
     init();
         
 </script>  
 </body>
 </html>
+
 
 
 
