@@ -2195,24 +2195,27 @@
 
     function renderUsersTable() {
       const tbody = document.getElementById('usersTableBody');
-      tbody.innerHTML = allUsers.map(user => '<tr><td>' + escapeHtml(user.email) + '</td><td><span class="role-badge ' + user.role + '">' + user.role + '</span></td><td><select onchange="updateUserRole(\'' + user.id + '\', this.value)" class="form-control" style="width: 150px;"><option value="user" ' + (user.role === 'user' ? 'selected' : '') + '>User</option><option value="moderator" ' + (user.role === 'moderator' ? 'selected' : '') + '>Moderator</option><option value="admin" ' + (user.role === 'admin' ? 'selected' : '') + '>Admin</option></select></td></tr>').join('');
-    }
-
-    async function updateUserRole(userId, newRole) {
-      try {
-        const { error } = await supabase
-          .from('user_roles')
-          .upsert({ user_id: userId, role: newRole }, { onConflict: 'user_id' });
-        if (error) throw error;
-        await logAuditEvent('role_change', `Gebruiker ${userId} rol gewijzigd naar ${newRole}`);
-        const user = allUsers.find(u => u.id === userId);
-        if (user) user.role = newRole;
-        renderUsersTable();
-        alert('Rol bijgewerkt!');
-      } catch (error) {
-        console.error('Error updating role:', error);
-        alert('Fout bij bijwerken rol: ' + error.message);
-      }
+      
+      tbody.innerHTML = allUsers.map(user => {
+        
+        return `
+          <tr>
+            <td>
+              ${escapeHtml(user.email)}
+            </td>
+            <td>
+              <span class="role-badge ${user.role}">${user.role}</span>
+            </td>
+            <td>
+              <select onchange="updateUserRole('${user.id}', this.value)" class="form-control" style="width: 150px;">
+                <option value="user" ${user.role === 'user' ? 'selected' : ''}>User</option>
+                <option value="moderator" ${user.role === 'moderator' ? 'selected' : ''}>Moderator</option>
+                <option value="admin" ${user.role === 'admin' ? 'selected' : ''}>Admin</option>
+              </select>
+            </td>
+          </tr>
+        `;
+      }).join('');
     }
 
     async function logAuditEvent(action, details) {
@@ -2294,23 +2297,45 @@
       const email = document.getElementById('registerEmail').value.trim();
       const password = document.getElementById('registerPassword').value;
       const password2 = document.getElementById('registerPassword2').value;
+
       if (password !== password2) {
         alert('Wachtwoorden komen niet overeen.');
         return;
       }
+
       try {
+        // 1. Maak de gebruiker aan in Supabase Auth
         const { data, error } = await supabase.auth.signUp({ email, password });
         if (error) throw error;
+
         const newUserId = data.user?.id;
+
         if (newUserId) {
+          // 2. Sla de rol én het e-mailadres op in jouw eigen tabel
+          // (Hier ging het mis: email en is_approved ontbraken)
           const { error: roleError } = await supabase
             .from('user_roles')
-            .insert({ user_id: newUserId, role: 'user' });
-          if (roleError) console.error('Fout bij opslaan rol:', roleError);
+            .insert({ 
+              user_id: newUserId, 
+              email: email,           // <--- DEZE IS CRUCIAAL
+              role: 'user', 
+              is_approved: false      // <--- EN DEZE OOK
+            });
+          
+          if (roleError) {
+             console.error('Fout bij opslaan rol:', roleError);
+             // Als het opslaan in de tabel mislukt, is het handig dit te weten,
+             // maar de user is wel aangemaakt in Auth.
+          }
         }
-        alert('Account aangemaakt. Controleer je e-mail (indien bevestiging nodig) en log daarna in.');
+
+        alert('Account aangemaakt! Je wordt nu doorgestuurd naar het wachtscherm.');
         closeRegisterModal();
         document.getElementById('registerForm').reset();
+        
+        // Herlaad de pagina om direct het wachtscherm te zien
+        location.reload(); 
+
       } catch (err) {
         console.error('Fout bij registreren:', err);
         alert('Registratie mislukt: ' + err.message);
@@ -2862,6 +2887,7 @@ async function approveUser(userId) {
 </script>  
 </body>
 </html>
+
 
 
 
