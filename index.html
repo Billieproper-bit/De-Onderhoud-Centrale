@@ -1607,8 +1607,10 @@
 
     async function handleLogin(e) {
       e.preventDefault();
-      const email = document.getElementById('email').value;
-      const password = document.getElementById('password').value;
+      const email = document.getElementById('loginEmail').value;
+
+      const password = document.getElementById('loginPassword').value;
+      
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) alert('Login mislukt: ' + error.message);
       document.getElementById('loginForm').reset();
@@ -2841,4 +2843,5 @@ async function approveUser(userId) {
 </script>  
 </body>
 </html>
+
 
