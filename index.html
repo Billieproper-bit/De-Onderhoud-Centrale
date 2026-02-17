@@ -995,6 +995,7 @@
     </div> 
   </div>
 
+  <!-- 1. ADMIN MODAL (Met gebruikersbeheer) -->
   <div id="adminModal" class="modal">
     <div class="modal-content wide">
       <div class="modal-header">
@@ -1007,14 +1008,15 @@
       </div>
       
       <div class="modal-body">
+        <!-- Wachtende gebruikers sectie -->
         <div class="admin-section" style="border-bottom: 2px solid var(--color-border); margin-bottom: 20px; padding-bottom: 20px;">
           <h3 style="margin-bottom: 16px; color: var(--color-warning);">⏳ Wacht op goedkeuring</h3>
           <div id="pendingUsersList">
-             <!-- Hier komen de wachtende gebruikers -->
              <p style="font-size:13px; color:var(--color-text-secondary);">Laden...</p>
           </div>
         </div>
 
+        <!-- Alle gebruikers sectie -->
         <div class="admin-section">
           <h3 style="margin-bottom: 16px;">Alle gebruikers en rollen</h3>
           <table class="user-table" id="usersTable">
@@ -1034,6 +1036,7 @@
     </div>
   </div>
 
+  <!-- 2. AUDIT LOG MODAL -->
   <div id="auditModal" class="modal">
     <div class="modal-content wide">
       <div class="modal-header">
@@ -1044,7 +1047,6 @@
           </svg>
         </button>
       </div>
-      
       <div class="modal-body">
         <div class="admin-section">
           <h3 style="margin-bottom: 16px;">Activiteitenlogboek</h3>
@@ -1069,6 +1071,7 @@
     </div>
   </div>
 
+  <!-- 3. TOEVOEGEN MODAL -->
   <div id="addModal" class="modal">
     <div class="modal-content wide">
       <div class="modal-header">
@@ -1209,6 +1212,7 @@
     </div>
   </div>
 
+  <!-- 4. BEWERKEN MODAL -->
   <div id="editModal" class="modal">
     <div class="modal-content wide">
       <div class="modal-header">
@@ -1337,7 +1341,7 @@
     </div>
   </div>
 
-  
+  <!-- 5. REGISTRATIE MODAL -->
   <div id="registerModal" class="modal">
     <div class="modal-content">
       <div class="modal-header">
@@ -2856,6 +2860,7 @@ async function approveUser(userId) {
 </script>  
 </body>
 </html>
+
 
 
 
