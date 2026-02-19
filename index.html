@@ -2487,56 +2487,94 @@
 
     async function handleAddSubmit(e) {
       e.preventDefault();
-      
-      const systemType = document.getElementById('addSystemType').value;
-      
-      const checksJson = await processChecksData('add');
-
-      let deviceImgUrl = null;
-      const deviceFile = document.getElementById('addDeviceImage').files[0];
-      if (deviceFile) {
-          try { deviceImgUrl = await uploadSingleFile(deviceFile); } 
-          catch(err) { console.error(err); alert('Fout bij uploaden toestelfoto'); return; }
-      }
-
-      const newSystem = {
-        systemtype: systemType,
-        brand: document.getElementById('addBrand').value,
-        model: document.getElementById('addModel').value,
-        logo_url: document.getElementById('addLogoUrl').value || null,
-        device_image_url: deviceImgUrl, // <--- NIEUWE REGEL
-        procedure: document.getElementById('addProcedure').value,
-        parts: collectPartsData('add'),
-        faults: collectFaultsData('add'),
-        checks: checksJson,
-        notes: document.getElementById('addNotes').value || null
-      };
-      
-      newSystem.handbook_date = document.getElementById('addHandbookDate').value || null;
-      newSystem.manual_url = document.getElementById('addManualUrl').value || null;
-
-      if (systemType === 'cv-ketel') {
-        newSystem.o2_low = document.getElementById('addO2Low').value || null;
-        newSystem.o2_high = document.getElementById('addO2High').value || null;
-        newSystem.co2_low = document.getElementById('addCO2Low').value || null;
-        newSystem.co2_high = document.getElementById('addCO2High').value || null;
-        newSystem.maxco = document.getElementById('addMaxCO').value || null;
-      } else {
-        newSystem.o2_low = null;
-        newSystem.o2_high = null;
-        newSystem.co2_low = null;
-        newSystem.co2_high = null;
-        newSystem.maxco = null;
-      }
+      console.log("🚀 Start opslaan nieuw systeem...");
 
       try {
+        // Stap 1: Basisvelden ophalen
+        const systemTypeEl = document.getElementById('addSystemType');
+        const brandEl = document.getElementById('addBrand');
+        const modelEl = document.getElementById('addModel');
+        const procedureEl = document.getElementById('addProcedure');
+
+        if (!systemTypeEl || !brandEl || !modelEl) {
+          throw new Error("Een van de verplichte velden (Type, Merk, Model) is niet gevonden in de HTML.");
+        }
+
+        const systemType = systemTypeEl.value;
+        console.log("📝 Type:", systemType);
+
+        // Stap 2: Checks en Materialen verzamelen
+        // We gebruiken try-catch per onderdeel zodat één fout niet alles stopt
+        let checksJson = null;
+        try {
+           checksJson = await processChecksData('add');
+        } catch(err) { console.warn("Fout bij checks:", err); }
+
+        let partsJson = null;
+        try {
+           partsJson = collectPartsData('add');
+        } catch(err) { console.warn("Fout bij parts:", err); }
+
+        let faultsJson = null;
+        try {
+           faultsJson = collectFaultsData('add');
+        } catch(err) { console.warn("Fout bij faults:", err); }
+
+        // Stap 3: Afbeelding uploaden (indien aanwezig)
+        let deviceImgUrl = null;
+        const deviceFileEl = document.getElementById('addDeviceImage');
+        if (deviceFileEl && deviceFileEl.files.length > 0) {
+            console.log("📸 Toestelfoto uploaden...");
+            try { 
+              deviceImgUrl = await uploadSingleFile(deviceFileEl.files[0]); 
+            } catch(err) { 
+              console.error("Foto upload error:", err);
+              if(!confirm("Het uploaden van de toestelfoto is mislukt. Wil je doorgaan zonder foto?")) return;
+            }
+        }
+
+        // Stap 4: Het object bouwen
+        const newSystem = {
+          systemtype: systemType,
+          brand: brandEl.value,
+          model: modelEl.value,
+          logo_url: document.getElementById('addLogoUrl')?.value || null,
+          device_image_url: deviceImgUrl,
+          procedure: procedureEl ? procedureEl.value : '',
+          parts: partsJson,
+          faults: faultsJson,
+          checks: checksJson,
+          notes: document.getElementById('addNotes')?.value || null,
+          handbook_date: document.getElementById('addHandbookDate')?.value || null,
+          manual_url: document.getElementById('addManualUrl')?.value || null
+        };
+
+        // Stap 5: Specifieke meetwaarden toevoegen (alleen als de velden bestaan)
+        if (systemType === 'cv-ketel') {
+          newSystem.o2_low = document.getElementById('addO2Low')?.value || null;
+          newSystem.o2_high = document.getElementById('addO2High')?.value || null;
+          newSystem.co2_low = document.getElementById('addCO2Low')?.value || null;
+          newSystem.co2_high = document.getElementById('addCO2High')?.value || null;
+          newSystem.maxco = document.getElementById('addMaxCO')?.value || null;
+        } else {
+          // Zorg dat ze leeg zijn voor andere systemen
+          newSystem.o2_low = null; newSystem.o2_high = null;
+          newSystem.co2_low = null; newSystem.co2_high = null;
+          newSystem.maxco = null;
+        }
+
+        console.log("📦 Data klaar voor verzending:", newSystem);
+
+        // Stap 6: Extra foto's uploaden
         let imageUrls = [];
-        // Hier wordt systemType gebruikt voor de bestandsnaam van de hoofdfoto's
-        if (pendingImages.add.length > 0) {
+        if (pendingImages.add && pendingImages.add.length > 0) {
+          console.log(`🖼️ ${pendingImages.add.length} extra foto's uploaden...`);
           imageUrls = await uploadImages(systemType + '-' + Date.now(), pendingImages.add);
         }
         newSystem.images = imageUrls;
 
+        // Stap 7: Opslaan in Supabase
+        console.log("O versturen naar database...");
         const { data, error } = await supabase
           .from('systems')
           .insert([newSystem])
@@ -2544,21 +2582,28 @@
           
         if (error) throw error;
         
+        console.log("✅ Succes! Opgeslagen data:", data);
+
         if (data && data.length > 0) {
           systems.push(data[0]);
-          await logAuditEvent('system_created', `Systeem ${newSystem.brand} ${newSystem.model} (${systemType}) aangemaakt`);
+          // Audit log proberen (niet fataal als het mislukt)
+          try {
+            await logAuditEvent('system_created', `Systeem ${newSystem.brand} ${newSystem.model} (${systemType}) aangemaakt`);
+          } catch(e) { console.warn("Audit log mislukt", e); }
         }
         
+        // Opruimen
         pendingImages.add = [];
         closeAddModal();
         updateBrandFilter();
-        // Ook model filter updaten na toevoegen
         updateModelFilter();
         filterSystems();
+        
         alert('Systeem succesvol toegevoegd!');
+
       } catch (error) {
-        console.error('Error adding system:', error);
-        alert('Fout bij toevoegen systeem: ' + error.message);
+        console.error('❌ CRITIQUE FOUT bij opslaan:', error);
+        alert('Er ging iets mis bij het opslaan:\n' + error.message + '\n\n(Kijk in de console F12 voor details)');
       }
     }
 
@@ -2945,6 +2990,7 @@ async function approveUser(userId) {
 </script>  
 </body>
 </html>
+
 
 
 
