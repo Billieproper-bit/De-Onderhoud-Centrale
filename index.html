@@ -1109,7 +1109,7 @@
         </button>
       </div>
                
-      <form id="addForm">
+      <form id="addForm" novalidate>
         <div class="modal-body">
           <div class="form-group">
             <label>Systeem Type</label>
@@ -2486,58 +2486,65 @@
     }
 
     async function handleAddSubmit(e) {
-      e.preventDefault();
-      console.log("🚀 Start opslaan nieuw systeem...");
+      e.preventDefault(); // Voorkom dat de pagina herlaadt
+      
+      // 1. Zoek de knop en maak hem even onbruikbaar (tegen dubbelklikken)
+      const submitBtn = e.target.querySelector('button[type="submit"]');
+      const originalText = submitBtn.textContent;
+      
+      console.log("🚀 Start procedure opslaan...");
 
       try {
-        // Stap 1: Basisvelden ophalen
+        // 2. Haal de verplichte velden op
         const systemTypeEl = document.getElementById('addSystemType');
         const brandEl = document.getElementById('addBrand');
         const modelEl = document.getElementById('addModel');
         const procedureEl = document.getElementById('addProcedure');
 
-        if (!systemTypeEl || !brandEl || !modelEl) {
-          throw new Error("Een van de verplichte velden (Type, Merk, Model) is niet gevonden in de HTML.");
+        // 3. HANDMATIGE CONTROLE (Vervangt de browser controle)
+        if (!brandEl.value.trim() || !modelEl.value.trim()) {
+            alert("⚠️ Let op: Merk en Model zijn verplicht!");
+            // Focus op het lege veld zodat je direct kunt typen
+            if(!brandEl.value.trim()) brandEl.focus();
+            else modelEl.focus();
+            return; // Stop de functie hier
         }
 
-        const systemType = systemTypeEl.value;
-        console.log("📝 Type:", systemType);
+        // Als we hier zijn, gaat het opslaan beginnen!
+        submitBtn.disabled = true;
+        submitBtn.textContent = "Opslaan...";
+        submitBtn.style.opacity = "0.7";
 
-        // Stap 2: Checks en Materialen verzamelen
-        // We gebruiken try-catch per onderdeel zodat één fout niet alles stopt
+        const systemType = systemTypeEl.value;
+
+        // Data verzamelen (met veilige checks)
         let checksJson = null;
-        try {
-           checksJson = await processChecksData('add');
-        } catch(err) { console.warn("Fout bij checks:", err); }
+        try { checksJson = await processChecksData('add'); } catch(err) { console.warn("Check data foutje (niet erg)", err); }
 
         let partsJson = null;
-        try {
-           partsJson = collectPartsData('add');
-        } catch(err) { console.warn("Fout bij parts:", err); }
+        try { partsJson = collectPartsData('add'); } catch(err) { console.warn("Parts data foutje", err); }
 
         let faultsJson = null;
-        try {
-           faultsJson = collectFaultsData('add');
-        } catch(err) { console.warn("Fout bij faults:", err); }
+        try { faultsJson = collectFaultsData('add'); } catch(err) { console.warn("Faults data foutje", err); }
 
-        // Stap 3: Afbeelding uploaden (indien aanwezig)
+        // Foto uploaden (indien aanwezig)
         let deviceImgUrl = null;
         const deviceFileEl = document.getElementById('addDeviceImage');
         if (deviceFileEl && deviceFileEl.files.length > 0) {
-            console.log("📸 Toestelfoto uploaden...");
             try { 
               deviceImgUrl = await uploadSingleFile(deviceFileEl.files[0]); 
             } catch(err) { 
-              console.error("Foto upload error:", err);
-              if(!confirm("Het uploaden van de toestelfoto is mislukt. Wil je doorgaan zonder foto?")) return;
+              if(!confirm("Fout bij uploaden hoofdfoto: " + err.message + "\n\nDoorgaan zonder foto?")) {
+                  throw new Error("Geannuleerd door gebruiker");
+              }
             }
         }
 
-        // Stap 4: Het object bouwen
+        // Het object bouwen voor de database
         const newSystem = {
           systemtype: systemType,
-          brand: brandEl.value,
-          model: modelEl.value,
+          brand: brandEl.value.trim(),
+          model: modelEl.value.trim(),
           logo_url: document.getElementById('addLogoUrl')?.value || null,
           device_image_url: deviceImgUrl,
           procedure: procedureEl ? procedureEl.value : '',
@@ -2549,7 +2556,7 @@
           manual_url: document.getElementById('addManualUrl')?.value || null
         };
 
-        // Stap 5: Specifieke meetwaarden toevoegen (alleen als de velden bestaan)
+        // Specifieke meetwaarden toevoegen (alleen als het CV-ketel is)
         if (systemType === 'cv-ketel') {
           newSystem.o2_low = document.getElementById('addO2Low')?.value || null;
           newSystem.o2_high = document.getElementById('addO2High')?.value || null;
@@ -2557,24 +2564,25 @@
           newSystem.co2_high = document.getElementById('addCO2High')?.value || null;
           newSystem.maxco = document.getElementById('addMaxCO')?.value || null;
         } else {
-          // Zorg dat ze leeg zijn voor andere systemen
+          // Reset waarden voor andere types
           newSystem.o2_low = null; newSystem.o2_high = null;
           newSystem.co2_low = null; newSystem.co2_high = null;
           newSystem.maxco = null;
         }
 
-        console.log("📦 Data klaar voor verzending:", newSystem);
-
-        // Stap 6: Extra foto's uploaden
+        // Extra foto's uit de galerij uploaden
         let imageUrls = [];
         if (pendingImages.add && pendingImages.add.length > 0) {
-          console.log(`🖼️ ${pendingImages.add.length} extra foto's uploaden...`);
-          imageUrls = await uploadImages(systemType + '-' + Date.now(), pendingImages.add);
+          try {
+             imageUrls = await uploadImages(systemType + '-' + Date.now(), pendingImages.add);
+          } catch(err) {
+             console.error("Galerij upload fout:", err);
+             // We gaan door, maar zonder de extra foto's (of met degene die wel gelukt zijn)
+          }
         }
         newSystem.images = imageUrls;
 
-        // Stap 7: Opslaan in Supabase
-        console.log("O versturen naar database...");
+        // Versturen naar Supabase
         const { data, error } = await supabase
           .from('systems')
           .insert([newSystem])
@@ -2582,28 +2590,30 @@
           
         if (error) throw error;
         
-        console.log("✅ Succes! Opgeslagen data:", data);
-
+        // Succes! Update de UI
         if (data && data.length > 0) {
           systems.push(data[0]);
-          // Audit log proberen (niet fataal als het mislukt)
-          try {
-            await logAuditEvent('system_created', `Systeem ${newSystem.brand} ${newSystem.model} (${systemType}) aangemaakt`);
-          } catch(e) { console.warn("Audit log mislukt", e); }
+          try { await logAuditEvent('system_created', `Systeem ${newSystem.brand} ${newSystem.model} aangemaakt`); } catch(e) {}
         }
         
-        // Opruimen
         pendingImages.add = [];
         closeAddModal();
         updateBrandFilter();
         updateModelFilter();
         filterSystems();
         
-        alert('Systeem succesvol toegevoegd!');
+        alert('✅ Systeem is opgeslagen!');
 
       } catch (error) {
-        console.error('❌ CRITIQUE FOUT bij opslaan:', error);
-        alert('Er ging iets mis bij het opslaan:\n' + error.message + '\n\n(Kijk in de console F12 voor details)');
+        console.error('❌ CRITIQUE FOUT:', error);
+        alert('Er ging iets mis bij het opslaan:\n' + error.message);
+      } finally {
+        // Altijd de knop weer aanzetten
+        if(submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.textContent = originalText;
+            submitBtn.style.opacity = "1";
+        }
       }
     }
 
@@ -2990,6 +3000,7 @@ async function approveUser(userId) {
 </script>  
 </body>
 </html>
+
 
 
 
