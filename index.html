@@ -847,6 +847,31 @@
       color: var(--color-text-secondary);
       font-size: 13px;
     }
+
+    .badge-notification {
+      position: absolute;
+      top: 0;
+      right: 0;
+      background-color: var(--color-error);
+      color: white;
+      border-radius: 50%;
+      width: 18px;
+      height: 18px;
+      font-size: 11px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      border: 2px solid var(--color-surface);
+      z-index: 10;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0% { box-shadow: 0 0 0 0 rgba(192, 21, 47, 0.4); }
+      70% { box-shadow: 0 0 0 6px rgba(192, 21, 47, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(192, 21, 47, 0); }
+    }
         
   </style>
 </head>
@@ -903,7 +928,8 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
               </svg>
             </button>
-            <div class="admin-actions-wrapper">
+            <div class="admin-actions-wrapper" style="position: relative;">
+              <span id="adminBadge" class="badge-notification hidden">0</span>
               <button class="btn icon-btn admin-toggle-btn" id="adminToggleBtn" type="button" style="display: none;" title="Beheer">
                 <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0l.284 1.174a1 1 0 00.97.758h1.518a1 1 0 01.894.553l.76 1.52a1 1 0 01-.116 1.034l-.96 1.28a1 1 0 000 1.2l.96 1.28a1 1 0 01.116 1.034l-.76 1.52a1 1 0 01-.894.553h-1.518a1 1 0 00-.97.758l-.284 1.174c-.426 1.756-2.924 1.756-3.35 0l-.284-1.174a1 1 0 00-.97-.758H7.253a1 1 0 01-.894-.553l-.76-1.52a1 1 0 01.116-1.034l.96-1.28a1 1 0 000-1.2l-.96-1.28a1 1 0 01-.116-1.034l.76-1.52a1 1 0 01.894-.553h1.518a1 1 0 00.97-.758l.284-1.174z"></path>
@@ -1617,13 +1643,16 @@
     function updateUIForRole() {
       const canEdit = currentUserRole === 'admin' || currentUserRole === 'moderator';
       const isAdmin = currentUserRole === 'admin';
+      
       document.getElementById('addSystemBtn').style.display = canEdit ? 'inline-flex' : 'none';
       document.getElementById('adminBtn').style.display = isAdmin ? 'inline-flex' : 'none';
       document.getElementById('auditBtn').style.display = isAdmin ? 'inline-flex' : 'none';
       document.getElementById('adminToggleBtn').style.display = canEdit ? 'inline-flex' : 'none';
+      
       document.querySelectorAll('.icon-btn[onclick*="openEditModal"]').forEach(btn => {
         btn.style.display = canEdit ? 'block' : 'none';
-      });
+      }); 
+      checkPendingNotifications();
     }
 
     async function handleLogin(e) {
@@ -2767,6 +2796,30 @@
       } catch (e) { console.error('Fout bij laden storingen', e); }
     }
 
+    // Functie om te checken of er wachtenden zijn
+    async function checkPendingNotifications() {
+      // Alleen admins mogen dit zien
+      if (!currentUser || currentUserRole !== 'admin') return;
+
+      // Tel hoeveel mensen op 'false' staan
+      const { count, error } = await supabase
+        .from('user_roles')
+        .select('*', { count: 'exact', head: true })
+        .eq('is_approved', false);
+
+      const badge = document.getElementById('adminBadge');
+      
+      if (count && count > 0) {
+        badge.textContent = count;
+        badge.classList.remove('hidden');
+        // Optioneel: verander ook de titel van de pagina zodat je het in tabbladen ziet
+        document.title = `(${count}) De Onderhoud Centrale`;
+      } else {
+        badge.classList.add('hidden');
+        document.title = "De Onderhoud Centrale";
+      }
+    }
+    
     // Deze functie verzamelt alle data uit de inputs en maakt er JSON van voor de database
     function collectPartsData(mode) {
       const container = document.getElementById(mode + 'PartsContainer');
@@ -2892,6 +2945,7 @@ async function approveUser(userId) {
 </script>  
 </body>
 </html>
+
 
 
 
