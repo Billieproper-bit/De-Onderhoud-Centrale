@@ -1010,7 +1010,6 @@
       </div>
       
       <div class="modal-body">
-        <!-- Wachtende gebruikers sectie -->
         <div class="admin-section" style="border-bottom: 2px solid var(--color-border); margin-bottom: 20px; padding-bottom: 20px;">
           <h3 style="margin-bottom: 16px; color: var(--color-warning);">⏳ Wacht op goedkeuring</h3>
           <div id="pendingUsersList">
@@ -1018,7 +1017,6 @@
           </div>
         </div>
 
-        <!-- Alle gebruikers sectie -->
         <div class="admin-section">
           <h3 style="margin-bottom: 16px;">Alle gebruikers en rollen</h3>
           <table class="user-table" id="usersTable">
@@ -1035,10 +1033,8 @@
           </table>
         </div>
       </div>
-    </div> 
-  </div> 
-
-  <div id="auditModal" class="modal">
+    </div>
+  </div>
 
   <!-- 2. AUDIT LOG MODAL -->
   <div id="auditModal" class="modal">
@@ -1092,14 +1088,14 @@
           <div class="form-group">
             <label>Systeem Type</label>
             <select id="addSystemType" class="form-control" required onchange="updateAddFieldsForSystemType(this.value)">
+              <option value="cv-ketel">CV-ketel</option>
+              <option value="warmtepomp">Warmtepomp</option>
+              <option value="mv-wtw">MV/WTW</option>
               <option value="appendages">Appendages</option>
               <option value="collectief">Collectief</option>
-              <option value="cv-ketel">CV-ketel</option>
-              <option value="mv-wtw">MV/WTW</option>
               <option value="overig">Overig</option>
               <option value="rookgasafvoer">Rookgasafvoer</option>
               <option value="thermostaten">Thermostaten</option>
-              <option value="warmtepomp">Warmtepomp</option>
               <option value="waterzijdig">Waterzijdig</option>
             </select>
           </div>
@@ -1131,7 +1127,7 @@
             </p>
           </div>
 
-          <div id="addCvKetelFields" style="display: none;">
+          <div id="addCvKetelFields">
             <div class="form-group">
               <label>O₂ Laaglast</label>
               <input type="text" id="addO2Low" class="form-control" placeholder="Bijv. 8,3 - 8,8">
@@ -2443,19 +2439,19 @@
       const wtwFields = document.getElementById('addWtwMvFields');
       const otherFields = document.getElementById('addOtherFields');
       
-      // Reset alles
-      cvFields.style.display = 'none';
-      wpFields.style.display = 'none';
-      wtwFields.style.display = 'none';
-      otherFields.style.display = 'none';
+      // Veiligheid: als een veld niet bestaat, stop dan niet de hele functie
+      if(cvFields) cvFields.style.display = 'none';
+      if(wpFields) wpFields.style.display = 'none';
+      if(wtwFields) wtwFields.style.display = 'none';
+      if(otherFields) otherFields.style.display = 'none';
 
-      if (type === 'cv-ketel') {
+      if (type === 'cv-ketel' && cvFields) {
           cvFields.style.display = 'block';
-      } else if (type === 'warmtepomp') {
+      } else if (type === 'warmtepomp' && wpFields) {
           wpFields.style.display = 'block';
-      } else if (type === 'wtw-mv' || type === 'mv-wtw') {
+      } else if ((type === 'wtw-mv' || type === 'mv-wtw') && wtwFields) {
           wtwFields.style.display = 'block';
-      } else if (['waterzijdig', 'overig', 'collectief', 'appendages', 'rookgasafvoer', 'thermostaten'].includes(type)) {
+      } else if (['waterzijdig', 'overig', 'collectief', 'appendages', 'rookgasafvoer', 'thermostaten'].includes(type) && otherFields) {
           otherFields.style.display = 'block';
       }
     }
@@ -2896,6 +2892,7 @@ async function approveUser(userId) {
 </script>  
 </body>
 </html>
+
 
 
 
