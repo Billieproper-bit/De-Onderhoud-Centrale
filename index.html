@@ -1035,8 +1035,10 @@
           </table>
         </div>
       </div>
-    </div>
-  </div>
+    </div> 
+  </div> 
+
+  <div id="auditModal" class="modal">
 
   <!-- 2. AUDIT LOG MODAL -->
   <div id="auditModal" class="modal">
@@ -1101,6 +1103,7 @@
               <option value="waterzijdig">Waterzijdig</option>
             </select>
           </div>
+          
           <div class="form-group">
             <label>Merk</label>
             <input type="text" id="addBrand" class="form-control" required placeholder="Bijv. ATAG, Remeha, Nefit">
@@ -1120,6 +1123,12 @@
           <div class="form-group">
             <label>Procedure</label>
             <textarea id="addProcedure" class="form-control" rows="6" required placeholder="Stap 1: ...&#10;Stap 2: ..."></textarea>
+          </div>
+
+          <div id="addWtwMvFields" style="display: none;">
+            <p style="color: var(--color-text-secondary); font-size: 14px; margin: 16px 0;">
+              Voor WTW/MV systemen zijn specifieke meetwaardes optioneel.
+            </p>
           </div>
 
           <div id="addCvKetelFields" style="display: none;">
@@ -2887,6 +2896,7 @@ async function approveUser(userId) {
 </script>  
 </body>
 </html>
+
 
 
 
