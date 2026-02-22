@@ -2519,7 +2519,13 @@
         try { checksJson = await processChecksData('add'); } catch(err) { console.warn("Check data foutje (niet erg)", err); }
 
         let partsJson = null;
-        try { partsJson = collectPartsData('add'); } catch(err) { console.warn("Parts data foutje", err); }
+        try { 
+        partsJson = collectPartsData('add'); 
+        console.log("Verzamelde onderdelen:", partsJson);
+        } catch(err) { 
+        console.error("CRUCIALE FOUT in collectPartsData:", err); 
+        alert("Er gaat iets mis bij de onderdelen: " + err.message);
+        }
 
         let faultsJson = null;
         try { faultsJson = collectFaultsData('add'); } catch(err) { console.warn("Faults data foutje", err); }
@@ -2952,3 +2958,4 @@ async function checkPendingNotifications() {
 </script>  
 </body>
 </html>
+
