@@ -1360,36 +1360,60 @@ function closeCalcModal() {
 }
 
 function calculateHVAC() {
-    const gasTime = parseFloat(document.getElementById('calcGasTime').value);
-    const deltaT = parseFloat(document.getElementById('calcDeltaT').value);
-    const flow = parseFloat(document.getElementById('calcFlow').value);
-    
-    let belasting = 0;
+    // Constanten van het formuleblad
+    const Hs = 35.17; // Bovenwaarde MJ/m3
+    const Hi = 31.65; // Onderwaarde MJ/m3
+    const rho = 983;  // Dichtheid water bij 60 graden (kg/m3)
+    const c = 4186;   // Soortelijke warmte water (J/kg.K)
+
+    // Inputs Belasting
+    const gasStart = parseFloat(document.getElementById('gasStart').value) || 0;
+    const gasEind = parseFloat(document.getElementById('gasEind').value) || 0;
+    const gasVerschil = gasEind - gasStart;
+
+    // Inputs Vermogen
+    const flowLmin = parseFloat(document.getElementById('calcFlow').value) || 0;
+    const tempKoud = parseFloat(document.getElementById('calcTempKoud').value) || 0;
+    const tempWarm = parseFloat(document.getElementById('calcTempWarm').value) || 0;
+
+    let belastingHs = 0;
     let vermogen = 0;
 
-    // 1. Bereken Belasting (36 / tijd * 8.8) voor 10 liter gasverbruik
-    if (gasTime > 0) {
-        belasting = (36 / gasTime) * 8.8 * 10; // Factor voor 10 liter Slochteren gas
-        document.getElementById('resBelasting').textContent = `Belasting: ${belasting.toFixed(2)} kW`;
+    // 1. Belasting berekenen (B = Qv * H)
+    // Qv in dm3/s over 180 seconden
+    if (gasVerschil > 0) {
+        const Qv_gas = gasVerschil / 180; // dm3/s
+        belastingHs = Qv_gas * Hs;
+        const belastingHi = Qv_gas * Hi;
+
+        document.getElementById('resBelastingHs').textContent = `Belasting (Hs): ${belastingHs.toFixed(2)} kW`;
+        document.getElementById('resBelastingHi').textContent = `Belasting (Hi): ${belastingHi.toFixed(2)} kW`;
     }
 
-    // 2. Bereken Waterzijdig Vermogen: Q = m * c * dT
-    // Voor water: L/min * 0.07 * dT is een goede benadering voor kW
-    if (deltaT > 0 && flow > 0) {
-        vermogen = flow * 0.07 * deltaT;
-        document.getElementById('resVermogen').textContent = `Vermogen: ${vermogen.toFixed(2)} kW`;
+    // 2. Vermogen berekenen (P = Qv * c * rho * dT)
+    if (flowLmin > 0 && tempWarm > tempKoud) {
+        const dT = tempWarm - tempKoud;
+        const Qv_water = (flowLmin / 60) / 1000; // Omrekenen van L/min naar m3/s
+        
+        // Formule: P = m3/s * J/kg.K * kg/m3 * K / 1000 (naar kW)
+        vermogen = (Qv_water * c * rho * dT) / 1000;
+        
+        document.getElementById('resVermogen').textContent = `Vermogen (P): ${vermogen.toFixed(2)} kW`;
     }
 
-    // 3. Rendement
-    if (belasting > 0 && vermogen > 0) {
-        const rendement = (vermogen / belasting) * 100;
-        const resRen = document.getElementById('resRendement');
+    // 3. Rendement berekenen (n = Pnuttig / Pin * 100%)
+    const resRen = document.getElementById('resRendement');
+    if (belastingHs > 0 && vermogen > 0) {
+        const rendement = (vermogen / belastingHs) * 100;
         resRen.textContent = `${rendement.toFixed(1)}%`;
         
-        // Kleurindicatie
-        if (rendement > 95) resRen.style.color = 'var(--color-success)';
-        else if (rendement > 85) resRen.style.color = 'var(--color-warning)';
+        // Kleurindicatie (HR ketels horen rond de 90-98% te zitten op Hs)
+        if (rendement > 90) resRen.style.color = 'var(--color-success)';
+        else if (rendement > 80) resRen.style.color = 'var(--color-warning)';
         else resRen.style.color = 'var(--color-error)';
+    } else {
+        resRen.textContent = '-%';
+        resRen.style.color = 'var(--color-primary)';
     }
 }
 
