@@ -1566,16 +1566,16 @@ async function loadPendingUsers() {
     const row = document.createElement('div');
     row.style = "display:flex; justify-content:space-between; align-items:center; padding:10px; background:var(--color-bg-primary); border:1px solid var(--color-border); border-radius:8px; margin-bottom:8px;";
     row.innerHTML = `
-  <span style="font-weight:500;">${user.email}</span>
-  <div style="display:flex; gap:8px;">
-    <button onclick="approveUser('${user.user_id}')" class="btn btn-primary" style="padding:4px 12px; font-size:12px;">
-      Toelaten
-    </button>
-    <button onclick="deleteUser('${user.user_id}', '${user.email}')" class="btn" style="padding:4px 12px; font-size:12px; color:var(--color-error); border-color:var(--color-error);">
-      Weigeren
-    </button>
-  </div>
-`;
+      <span style="font-weight:500;">${user.email}</span>
+      <div style="display:flex; gap:8px;">
+        <button onclick="approveUser('${user.user_id}')" class="btn btn-primary" style="padding:4px 12px; font-size:12px;">
+          Toelaten
+        </button>
+        <button onclick="deleteUser('${user.user_id}', '${user.email}')" class="btn" style="padding:4px 12px; font-size:12px; color:var(--color-error); border-color:var(--color-error);">
+          Weigeren
+        </button>
+      </div>
+    `;
     container.appendChild(row);
   });
 }
