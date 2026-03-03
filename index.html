@@ -2714,38 +2714,74 @@
     }
 
     async function uploadImages(folderName, files) {
-      const urls = [];
-      console.log("Start uploaden naar bucket: system-images"); 
+  const urls = [];
+  console.log("Start uploaden naar bucket: system-images. Aantal bestanden:", files.length);
 
-      for (let file of files) {
-        if (!(file instanceof File)) continue;
-        
-        const fileExt = file.name.split('.').pop();
-        const fileName = folderName + '-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9) + '.' + fileExt;
-        
-        const { data, error } = await supabase.storage
-          .from('system-images') 
-          .upload(fileName, file, { upsert: true });
-          
-        if (error) {
-          console.error('Upload error:', error);
-          alert('Fout bij uploaden foto: ' + error.message);
-        } else {
-          console.log("Upload gelukt:", fileName);
-          urls.push('https://srsnjifezttivawxnndu.supabase.co/storage/v1/object/public/system-images/' + fileName);
-        }
+  for (let file of files) {
+    try {
+      // Als het al een URL is (bij bewerken), gewoon toevoegen aan de lijst
+      if (!(file instanceof File)) {
+        if (typeof file === 'string') urls.push(file);
+        continue;
       }
-      return urls;
-    }
 
-    async function uploadSingleFile(file) {
-      if (!file) return null;
       const fileExt = file.name.split('.').pop();
-      const fileName = 'device-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9) + '.' + fileExt;
-      const { error } = await supabase.storage.from('system-images').upload(fileName, file);
-      if (error) { throw error; }
-      return 'https://srsnjifezttivawxnndu.supabase.co/storage/v1/object/public/system-images/' + fileName;
+      const fileName = `${folderName}/${Date.now()}-${Math.random().toString(36).substr(2, 9)}.${fileExt}`;
+
+      console.log(`Bezig met uploaden naar Supabase: ${fileName}...`);
+
+      const { data, error } = await supabase.storage
+        .from('system-images')
+        .upload(fileName, file, { 
+          cacheControl: '3600',
+          upsert: true 
+        });
+
+      if (error) {
+        console.error("Supabase Storage Error:", error);
+        throw error;
+      }
+
+      // Gebruik de officiële methode om de URL op te halen
+      const { data: publicUrlData } = supabase.storage
+        .from('system-images')
+        .getPublicUrl(fileName);
+
+      console.log("Upload succesvol. URL:", publicUrlData.publicUrl);
+      urls.push(publicUrlData.publicUrl);
+
+    } catch (err) {
+      console.error("Fout in uploadImages loop:", err.message);
+      alert("Er is een fout opgetreden bij het uploaden van een afbeelding: " + err.message);
+      throw err; // Stop de hele loop als er iets misgaat
     }
+  }
+  return urls;
+}
+
+async function uploadSingleFile(file) {
+  if (!file) return null;
+  try {
+    console.log("Start uploadSingleFile...");
+    const fileExt = file.name.split('.').pop();
+    const fileName = `devices/${Date.now()}-${Math.random().toString(36).substr(2, 9)}.${fileExt}`;
+
+    const { data, error } = await supabase.storage
+      .from('system-images')
+      .upload(fileName, file, { upsert: true });
+
+    if (error) throw error;
+
+    const { data: publicUrlData } = supabase.storage
+      .from('system-images')
+      .getPublicUrl(fileName);
+
+    return publicUrlData.publicUrl;
+  } catch (err) {
+    console.error("Fout in uploadSingleFile:", err.message);
+    throw err;
+  }
+}
 
     function escapeInput(str) {
       return str ? str.replace(/"/g, '&quot;') : '';
@@ -2953,5 +2989,6 @@ async function checkPendingNotifications() {
 </script>  
 </body>
 </html>
+
 
 
