@@ -814,23 +814,24 @@ import { supabase } from './supabase-config.js';
       tbody.innerHTML = allUsers.map(user => {
         return `
           <tr>
-            <td>
-              ${escapeHtml(user.email)}
-            </td>
-            <td>
-              <span class="role-badge ${user.role}">${user.role}</span>
-            </td>
-            <td>
-              <select onchange="updateUserRole('${user.id}', this.value)" class="form-control" style="width: 150px;">
-                <option value="user" ${user.role === 'user' ? 'selected' : ''}>User</option>
-                <option value="moderator" ${user.role === 'moderator' ? 'selected' : ''}>Moderator</option>
-                <option value="admin" ${user.role === 'admin' ? 'selected' : ''}>Admin</option>
-              </select>
-            </td>
-          </tr>
-        `;
-      }).join('');
-    }
+    <td>${escapeHtml(user.email)}</td>
+    <td><span class="role-badge ${user.role}">${user.role}</span></td>
+    <td style="display: flex; gap: 8px; align-items: center;">
+      <select onchange="updateUserRole('${user.id}', this.value)" class="form-control" style="width: 120px;">
+        <option value="user" ${user.role === 'user' ? 'selected' : ''}>User</option>
+        <option value="moderator" ${user.role === 'moderator' ? 'selected' : ''}>Moderator</option>
+        <option value="admin" ${user.role === 'admin' ? 'selected' : ''}>Admin</option>
+      </select>
+      
+      <!-- DE NIEUWE VERWIJDER KNOP -->
+      <button onclick="deleteUser('${user.id}', '${user.email}')" class="btn" style="color: var(--color-error); border-color: var(--color-error); padding: 4px 8px;">
+        <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width:16px; height:16px;">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+        </svg>
+      </button>
+    </td>
+  </tr>
+`;
 
     async function updateUserRole(userId, newRole) {
       try {
@@ -848,6 +849,34 @@ import { supabase } from './supabase-config.js';
         alert('Fout bij bijwerken rol: ' + error.message);
       }
     }
+
+    async function deleteUser(userId, email) {
+  if (userId === currentUser.id) {
+    alert("Je kunt jezelf niet verwijderen!");
+    return;
+  }
+
+  if (!confirm(`Weet je zeker dat je de gebruiker ${email} volledig wilt verwijderen? Dit kan niet ongedaan worden gemaakt.`)) {
+    return;
+  }
+
+  try {
+    // We roepen de SQL functie aan die we in Stap 1 hebben gemaakt
+    const { error } = await supabase.rpc('delete_user_by_id', { user_id: userId });
+
+    if (error) throw error;
+
+    alert('Gebruiker succesvol verwijderd.');
+    await logAuditEvent('user_deleted', `Gebruiker ${email} volledig verwijderd`);
+    
+    // Ververs de lijst
+    await loadUsers();
+    await loadPendingUsers();
+  } catch (error) {
+    console.error('Error deleting user:', error);
+    alert('Fout bij verwijderen: ' + error.message);
+  }
+}
 
     async function logAuditEvent(action, details) {
       if (!currentUser) return;
@@ -1537,11 +1566,16 @@ async function loadPendingUsers() {
     const row = document.createElement('div');
     row.style = "display:flex; justify-content:space-between; align-items:center; padding:10px; background:var(--color-bg-primary); border:1px solid var(--color-border); border-radius:8px; margin-bottom:8px;";
     row.innerHTML = `
-      <span style="font-weight:500;">${user.email}</span>
-      <button onclick="approveUser('${user.user_id}')" class="btn btn-primary" style="padding:4px 12px; font-size:12px;">
-        Toelaten
-      </button>
-    `;
+  <span style="font-weight:500;">${user.email}</span>
+  <div style="display:flex; gap:8px;">
+    <button onclick="approveUser('${user.user_id}')" class="btn btn-primary" style="padding:4px 12px; font-size:12px;">
+      Toelaten
+    </button>
+    <button onclick="deleteUser('${user.user_id}', '${user.email}')" class="btn" style="padding:4px 12px; font-size:12px; color:var(--color-error); border-color:var(--color-error);">
+      Weigeren
+    </button>
+  </div>
+`;
     container.appendChild(row);
   });
 }
@@ -1611,6 +1645,7 @@ window.deleteSystem = deleteSystem;
 window.openAdminModal = openAdminModal;
 window.closeAdminModal = closeAdminModal;
 window.approveUser = approveUser;
+window.deleteUser = deleteUser;
 
 window.openAuditModal = openAuditModal;
 window.closeAuditModal = closeAuditModal;
