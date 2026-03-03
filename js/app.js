@@ -1662,4 +1662,6 @@ window.openLightbox = openLightbox;
 window.closeLightbox = closeLightbox;
 window.switchTab = switchTab;
 
+window.supabase = supabase;
+
 window.activateEasterEgg = activateEasterEgg;
