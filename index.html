@@ -289,40 +289,66 @@
   </div>
 
   <div id="calcModal" class="modal">
-  <div class="modal-content">
+  <div class="modal-content wide">
     <div class="modal-header">
-      <h2>HVAC Calculator</h2>
+      <h2>HVAC Calculator (NEN-norm)</h2>
       <button class="icon-btn" onclick="closeCalcModal()">&times;</button>
     </div>
     <div class="modal-body">
-      <div style="background: var(--color-bg-primary); padding: 15px; border-radius: 8px; margin-bottom: 20px;">
-        <h3 style="font-size: 14px; margin-bottom: 10px;">1. Belasting (op Onderwaarde)</h3>
-        <div class="form-group">
-          <label>Tijd voor 10 liter gas (seconden)</label>
-          <input type="number" id="calcGasTime" class="form-control" placeholder="Bijv. 36" oninput="calculateHVAC()">
-        </div>
-        <p id="resBelasting" style="font-weight: bold; color: var(--color-primary); margin-top: 5px;">Belasting: - kW</p>
-      </div>
-
-      <div style="background: var(--color-bg-primary); padding: 15px; border-radius: 8px; margin-bottom: 20px;">
-        <h3 style="font-size: 14px; margin-bottom: 10px;">2. Waterzijdig Vermogen</h3>
+      
+      <!-- BELASTING (GAS) -->
+      <div style="background: var(--color-bg-primary); padding: 15px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid var(--color-primary);">
+        <h3 style="font-size: 14px; margin-bottom: 5px;">1. Belasting ($P_{in}$) berekenen</h3>
+        <p style="font-size: 12px; color: var(--color-text-secondary); margin-bottom: 10px;">
+          <i>Werkwijze: Zet ketel op vollast. Meet het gasverbruik gedurende precies <b>180 seconden</b>.</i>
+        </p>
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
           <div class="form-group">
-            <label>ΔT (Aanvoer - Retour)</label>
-            <input type="number" id="calcDeltaT" class="form-control" placeholder="K" oninput="calculateHVAC()">
+            <label>Startstand (Liters)</label>
+            <input type="number" id="gasStart" class="form-control" placeholder="0" oninput="calculateHVAC()">
           </div>
+          <div class="form-group">
+            <label>Eindstand (Liters)</label>
+            <input type="number" id="gasEind" class="form-control" placeholder="Bijv. 50" oninput="calculateHVAC()">
+          </div>
+        </div>
+        <div style="margin-top: 10px; padding: 10px; background: white; border-radius: 4px; font-size: 13px;">
+            <div id="resBelastingHs" style="font-weight: bold; color: var(--color-text);">Belasting ($H_s$): - kW</div>
+            <div id="resBelastingHi" style="font-size: 12px; color: var(--color-text-secondary);">Belasting ($H_i$): - kW</div>
+            <p style="font-size: 11px; margin-top: 5px; color: var(--color-warning);">Vergelijk $H_s$ met $Q_n$ op het typeplaatje.</p>
+        </div>
+      </div>
+
+      <!-- VERMOGEN (WATER) -->
+      <div style="background: var(--color-bg-primary); padding: 15px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid var(--color-primary);">
+        <h3 style="font-size: 14px; margin-bottom: 5px;">2. Nuttig Vermogen ($P_{nuttig}$)</h3>
+        <p style="font-size: 12px; color: var(--color-text-secondary); margin-bottom: 10px;">
+          <i>Meet de flow met een flowbeker en noteer de temperaturen.</i>
+        </p>
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
           <div class="form-group">
             <label>Flow (L/min)</label>
             <input type="number" id="calcFlow" class="form-control" placeholder="L/min" oninput="calculateHVAC()">
           </div>
+          <div class="form-group">
+            <label>T-Koud (°C)</label>
+            <input type="number" id="calcTempKoud" class="form-control" placeholder="10" oninput="calculateHVAC()">
+          </div>
+          <div class="form-group">
+            <label>T-Warm (°C)</label>
+            <input type="number" id="calcTempWarm" class="form-control" placeholder="60" oninput="calculateHVAC()">
+          </div>
         </div>
-        <p id="resVermogen" style="font-weight: bold; color: var(--color-primary); margin-top: 5px;">Vermogen: - kW</p>
+        <div id="resVermogen" style="margin-top: 10px; font-weight: bold; color: var(--color-primary);">Vermogen ($P$): - kW</div>
       </div>
 
-      <div id="resRendementBox" style="text-align: center; padding: 20px; border: 2px solid var(--color-border); border-radius: 12px;">
-        <div style="font-size: 12px; text-transform: uppercase; color: var(--color-text-secondary);">Actueel Rendement</div>
-        <div id="resRendement" style="font-size: 32px; font-weight: 800; color: var(--color-success);">-%</div>
+      <!-- RENDEMENT -->
+      <div id="resRendementBox" style="text-align: center; padding: 20px; border: 2px solid var(--color-border); border-radius: 12px; background: white;">
+        <div style="font-size: 12px; text-transform: uppercase; color: var(--color-text-secondary); letter-spacing: 1px;">Actueel Rendement ($\eta$)</div>
+        <div id="resRendement" style="font-size: 32px; font-weight: 800; color: var(--color-primary);">-%</div>
+        <p style="font-size: 11px; color: var(--color-text-secondary); margin-top: 5px;">Berekend op basis van Belasting ($H_s$)</p>
       </div>
+
     </div>
   </div>
 </div>
@@ -350,6 +376,7 @@
   
 </body>
 </html>
+
 
 
 
