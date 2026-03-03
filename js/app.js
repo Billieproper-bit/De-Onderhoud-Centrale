@@ -1590,3 +1590,41 @@ async function checkPendingNotifications() {
 }
     
     init();
+
+window.handleLogin = handleLogin;
+window.handleLogout = handleLogout;
+window.handleRegister = handleRegister;
+window.openRegisterModal = openRegisterModal;
+window.closeRegisterModal = closeRegisterModal;
+
+window.toggleTheme = toggleTheme;
+window.toggleFavorite = toggleFavorite;
+
+window.openAddModal = openAddModal;
+window.closeAddModal = closeAddModal;
+window.updateAddFieldsForSystemType = updateAddFieldsForSystemType;
+
+window.openEditModal = openEditModal;
+window.closeEditModal = closeEditModal;
+window.deleteSystem = deleteSystem;
+
+window.openAdminModal = openAdminModal;
+window.closeAdminModal = closeAdminModal;
+window.approveUser = approveUser;
+
+window.openAuditModal = openAuditModal;
+window.closeAuditModal = closeAuditModal;
+
+window.addPartRow = addPartRow;
+window.addCheckRow = addCheckRow;
+window.addFaultRow = addFaultRow;
+
+window.handleImageSelect = handleImageSelect;
+window.handleDrop = handleDrop;
+window.removeImage = removeImage;
+
+window.openLightbox = openLightbox;
+window.closeLightbox = closeLightbox;
+window.switchTab = switchTab;
+
+window.activateEasterEgg = activateEasterEgg;
