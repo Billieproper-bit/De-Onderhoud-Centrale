@@ -2735,45 +2735,37 @@
 
     async function uploadImages(folderName, files) {
   const urls = [];
-  console.log("Start uploaden naar bucket: system-images. Aantal bestanden:", files.length);
-
+  
   for (let file of files) {
+    if (!(file instanceof File)) {
+      if (typeof file === 'string') urls.push(file);
+      continue;
+    }
+
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${folderName}/${Date.now()}.${fileExt}`;
+
+    console.log("Poging tot upload...", fileName);
+
+    // We maken een timeout van 10 seconden
+    const timeout = new Promise((_, reject) => 
+      setTimeout(() => reject(new Error("Supabase upload timeout (10s)")), 10000)
+    );
+
     try {
-      // Als het al een URL is (bij bewerken), gewoon toevoegen aan de lijst
-      if (!(file instanceof File)) {
-        if (typeof file === 'string') urls.push(file);
-        continue;
-      }
+      // We laten de upload racen tegen de klok
+      const uploadPromise = supabase.storage.from('system-images').upload(fileName, file);
+      const { data, error } = await Promise.race([uploadPromise, timeout]);
 
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${folderName}/${Date.now()}-${Math.random().toString(36).substr(2, 9)}.${fileExt}`;
+      if (error) throw error;
 
-      console.log(`Bezig met uploaden naar Supabase: ${fileName}...`);
-
-      const { data, error } = await supabase.storage
-        .from('system-images')
-        .upload(fileName, file, { 
-          cacheControl: '3600',
-          upsert: true 
-        });
-
-      if (error) {
-        console.error("Supabase Storage Error:", error);
-        throw error;
-      }
-
-      // Gebruik de officiële methode om de URL op te halen
-      const { data: publicUrlData } = supabase.storage
-        .from('system-images')
-        .getPublicUrl(fileName);
-
-      console.log("Upload succesvol. URL:", publicUrlData.publicUrl);
-      urls.push(publicUrlData.publicUrl);
-
+      const { data: urlData } = supabase.storage.from('system-images').getPublicUrl(fileName);
+      urls.push(urlData.publicUrl);
+      console.log("Upload geslaagd:", urlData.publicUrl);
     } catch (err) {
-      console.error("Fout in uploadImages loop:", err.message);
-      alert("Er is een fout opgetreden bij het uploaden van een afbeelding: " + err.message);
-      throw err; // Stop de hele loop als er iets misgaat
+      console.error("Upload gestopt:", err.message);
+      alert("Upload fout: " + err.message);
+      throw err; // Dit stopt het 'hangen' en geeft een melding
     }
   }
   return urls;
@@ -3027,6 +3019,7 @@ async function checkPendingNotifications() {
 </script>  
 </body>
 </html>
+
 
 
 
