@@ -803,7 +803,7 @@ import { supabase } from './supabase-config.js';
         }));
         
         renderUsersTable();
-        catch (error) {
+      } catch (error) {
         console.error('Error loading users:', error);
         document.getElementById('usersTableBody').innerHTML = '<tr><td colspan="3" style="text-align: center; color: var(--color-error);">Fout bij laden gebruikers. Zorg ervoor dat de RPC-functie "get_all_users_with_roles" bestaat.</td></tr>';
       }
@@ -814,24 +814,25 @@ import { supabase } from './supabase-config.js';
       tbody.innerHTML = allUsers.map(user => {
         return `
           <tr>
-    <td>${escapeHtml(user.email)}</td>
-    <td><span class="role-badge ${user.role}">${user.role}</span></td>
-    <td style="display: flex; gap: 8px; align-items: center;">
-      <select onchange="updateUserRole('${user.id}', this.value)" class="form-control" style="width: 120px;">
-        <option value="user" ${user.role === 'user' ? 'selected' : ''}>User</option>
-        <option value="moderator" ${user.role === 'moderator' ? 'selected' : ''}>Moderator</option>
-        <option value="admin" ${user.role === 'admin' ? 'selected' : ''}>Admin</option>
-      </select>
-      
-      <!-- DE NIEUWE VERWIJDER KNOP -->
-      <button onclick="deleteUser('${user.id}', '${user.email}')" class="btn" style="color: var(--color-error); border-color: var(--color-error); padding: 4px 8px;">
-        <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width:16px; height:16px;">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-        </svg>
-      </button>
-    </td>
-  </tr>
-`;
+            <td>${escapeHtml(user.email)}</td>
+            <td><span class="role-badge ${user.role}">${user.role}</span></td>
+            <td style="display: flex; gap: 8px; align-items: center;">
+              <select onchange="updateUserRole('${user.id}', this.value)" class="form-control" style="width: 120px;">
+                <option value="user" ${user.role === 'user' ? 'selected' : ''}>User</option>
+                <option value="moderator" ${user.role === 'moderator' ? 'selected' : ''}>Moderator</option>
+                <option value="admin" ${user.role === 'admin' ? 'selected' : ''}>Admin</option>
+              </select>
+              
+              <button onclick="deleteUser('${user.id}', '${user.email}')" class="btn" style="color: var(--color-error); border-color: var(--color-error); padding: 4px 8px;">
+                <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width:16px; height:16px;">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                </svg>
+              </button>
+            </td>
+          </tr>
+        `;
+      }).join(''); 
+    }  
 
     async function updateUserRole(userId, newRole) {
       try {
