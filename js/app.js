@@ -1540,12 +1540,8 @@ async function loadPendingUsers() {
     row.innerHTML = `
       <span style="font-weight:500;">${user.email}</span>
       <div style="display:flex; gap:8px;">
-        <button onclick="approveUser('${user.user_id}')" class="btn btn-primary" style="padding:4px 12px; font-size:12px;">
-          Toelaten
-        </button>
-        <button onclick="deleteUser('${user.user_id}', '${user.email}')" class="btn" style="padding:4px 12px; font-size:12px; color:var(--color-error); border-color:var(--color-error);">
-          Weigeren
-        </button>
+        <button onclick="approveUser('${user.user_id}')" class="btn btn-primary" style="padding:4px 12px; font-size:12px;">Toelaten</button>
+        <button onclick="deleteUser('${user.user_id}', '${user.email}')" class="btn" style="padding:4px 12px; font-size:12px; color:var(--color-error); border-color:var(--color-error);">Weigeren</button>
       </div>
     `;
     container.appendChild(row);
@@ -1555,7 +1551,6 @@ async function loadPendingUsers() {
 // Functie 2: Keur een gebruiker goed
 async function approveUser(userId) {
   if(!confirm('Wil je deze gebruiker toegang geven?')) return;
-
   const { error } = await supabase
     .from('user_roles')
     .update({ is_approved: true })
@@ -1567,7 +1562,6 @@ async function approveUser(userId) {
     loadPendingUsers(); 
     loadUsers(); 
     checkPendingNotifications();
-    
     if(typeof logAuditEvent === 'function') {
         logAuditEvent('user_approved', `Gebruiker ${userId} goedgekeurd`);
     }
@@ -1577,14 +1571,11 @@ async function approveUser(userId) {
 // Functie 3: Check wachtenden en update badge
 async function checkPendingNotifications() {
   if (!currentUser || currentUserRole !== 'admin') return;
-
   const { count, error } = await supabase
     .from('user_roles')
     .select('*', { count: 'exact', head: true })
     .eq('is_approved', false);
-
   const badge = document.getElementById('adminBadge');
-  
   if (count && count > 0) {
     badge.textContent = count;
     badge.classList.remove('hidden');
@@ -1594,75 +1585,57 @@ async function checkPendingNotifications() {
     document.title = "De Onderhoud Centrale";
   }
 }
-    
-    init();
 
+// Functie 4: Verwijder gebruiker
 async function deleteUser(userId, email) {
   if (userId === currentUser.id) {
     alert("Je kunt jezelf niet verwijderen!");
     return;
   }
-
-  if (!confirm(`Weet je zeker dat je de gebruiker ${email} volledig wilt verwijderen? Dit kan niet ongedaan worden gemaakt.`)) {
-    return;
-  }
+  if (!confirm(`Weet je zeker dat je ${email} wilt verwijderen?`)) return;
 
   try {
-    // We roepen de SQL functie aan die je in de Supabase SQL-editor hebt gemaakt
     const { error } = await supabase.rpc('delete_user_by_id', { user_id: userId });
-
     if (error) throw error;
-
-    alert('Gebruiker succesvol verwijderd.');
-    if(typeof logAuditEvent === 'function') {
-      await logAuditEvent('user_deleted', `Gebruiker ${email} volledig verwijderd`);
-    }
-    
-    // Ververs de lijsten
+    alert('Gebruiker verwijderd.');
     await loadUsers();
     await loadPendingUsers();
-  } catch (error) {
-    console.error('Error deleting user:', error);
-    alert('Fout bij verwijderen: ' + error.message);
+  } catch (err) {
+    alert('Fout: ' + err.message);
   }
 }
 
+// Start de app
+init();
+
+// --- KOPPELINGEN NAAR WINDOW ---
 window.handleLogin = handleLogin;
 window.handleLogout = handleLogout;
 window.handleRegister = handleRegister;
 window.openRegisterModal = openRegisterModal;
 window.closeRegisterModal = closeRegisterModal;
-
 window.toggleTheme = toggleTheme;
 window.toggleFavorite = toggleFavorite;
-
 window.openAddModal = openAddModal;
 window.closeAddModal = closeAddModal;
 window.updateAddFieldsForSystemType = updateAddFieldsForSystemType;
-
 window.openEditModal = openEditModal;
 window.closeEditModal = closeEditModal;
 window.deleteSystem = deleteSystem;
-
 window.openAdminModal = openAdminModal;
 window.closeAdminModal = closeAdminModal;
 window.approveUser = approveUser;
-window.deleteUser = deleteUser; // Nu bestaat de functie wel!
-
+window.deleteUser = deleteUser;
 window.openAuditModal = openAuditModal;
 window.closeAuditModal = closeAuditModal;
-
 window.addPartRow = addPartRow;
 window.addCheckRow = addCheckRow;
 window.addFaultRow = addFaultRow;
-
 window.handleImageSelect = handleImageSelect;
 window.handleDrop = handleDrop;
 window.removeImage = removeImage;
-
 window.openLightbox = openLightbox;
 window.closeLightbox = closeLightbox;
 window.switchTab = switchTab;
-
 window.supabase = supabase;
 window.activateEasterEgg = activateEasterEgg;
