@@ -1348,6 +1348,48 @@ import { supabase } from './supabase-config.js';
   return urls;
 }
 
+function openCalcModal() {
+    document.getElementById('calcModal').classList.add('active');
+}
+
+function closeCalcModal() {
+    document.getElementById('calcModal').classList.remove('active');
+}
+
+function calculateHVAC() {
+    const gasTime = parseFloat(document.getElementById('calcGasTime').value);
+    const deltaT = parseFloat(document.getElementById('calcDeltaT').value);
+    const flow = parseFloat(document.getElementById('calcFlow').value);
+    
+    let belasting = 0;
+    let vermogen = 0;
+
+    // 1. Bereken Belasting (36 / tijd * 8.8) voor 10 liter gasverbruik
+    if (gasTime > 0) {
+        belasting = (36 / gasTime) * 8.8 * 10; // Factor voor 10 liter Slochteren gas
+        document.getElementById('resBelasting').textContent = `Belasting: ${belasting.toFixed(2)} kW`;
+    }
+
+    // 2. Bereken Waterzijdig Vermogen: Q = m * c * dT
+    // Voor water: L/min * 0.07 * dT is een goede benadering voor kW
+    if (deltaT > 0 && flow > 0) {
+        vermogen = flow * 0.07 * deltaT;
+        document.getElementById('resVermogen').textContent = `Vermogen: ${vermogen.toFixed(2)} kW`;
+    }
+
+    // 3. Rendement
+    if (belasting > 0 && vermogen > 0) {
+        const rendement = (vermogen / belasting) * 100;
+        const resRen = document.getElementById('resRendement');
+        resRen.textContent = `${rendement.toFixed(1)}%`;
+        
+        // Kleurindicatie
+        if (rendement > 95) resRen.style.color = 'var(--color-success)';
+        else if (rendement > 85) resRen.style.color = 'var(--color-warning)';
+        else resRen.style.color = 'var(--color-error)';
+    }
+}
+
 async function uploadSingleFile(file) {
   if (!file) return null;
   try {
@@ -1638,5 +1680,8 @@ window.removeImage = removeImage;
 window.openLightbox = openLightbox;
 window.closeLightbox = closeLightbox;
 window.switchTab = switchTab;
+window.openCalcModal = openCalcModal;
+window.closeCalcModal = closeCalcModal;
+window.calculateHVAC = calculateHVAC;
 window.supabase = supabase;
 window.activateEasterEgg = activateEasterEgg;
