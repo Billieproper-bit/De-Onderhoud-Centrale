@@ -803,7 +803,7 @@ import { supabase } from './supabase-config.js';
         }));
         
         renderUsersTable();
-      } catch (error) {
+        catch (error) {
         console.error('Error loading users:', error);
         document.getElementById('usersTableBody').innerHTML = '<tr><td colspan="3" style="text-align: center; color: var(--color-error);">Fout bij laden gebruikers. Zorg ervoor dat de RPC-functie "get_all_users_with_roles" bestaat.</td></tr>';
       }
