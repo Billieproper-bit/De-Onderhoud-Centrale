@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="nl">
+  
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,8 +9,6 @@
   <!-- Iconen -->
   <link rel="icon" type="image/x-icon" href="favicon.ico">
   <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
-  
-  <!-- Jouw eigen CSS bestand (Zorg dat dit bestand in de map /css staat) -->
   <link rel="stylesheet" href="css/style.css">
 </head>
   
@@ -148,11 +147,17 @@
         <button class="icon-btn" onclick="closeAdminModal()">&times;</button>
       </div>
       <div class="modal-body">
-        <div id="pendingUsersList"></div>
-        <table class="user-table" id="usersTable">
-          <thead><tr><th>E-mail</th><th>Rol</th><th>Acties</th></tr></thead>
-          <tbody id="usersTableBody"></tbody>
-        </table>
+        <div class="admin-section">
+          <h3>⏳ Wacht op goedkeuring</h3>
+          <div id="pendingUsersList"></div>
+        </div>
+        <div class="admin-section">
+          <h3>Alle gebruikers</h3>
+          <table class="user-table">
+            <thead><tr><th>E-mail</th><th>Rol</th><th>Acties</th></tr></thead>
+            <tbody id="usersTableBody"></tbody>
+          </table>
+        </div>
       </div>
     </div>
   </div>
@@ -160,53 +165,127 @@
   <!-- 2. AUDIT LOG MODAL -->
   <div id="auditModal" class="modal">
     <div class="modal-content wide">
-      <div class="modal-header">
-        <h2 class="modal-title">Audit Log</h2>
-        <button class="icon-btn" onclick="closeAuditModal()">&times;</button>
-      </div>
+      <div class="modal-header"><h2>Audit Log</h2><button class="icon-btn" onclick="closeAuditModal()">&times;</button></div>
       <div class="modal-body">
-        <input type="text" id="auditSearchInput" class="form-control" placeholder="Zoek in logboek...">
+        <input type="text" id="auditSearchInput" class="form-control" placeholder="Zoek...">
         <table class="user-table"><tbody id="auditTableBody"></tbody></table>
       </div>
     </div>
   </div>
 
-  <!-- 3. TOEVOEGEN MODAL (Versimpeld voor overzicht, zorg dat je velden kloppen) -->
+  <!-- 3. TOEVOEGEN MODAL (VOLLEDIG) -->
   <div id="addModal" class="modal">
     <div class="modal-content wide">
-      <div class="modal-header"><h2>Nieuw systeem</h2><button class="icon-btn" onclick="closeAddModal()">&times;</button></div>
-      <form id="addForm"><div class="modal-body" id="addModalBody">
-          <!-- Zorg dat hier al je invoervelden staan zoals in je originele code -->
+      <div class="modal-header"><h2>Nieuw systeem toevoegen</h2><button class="icon-btn" onclick="closeAddModal()">&times;</button></div>
+      <form id="addForm">
+        <div class="modal-body">
+          <div class="form-group">
+            <label>Systeem Type</label>
+            <select id="addSystemType" class="form-control" required onchange="updateAddFieldsForSystemType(this.value)">
+              <option value="cv-ketel">CV-ketel</option>
+              <option value="warmtepomp">Warmtepomp</option>
+              <option value="mv-wtw">MV/WTW</option>
+              <option value="appendages">Appendages</option>
+              <option value="rookgasafvoer">Rookgasafvoer</option>
+              <option value="thermostaten">Thermostaten</option>
+              <option value="waterzijdig">Waterzijdig</option>
+              <option value="collectief">Collectief</option>
+              <option value="overig">Overig</option>
+            </select>
+          </div>
           <div class="form-group"><label>Merk</label><input type="text" id="addBrand" class="form-control" required></div>
           <div class="form-group"><label>Model</label><input type="text" id="addModel" class="form-control" required></div>
-          <div class="form-group"><label>Procedure</label><textarea id="addProcedure" class="form-control" rows="5"></textarea></div>
-          <!-- Voeg hier de rest van de velden toe (O2, CO2, etc.) -->
-      </div>
-      <div class="modal-footer"><button type="submit" class="btn btn-primary">Opslaan</button></div>
+          <div class="form-group"><label>Logo URL</label><input type="url" id="addLogoUrl" class="form-control"></div>
+          <div class="form-group"><label>Toestel Foto</label><input type="file" id="addDeviceImage" class="form-control" accept="image/*"></div>
+          <div class="form-group"><label>Procedure</label><textarea id="addProcedure" class="form-control" rows="5" required></textarea></div>
+
+          <!-- Dynamische velden voor CV -->
+          <div id="addCvKetelFields">
+            <div class="form-group"><label>O₂ Laaglast</label><input type="text" id="addO2Low" class="form-control"></div>
+            <div class="form-group"><label>O₂ Hooglast</label><input type="text" id="addO2High" class="form-control"></div>
+            <div class="form-group"><label>CO₂ Laaglast</label><input type="text" id="addCO2Low" class="form-control"></div>
+            <div class="form-group"><label>CO₂ Hooglast</label><input type="text" id="addCO2High" class="form-control"></div>
+            <div class="form-group"><label>Max CO (PPM)</label><input type="text" id="addMaxCO" class="form-control"></div>
+          </div>
+          
+          <div id="addWarmtepompFields" style="display:none;"><p>Geen specifieke meetwaarden voor warmtepompen.</p></div>
+          <div id="addWtwMvFields" style="display:none;"><p>Geen specifieke meetwaarden voor WTW/MV.</p></div>
+          <div id="addOtherFields" style="display:none;"><p>Geen extra velden nodig.</p></div>
+
+          <div class="form-group">
+            <label>Galerij Foto's (max 5)</label>
+            <div class="upload-zone" id="addUploadZone" onclick="document.getElementById('addImageInput').click()">
+              <p>Klik of sleep foto's hierheen</p>
+              <input type="file" id="addImageInput" multiple accept="image/*" style="display:none" onchange="handleImageSelect(this.files, 'add')">
+              <div id="addImageCount">0/5 foto's</div>
+            </div>
+            <div id="addImageGallery" class="image-gallery"></div>
+          </div>
+
+          <div class="form-group"><label>Materialen</label><div id="addPartsContainer"></div><button type="button" class="btn" onclick="addPartRow('add')">+ Regel</button></div>
+          <div class="form-group"><label>Controlepunten</label><div id="addChecksContainer"></div><button type="button" class="btn" onclick="addCheckRow('add')">+ Controle</button></div>
+          <div class="form-group"><label>Storingen</label><div id="addFaultsContainer"></div><button type="button" class="btn" onclick="addFaultRow('add')">+ Storing</button></div>
+          
+          <div class="form-group"><label>Opmerkingen</label><textarea id="addNotes" class="form-control"></textarea></div>
+          <div class="form-group"><label>Datum Handleiding</label><input type="date" id="addHandbookDate" class="form-control"></div>
+          <div class="form-group"><label>Link Handleiding</label><input type="url" id="addManualUrl" class="form-control"></div>
+        </div>
+        <div class="modal-footer"><button type="submit" class="btn btn-primary">Opslaan</button></div>
       </form>
     </div>
   </div>
 
-  <!-- 4. BEWERKEN MODAL -->
+  <!-- 4. BEWERKEN MODAL (VOLLEDIG) -->
   <div id="editModal" class="modal">
     <div class="modal-content wide">
-      <div class="modal-header"><h2>Bewerken</h2><button class="icon-btn" onclick="closeEditModal()">&times;</button></div>
+      <div class="modal-header"><h2>Systeem bewerken</h2><button class="icon-btn" onclick="closeEditModal()">&times;</button></div>
       <form id="editForm">
         <input type="hidden" id="editId">
+        <input type="hidden" id="editSystemType">
         <div class="modal-body">
-           <div class="form-group"><label>Merk</label><input type="text" id="editBrand" class="form-control"></div>
-           <div class="form-group"><label>Model</label><input type="text" id="editModel" class="form-control"></div>
-           <div class="form-group"><label>Procedure</label><textarea id="editProcedure" class="form-control" rows="5"></textarea></div>
+          <div class="form-group"><label>Merk</label><input type="text" id="editBrand" class="form-control" required></div>
+          <div class="form-group"><label>Model</label><input type="text" id="editModel" class="form-control" required></div>
+          <div class="form-group"><label>Logo URL</label><input type="url" id="editLogoUrl" class="form-control"></div>
+          <div class="form-group"><label>Toestel Foto</label><input type="file" id="editDeviceImage" class="form-control"><div id="editDeviceImagePreview"></div></div>
+          <div class="form-group"><label>Procedure</label><textarea id="editProcedure" class="form-control" rows="5" required></textarea></div>
+
+          <div id="cvKetelFields">
+            <div class="form-group"><label>O₂ Laaglast</label><input type="text" id="editO2Low" class="form-control"></div>
+            <div class="form-group"><label>O₂ Hooglast</label><input type="text" id="editO2High" class="form-control"></div>
+            <div class="form-group"><label>CO₂ Laaglast</label><input type="text" id="editCO2Low" class="form-control"></div>
+            <div class="form-group"><label>CO₂ Hooglast</label><input type="text" id="editCO2High" class="form-control"></div>
+            <div class="form-group"><label>Max CO (PPM)</label><input type="text" id="editMaxCO" class="form-control"></div>
+          </div>
+          
+          <div id="warmtepompFields" style="display:none;"></div>
+          <div id="otherFields" style="display:none;"></div>
+
+          <div class="form-group">
+            <label>Galerij Foto's</label>
+            <div class="upload-zone" onclick="document.getElementById('editImageInput').click()">
+              <input type="file" id="editImageInput" multiple accept="image/*" style="display:none" onchange="handleImageSelect(this.files, 'edit')">
+              <div id="editImageCount">0/5 foto's</div>
+            </div>
+            <div id="editImageGallery" class="image-gallery"></div>
+          </div>
+
+          <div class="form-group"><label>Materialen</label><div id="editPartsContainer"></div><button type="button" class="btn" onclick="addPartRow('edit')">+ Regel</button></div>
+          <div class="form-group"><label>Controlepunten</label><div id="editChecksContainer"></div><button type="button" class="btn" onclick="addCheckRow('edit')">+ Controle</button></div>
+          <div class="form-group"><label>Storingen</label><div id="editFaultsContainer"></div><button type="button" class="btn" onclick="addFaultRow('edit')">+ Storing</button></div>
+          
+          <div class="form-group"><label>Opmerkingen</label><textarea id="editNotes" class="form-control"></textarea></div>
+          <div class="form-group"><label>Datum Handleiding</label><input type="date" id="editHandbookDate" class="form-control"></div>
+          <div class="form-group"><label>Link Handleiding</label><input type="url" id="editManualUrl" class="form-control"></div>
         </div>
-        <div class="modal-footer"><button type="submit" class="btn btn-primary">Update</button></div>
+        <div class="modal-footer"><button type="submit" class="btn btn-primary">Bijwerken</button></div>
       </form>
     </div>
   </div>
 
-  <!-- 5. DE LIGHTBOX (Cruciaal voor de foto's!) -->
+  <!-- 5. LIGHTBOX -->
   <div id="lightbox" class="lightbox">
     <div class="lightbox-content">
-      <img id="lightboxImg" class="lightbox-img" alt="Uitvergrote foto">
+      <img id="lightboxImg" class="lightbox-img">
       <button class="lightbox-close" onclick="closeLightbox()">&times;</button>
     </div>
   </div>
@@ -226,4 +305,5 @@
   
 </body>
 </html>
+
 
