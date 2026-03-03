@@ -850,34 +850,6 @@ import { supabase } from './supabase-config.js';
       }
     }
 
-    async function deleteUser(userId, email) {
-  if (userId === currentUser.id) {
-    alert("Je kunt jezelf niet verwijderen!");
-    return;
-  }
-
-  if (!confirm(`Weet je zeker dat je de gebruiker ${email} volledig wilt verwijderen? Dit kan niet ongedaan worden gemaakt.`)) {
-    return;
-  }
-
-  try {
-    // We roepen de SQL functie aan die we in Stap 1 hebben gemaakt
-    const { error } = await supabase.rpc('delete_user_by_id', { user_id: userId });
-
-    if (error) throw error;
-
-    alert('Gebruiker succesvol verwijderd.');
-    await logAuditEvent('user_deleted', `Gebruiker ${email} volledig verwijderd`);
-    
-    // Ververs de lijst
-    await loadUsers();
-    await loadPendingUsers();
-  } catch (error) {
-    console.error('Error deleting user:', error);
-    alert('Fout bij verwijderen: ' + error.message);
-  }
-}
-
     async function logAuditEvent(action, details) {
       if (!currentUser) return;
       try {
@@ -1625,6 +1597,36 @@ async function checkPendingNotifications() {
     
     init();
 
+async function deleteUser(userId, email) {
+  if (userId === currentUser.id) {
+    alert("Je kunt jezelf niet verwijderen!");
+    return;
+  }
+
+  if (!confirm(`Weet je zeker dat je de gebruiker ${email} volledig wilt verwijderen? Dit kan niet ongedaan worden gemaakt.`)) {
+    return;
+  }
+
+  try {
+    // We roepen de SQL functie aan die je in de Supabase SQL-editor hebt gemaakt
+    const { error } = await supabase.rpc('delete_user_by_id', { user_id: userId });
+
+    if (error) throw error;
+
+    alert('Gebruiker succesvol verwijderd.');
+    if(typeof logAuditEvent === 'function') {
+      await logAuditEvent('user_deleted', `Gebruiker ${email} volledig verwijderd`);
+    }
+    
+    // Ververs de lijsten
+    await loadUsers();
+    await loadPendingUsers();
+  } catch (error) {
+    console.error('Error deleting user:', error);
+    alert('Fout bij verwijderen: ' + error.message);
+  }
+}
+
 window.handleLogin = handleLogin;
 window.handleLogout = handleLogout;
 window.handleRegister = handleRegister;
@@ -1645,7 +1647,7 @@ window.deleteSystem = deleteSystem;
 window.openAdminModal = openAdminModal;
 window.closeAdminModal = closeAdminModal;
 window.approveUser = approveUser;
-window.deleteUser = deleteUser;
+window.deleteUser = deleteUser; // Nu bestaat de functie wel!
 
 window.openAuditModal = openAuditModal;
 window.closeAuditModal = closeAuditModal;
@@ -1663,5 +1665,4 @@ window.closeLightbox = closeLightbox;
 window.switchTab = switchTab;
 
 window.supabase = supabase;
-
 window.activateEasterEgg = activateEasterEgg;
