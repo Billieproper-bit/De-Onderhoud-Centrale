@@ -1382,23 +1382,22 @@ function calculateHVAC() {
     // 1. Belasting berekenen (B = Qv * H)
     // Qv in dm3/s over 180 seconden
     if (gasVerschil > 0) {
-        const Qv_gas = gasVerschil / 180; // dm3/s
-        belastingHs = Qv_gas * Hs;
-        const belastingHi = Qv_gas * Hi;
+    const Qv_gas = gasVerschil / 180;
+    belastingHs = Qv_gas * Hs;
+    const belastingHi = Qv_gas * Hi;
 
-        document.getElementById('resBelastingHs').textContent = `Belasting (Hs): ${belastingHs.toFixed(2)} kW`;
-        document.getElementById('resBelastingHi').textContent = `Belasting (Hi): ${belastingHi.toFixed(2)} kW`;
+    // Gebruik innerHTML om de <sub> tags te laten werken
+    document.getElementById('resBelastingHs').innerHTML = `Belasting (H<sub>s</sub>): ${belastingHs.toFixed(2)} kW`;
+    document.getElementById('resBelastingHi').innerHTML = `Belasting (H<sub>i</sub>): ${belastingHi.toFixed(2)} kW`;
     }
 
     // 2. Vermogen berekenen (P = Qv * c * rho * dT)
     if (flowLmin > 0 && tempWarm > tempKoud) {
-        const dT = tempWarm - tempKoud;
-        const Qv_water = (flowLmin / 60) / 1000; // Omrekenen van L/min naar m3/s
-        
-        // Formule: P = m3/s * J/kg.K * kg/m3 * K / 1000 (naar kW)
-        vermogen = (Qv_water * c * rho * dT) / 1000;
-        
-        document.getElementById('resVermogen').textContent = `Vermogen (P): ${vermogen.toFixed(2)} kW`;
+    const dT = tempWarm - tempKoud;
+    const Qv_water = (flowLmin / 60) / 1000;
+    vermogen = (Qv_water * c * rho * dT) / 1000;
+    
+    document.getElementById('resVermogen').textContent = `Vermogen (P): ${vermogen.toFixed(2)} kW`;
     }
 
     // 3. Rendement berekenen (n = Pnuttig / Pin * 100%)
