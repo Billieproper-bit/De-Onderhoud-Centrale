@@ -536,7 +536,8 @@
     .gallery-item img {
       width: 100%;
       height: 100%;
-      object-fit: cover;
+      object-fit: contain; /* Verander 'cover' naar 'contain' als je de hele foto wilt zien */
+      background: #000;    /* Voeg een zwarte achtergrond toe zodat de vorm mooi blijft */
     }
 
     .gallery-item-delete {
@@ -596,8 +597,8 @@
       position: fixed;
       top: 0;
       left: 0;
-      right: 0;
-      bottom: 0;
+      width: 100%;
+      height: 100%;
       background: rgba(0, 0, 0, 0.9);
       z-index: 2000;
       align-items: center;
@@ -615,11 +616,12 @@
     }
 
     .lightbox-img {
-      max-width: 100%;
-      max-height: 100%;
-      border-radius: var(--radius-lg);
-    }
-
+  max-width: 95vw;   /* Gebruik maximaal 95% van de breedte */
+  max-height: 90vh;  /* Gebruik maximaal 90% van de hoogte */
+  object-fit: contain; /* Zorg dat de hele foto zichtbaar is (niet bijsnijden) */
+  border-radius: var(--radius-lg);
+  box-shadow: 0 0 20px rgba(0,0,0,0.5);
+}
     .lightbox-close {
       position: absolute;
       top: 10px;
@@ -778,11 +780,12 @@
     .check-img {
       margin-top: 8px;
       max-width: 100%;
+      max-height: 400px;   /* Verhoog dit voor desktop */
       border-radius: 4px;
       border: 1px solid var(--color-border);
-      max-height: 200px;
-      object-fit: cover;
+      object-fit: contain; /* Verander 'cover' naar 'contain' om de hele foto te zien */
       cursor: pointer;
+      background-color: #f0f0f0;
     }
     
     .supplier-badge {
