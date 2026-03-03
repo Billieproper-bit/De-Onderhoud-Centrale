@@ -1,4 +1,3 @@
-// js/supabase-config.js
 export const SUPABASE_URL = 'https://srsnjifezttivawxnndu.supabase.co';
 export const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI...'; // Je volledige key
 
