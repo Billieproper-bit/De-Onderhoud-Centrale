@@ -1401,12 +1401,19 @@ function calculateHVAC() {
     }
 
     // 3. Rendement berekenen (n = Pnuttig / Pin * 100%)
+    // 3. Rendement berekenen (n = Pnuttig / Pin * 100%)
     const resRen = document.getElementById('resRendement');
+    
+    // Check of het vakje wel bestaat op de pagina voor we verder gaan
+    if (!resRen) {
+        console.error("Fout: Element 'resRendement' niet gevonden in de HTML!");
+        return; 
+    }
+
     if (belastingHs > 0 && vermogen > 0) {
         const rendement = (vermogen / belastingHs) * 100;
         resRen.textContent = `${rendement.toFixed(1)}%`;
         
-        // Kleurindicatie (HR ketels horen rond de 90-98% te zitten op Hs)
         if (rendement > 90) resRen.style.color = 'var(--color-success)';
         else if (rendement > 80) resRen.style.color = 'var(--color-warning)';
         else resRen.style.color = 'var(--color-error)';
