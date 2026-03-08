@@ -17,7 +17,7 @@ import { supabase } from './supabase-config.js';
       const themes = [
         { bg: '#6C10F3', text: '#43EDC2' }, // Paars & Teal
         { bg: '#163C64', text: '#F76648' }, // Donkerblauw & Oranje
-        { bg: '#DFDE2F', text: '#1E1D1C' },  // Geel & Donkergrijs
+        { bg: '#DFDE2F', text: '#1E1D1C' }, // Geel & Donkergrijs
         { bg: '#FAD0C9', text: '#6E6E6D' } // Roze & Grijs
       ];
       
