@@ -132,32 +132,33 @@ import { supabase } from './supabase-config.js';
       pendingDiv.classList.remove('hidden');
     }
 
-    function setupEventListeners() {
-    document.getElementById('loginForm').addEventListener('submit', handleLogin);
-    document.getElementById('logoutBtn').addEventListener('click', handleLogout);
-    document.getElementById('themeToggle').addEventListener('click', toggleTheme);
-    document.getElementById('adminBtn').addEventListener('click', openAdminModal);
-    document.getElementById('addSystemBtn').addEventListener('click', openAddModal);
-    document.getElementById('auditBtn').addEventListener('click', openAuditModal);
+function setupEventListeners() {
+    // Gebruik de ?. (optional chaining) zodat de code niet crasht als een ID mist
+    document.getElementById('loginForm')?.addEventListener('submit', handleLogin);
+    document.getElementById('logoutBtn')?.addEventListener('click', handleLogout);
+    document.getElementById('themeToggle')?.addEventListener('click', toggleTheme);
+    document.getElementById('adminBtn')?.addEventListener('click', openAdminModal);
+    document.getElementById('addSystemBtn')?.addEventListener('click', openAddModal);
+    document.getElementById('auditBtn')?.addEventListener('click', openAuditModal);
     document.getElementById('auditSearchInput')?.addEventListener('input', filterAuditLogs);
-    document.getElementById('copyrightName').addEventListener('click', activateEasterEgg);
+    document.getElementById('copyrightName')?.addEventListener('click', activateEasterEgg);
     
-    document.getElementById('systemTypeFilter').addEventListener('change', () => {
+    document.getElementById('systemTypeFilter')?.addEventListener('change', () => {
         updateBrandFilter(); 
         updateModelFilter(); 
         filterSystems();     
     });
 
-    document.getElementById('brandFilter').addEventListener('change', () => {
+    document.getElementById('brandFilter')?.addEventListener('change', () => {
         updateModelFilter(); 
         filterSystems();     
     });
 
-    document.getElementById('modelFilter').addEventListener('change', filterSystems);
-    document.getElementById('favoritesFilter').addEventListener('change', filterSystems);
-    document.getElementById('addForm').addEventListener('submit', handleAddSubmit);
-    document.getElementById('editForm').addEventListener('submit', handleEditSubmit);
-    document.getElementById('registerForm').addEventListener('submit', handleRegister);
+    document.getElementById('modelFilter')?.addEventListener('change', filterSystems);
+    document.getElementById('favoritesFilter')?.addEventListener('change', filterSystems);
+    document.getElementById('addForm')?.addEventListener('submit', handleAddSubmit);
+    document.getElementById('editForm')?.addEventListener('submit', handleEditSubmit);
+    document.getElementById('registerForm')?.addEventListener('submit', handleRegister);
       
     const adminToggleBtn = document.getElementById('adminToggleBtn');
     const adminActions = document.getElementById('adminActions');
