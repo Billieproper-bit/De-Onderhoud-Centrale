@@ -376,9 +376,40 @@
   
   <!-- 2. Laad daarna pas jouw eigen app logica als module -->
   <script type="module" src="./js/app.js"></script>
+
+  <!-- 6. REGISTRATIE MODAL -->
+  <div id="registerModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title">Nieuw account registreren</h2>
+        <button class="icon-btn" onclick="closeRegisterModal()">&times;</button>
+      </div>
+      <form id="registerForm">
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="registerEmail">E-mail</label>
+            <input type="email" id="registerEmail" class="form-control" required placeholder="monteur@bedrijf.nl">
+          </div>
+          <div class="form-group">
+            <label for="registerPassword">Wachtwoord</label>
+            <input type="password" id="registerPassword" class="form-control" required placeholder="Minimaal 6 tekens">
+          </div>
+          <div class="form-group">
+            <label for="registerPassword2">Herhaal wachtwoord</label>
+            <input type="password" id="registerPassword2" class="form-control" required placeholder="Bevestig wachtwoord">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn" onclick="closeRegisterModal()">Annuleren</button>
+          <button type="submit" class="btn btn-primary">Account aanmaken</button>
+        </div>
+      </form>
+    </div>
+  </div>
   
 </body>
 </html>
+
 
 
 
