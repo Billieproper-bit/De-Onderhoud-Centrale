@@ -868,42 +868,49 @@
     }
 
 html {
-  /* Zorg dat de basis altijd scrollbaar is */
-  overflow-y: auto;
-  overflow-x: hidden;
-  width: 100%;
+    /* Zorg dat de website nooit breder is dan het scherm */
+    max-width: 100%;
+    overflow-x: hidden;
+    /* Forceer dat de verticale scrollbalk mag bestaan */
+    overflow-y: auto !important; 
+    height: auto;
 }
 
 body {
-  max-width: 100vw;
-  /* Belangrijk: overflow-x op hidden, maar overflow-y MOET op auto/visible */
-  overflow-x: hidden; 
-  overflow-y: auto;
-  position: relative;
-  min-height: 100vh;
-  /* 'contain' is veiliger dan 'none' voor mobiel scrollen */
-  overscroll-behavior-y: contain; 
-  -webkit-overflow-scrolling: touch; /* Zorgt voor soepel scrollen op iPhone */
+    max-width: 100%;
+    /* Laat de body gewoon meegroeien met de content */
+    height: auto;
+    min-height: 100vh;
+    /* Voorkom zijwaarts schuiven */
+    overflow-x: hidden;
+    /* Belangrijk: zet dit NIET op hidden */
+    overflow-y: visible; 
+    position: relative;
+    margin: 0;
+    padding: 0;
+    /* Zorgt voor soepel scrollen op telefoons */
+    -webkit-overflow-scrolling: touch;
 }
 
-/* Zorg dat de container de breedte niet forceert */
+/* Zorg dat de containers binnen de lijntjes blijven */
 .container {
-  width: 100%;
-  max-width: 1280px; /* Of je gewenste max breedte */
-  margin: 0 auto;
-  padding-left: 15px;
-  padding-right: 15px;
-  box-sizing: border-box;
+    width: 100%;
+    max-width: 1280px;
+    margin: 0 auto;
+    padding-left: 15px;
+    padding-right: 15px;
+    box-sizing: border-box;
 }
 
-/* De rest van de fixes (zoom en touch) waren wel goed: */
+/* Fix voor de iPhone zoom bij input velden */
 input, select, textarea {
-  font-size: 16px !important;
+    font-size: 16px !important;
 }
 
+/* Touch optimalisatie */
 button, .btn, .tab-btn, .icon-btn {
-  user-select: none;
-  -webkit-tap-highlight-color: transparent;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
 }
 
 
