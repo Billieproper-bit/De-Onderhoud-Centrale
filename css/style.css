@@ -191,6 +191,7 @@
     }
 
     .system-card {
+      position: relative;
       background: var(--color-surface);
       border: 1px solid var(--color-card-border);
       border-radius: var(--radius-lg);
@@ -204,10 +205,10 @@
     }
 
     .card-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: start;
-      margin-bottom: 16px;
+  display: flex;
+  flex-direction: column; /* Zet alles onder elkaar op mobiel */
+  gap: 12px;
+  margin-bottom: 16px;
     }
 
     .card-meta {
@@ -218,8 +219,11 @@
     }
 
     .card-actions {
-      display: flex;
-      gap: 8px;
+  display: flex;
+  gap: 4px;
+  position: absolute;
+  top: 15px;
+  right: 15px;
     }
 
     .icon-btn {
@@ -426,19 +430,18 @@
     }
 
     .brand-logo {
-      width: 48px;
-      height: 48px;
-      border-radius: var(--radius-base);
-      object-fit: contain;
-      background: white;
-      padding: 4px;
-      border: 1px solid var(--color-card-border);
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+  flex-shrink: 0; 
     }
 
     .card-header-with-logo {
-      display: flex;
-      gap: 12px;
-      align-items: start;
+  display: flex;
+  flex-direction: column; /* Logo boven, tekst onder */
+  align-items: flex-start;
+  gap: 12px;
+  width: 100%;
     }
 
     .admin-section {
@@ -834,28 +837,46 @@
     
     /* Nieuwe stijlen voor de header (Auto-stijl) */
     .card-header-text {
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      flex: 1; 
-      min-width: 0; 
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  margin-top: 4px; /* Geeft een klein beetje ademruimte onder het logo */
+    }
+
+/* Op desktop zetten we het weer terug naar de oude stand */
+@media (min-width: 600px) {
+  .card-header {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: flex-start;
+      }
+  
+  .card-header-with-logo {
+    flex-direction: row; /* Logo weer naast de tekst op desktop */
+    align-items: flex-start;
+      }
+
+  .card-actions {
+    position: static; /* Haal uit absolute positie */
+      }
     }
     
     .brand-label {
-      font-size: 13px;
-      font-weight: 800; /* Extra dik */
-      text-transform: uppercase; /* Alles in HOOFDLETTERS */
-      color: var(--color-primary); /* In de hoofdkleur van je app */
-      letter-spacing: 1px;
-      line-height: 1.2;
+      font-size: 14px;
+      font-weight: 800;
+      text-transform: uppercase;
+      color: var(--color-primary);
+      display: block;
       margin-bottom: 2px;
     }
     
     .model-label {
-      font-size: 18px;
+      font-size: 20px; /* Iets groter voor leesbaarheid */
       font-weight: 700;
       color: var(--color-text);
       line-height: 1.2;
+      word-wrap: break-word; /* Zorg dat lange woorden afbreken */
+      display: block;
     }
 
     .app-footer {
