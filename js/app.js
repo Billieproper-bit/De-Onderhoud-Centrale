@@ -646,7 +646,8 @@ function setupEventListeners() {
                 
                 <!-- DATUM + LINK SECTIE -->
                 <div style="margin-top: 4px; display: flex; flex-direction: column; gap: 2px;">
-                    ${system.handbook_date ? '<div class="card-meta">📅 Handleiding: ' + new Date(system.handbook_date).toLocaleDateString('nl-NL') + '</div>' : ''}
+                    ${system.handbook_date && system.handbook_date !== '1900-01-01' ? 
+                      `<div class="card-meta">📅 Handleiding: ${new Date(system.handbook_date).toLocaleDateString('nl-NL')}</div>`: ''}
                     
                     ${system.manual_url ? `
                         <a href="${escapeHtml(system.manual_url)}" target="_blank" style="display: inline-flex; align-items: center; gap: 4px; font-size: 13px; color: var(--color-primary); text-decoration: none; font-weight: 500;">
