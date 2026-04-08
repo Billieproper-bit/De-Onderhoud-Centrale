@@ -1193,97 +1193,103 @@ function setupEventListeners() {
     }
 
     async function handleEditSubmit(e) {
-      e.preventDefault();
-      
-      const submitBtn = e.target.querySelector('button[type="submit"]');
-      const originalText = submitBtn.textContent;
+  e.preventDefault();
+  const submitBtn = e.target.querySelector('button[type="submit"]');
+  const originalText = submitBtn.textContent;
 
-      console.log("🚀 Start procedure: Systeem bijwerken...");
+  try {
+    submitBtn.disabled = true;
+    submitBtn.textContent = "Bezig met opslaan...";
+    console.log("🚀 Start procedure: Systeem bijwerken voor ID:", currentEditingId);
 
-      try {
-        submitBtn.disabled = true;
-        submitBtn.textContent = "Bezig met bijwerken...";
+    const systemType = document.getElementById('editSystemType').value || 'update';
+    
+    // 1. Data verzamelen (met checks)
+    const checksJson = await processChecksData('edit');
+    const partsJson = collectPartsData('edit');
+    const faultsJson = collectFaultsData('edit');
 
-        const systemType = document.getElementById('editSystemType').value || 'update';
-        
-        // 1. Data verzamelen
-        const checksJson = await processChecksData('edit');
-        const partsJson = collectPartsData('edit');
-        const faultsJson = collectFaultsData('edit');
-
-        // 2. Toestelfoto afhandelen
-        let deviceImgUrl = document.getElementById('editDeviceImage').dataset.currentUrl || null;
-        const deviceFile = document.getElementById('editDeviceImage').files[0];
-        if (deviceFile) {
-            deviceImgUrl = await uploadSingleFile(deviceFile);
-        }
-
-        // 3. Galerij foto's afhandelen
-        let imageUrls = pendingImages.edit;
-        if (pendingImages.edit.some(img => img instanceof File)) {
-          const newFiles = pendingImages.edit.filter(img => img instanceof File);
-          const uploadedUrls = await uploadImages(systemType + '-' + Date.now(), newFiles);
-          const existingUrls = pendingImages.edit.filter(img => typeof img === 'string');
-          imageUrls = existingUrls.concat(uploadedUrls);
-        }
-
-        const updates = {
-          brand: document.getElementById('editBrand').value,
-          model: document.getElementById('editModel').value,
-          logo_url: document.getElementById('editLogoUrl').value || null,
-          device_image_url: deviceImgUrl, 
-          procedure: document.getElementById('editProcedure').value,
-          parts: partsJson,
-          faults: faultsJson,
-          checks: checksJson, 
-          images: imageUrls,
-          notes: document.getElementById('editNotes').value || null,
-          handbook_date: document.getElementById('editHandbookDate').value || null,
-          manual_url: document.getElementById('editManualUrl').value || null
-        };
-        
-        // CV velden
-        if (systemType === 'cv-ketel') {
-          updates.o2_low = document.getElementById('editO2Low').value || null;
-          updates.o2_high = document.getElementById('editO2High').value || null;
-          updates.co2_low = document.getElementById('editCO2Low').value || null;
-          updates.co2_high = document.getElementById('editCO2High').value || null;
-          updates.maxco = document.getElementById('editMaxCO').value || null;
-        }
-
-        console.log("Data klaar voor update in Supabase:", updates);
-
-        // 4. DATABASE UPDATE
-        const { error } = await supabase
-          .from('systems')
-          .update(updates)
-          .eq('id', currentEditingId);
-
-        if (error) throw error;
-        
-        console.log("✅ Update succesvol!");
-
-        const systemIndex = systems.findIndex(s => s.id === currentEditingId);
-        if (systemIndex !== -1) {
-          systems[systemIndex] = Object.assign({}, systems[systemIndex], updates);
-          await logAuditEvent('system_updated', `Systeem ${updates.brand} ${updates.model} bijgewerkt`);
-        }
-        
-        pendingImages.edit = [];
-        closeEditModal();
-        updateBrandFilter();
-        updateModelFilter(); 
-        filterSystems();
-        alert('Systeem succesvol bijgewerkt!');
-
-      } catch (error) {
-        console.error('❌ FOUT BIJ BIJWERKEN:', error);
-        alert('Bijwerken mislukt: ' + (error.message || "Onbekende database fout"));
-      } finally {
-        submitBtn.disabled = false;
-        submitBtn.textContent = originalText;
-      }
+    // 2. Toestelfoto
+    let deviceImgUrl = document.getElementById('editDeviceImage').dataset.currentUrl || null;
+    const deviceFile = document.getElementById('editDeviceImage').files[0];
+    if (deviceFile) {
+        deviceImgUrl = await uploadSingleFile(deviceFile);
     }
+
+    // 3. Galerij foto's (Met extra logging)
+    let imageUrls = pendingImages.edit;
+    if (pendingImages.edit.some(img => img instanceof File)) {
+      console.log("📸 Nieuwe foto's gedetecteerd, uploaden start...");
+      const newFiles = pendingImages.edit.filter(img => img instanceof File);
+      const uploadedUrls = await uploadImages(systemType + '-' + Date.now(), newFiles);
+      const existingUrls = pendingImages.edit.filter(img => typeof img === 'string');
+      imageUrls = existingUrls.concat(uploadedUrls);
+    }
+
+    const updates = {
+      brand: document.getElementById('editBrand').value.trim(),
+      model: document.getElementById('editModel').value.trim(),
+      logo_url: document.getElementById('editLogoUrl').value || null,
+      device_image_url: deviceImgUrl, 
+      procedure: document.getElementById('editProcedure').value,
+      parts: partsJson,
+      faults: faultsJson,
+      checks: checksJson, 
+      images: imageUrls,
+      notes: document.getElementById('editNotes').value || null,
+      handbook_date: document.getElementById('editHandbookDate').value || null,
+      manual_url: document.getElementById('editManualUrl').value || null
+    };
+
+    // CV velden
+    if (systemType === 'cv-ketel') {
+      updates.o2_low = document.getElementById('editO2Low').value || null;
+      updates.o2_high = document.getElementById('editO2High').value || null;
+      updates.co2_low = document.getElementById('editCO2Low').value || null;
+      updates.co2_high = document.getElementById('editCO2High').value || null;
+      updates.maxco = document.getElementById('editMaxCO').value || null;
+    }
+
+    console.log("📡 Gegevens klaar voor Supabase:", updates);
+
+    // 4. DE DATABASE UPDATE (Met .select() om succes te forceren)
+    const { data, error, status } = await supabase
+      .from('systems')
+      .update(updates)
+      .eq('id', currentEditingId)
+      .select(); // Belangrijk: haal de gewijzigde rij direct op
+
+    if (error) {
+      console.error("❌ Supabase Fout:", error);
+      throw error;
+    }
+
+    // Controleer of er echt iets is aangepast
+    if (!data || data.length === 0) {
+      throw new Error("De database gaf geen fout, maar er is niets aangepast. Bestaat het ID nog?");
+    }
+
+    console.log("✅ Update bevestigd door database!", data[0]);
+
+    // 5. Update de lokale lijst direct
+    const systemIndex = systems.findIndex(s => s.id === currentEditingId);
+    if (systemIndex !== -1) {
+      systems[systemIndex] = { ...systems[systemIndex], ...updates };
+    }
+    
+    // UI verversen
+    closeEditModal();
+    filterSystems(); // Teken de kaartjes opnieuw met de nieuwe data
+    alert('Systeem succesvol bijgewerkt!');
+
+  } catch (error) {
+    console.error('❌ CRITIEKE FOUT:', error);
+    alert('Fout bij bijwerken: ' + error.message);
+  } finally {
+    submitBtn.disabled = false;
+    submitBtn.textContent = originalText;
+  }
+}
     
     function handleDrop(e, mode) {
       e.preventDefault();
