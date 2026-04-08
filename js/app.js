@@ -1193,44 +1193,51 @@ function setupEventListeners() {
     }
 
     async function handleEditSubmit(e) {
-  e.preventDefault();
-  const submitBtn = e.target.querySelector('button[type="submit"]');
-  const originalText = submitBtn.textContent;
+  if (e) e.preventDefault();
+  
+  const submitBtn = document.querySelector('#editForm button[type="submit"]');
+  const originalText = submitBtn ? submitBtn.textContent : "Opslaan";
 
   try {
-    submitBtn.disabled = true;
-    submitBtn.textContent = "Bezig met opslaan...";
-    console.log("🚀 Start procedure: Systeem bijwerken voor ID:", currentEditingId);
-
-    const systemType = document.getElementById('editSystemType').value || 'update';
-    
-    // 1. Data verzamelen (met checks)
-    const checksJson = await processChecksData('edit');
-    const partsJson = collectPartsData('edit');
-    const faultsJson = collectFaultsData('edit');
-
-    // 2. Toestelfoto
-    let deviceImgUrl = document.getElementById('editDeviceImage').dataset.currentUrl || null;
-    const deviceFile = document.getElementById('editDeviceImage').files[0];
-    if (deviceFile) {
-        deviceImgUrl = await uploadSingleFile(deviceFile);
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.textContent = "Bezig...";
     }
 
-    // 3. Galerij foto's (Met extra logging)
+    console.log("--- START DIAGNOSE OPSLAAN ---");
+    console.log("Stap 1: Verzamelen van tekstvelden...");
+    
+    const id = document.getElementById('editId').value;
+    const brand = document.getElementById('editBrand').value;
+    const model = document.getElementById('editModel').value;
+    
+    console.log(`Stap 2: Verwerken van onderdelen (parts)...`);
+    const partsJson = collectPartsData('edit');
+
+    console.log("Stap 3: Verwerken van controlepunten (checks)...");
+    const checksJson = await processChecksData('edit');
+
+    console.log("Stap 4: Verwerken van storingen (faults)...");
+    const faultsJson = collectFaultsData('edit');
+
+    console.log("Stap 5: Foto-uploads controleren...");
     let imageUrls = pendingImages.edit;
-    if (pendingImages.edit.some(img => img instanceof File)) {
-      console.log("📸 Nieuwe foto's gedetecteerd, uploaden start...");
-      const newFiles = pendingImages.edit.filter(img => img instanceof File);
-      const uploadedUrls = await uploadImages(systemType + '-' + Date.now(), newFiles);
-      const existingUrls = pendingImages.edit.filter(img => typeof img === 'string');
-      imageUrls = existingUrls.concat(uploadedUrls);
+    
+    // Check of er echt nieuwe bestanden zijn
+    const heeftNieuweFiles = pendingImages.edit.some(img => img instanceof File);
+    if (heeftNieuweFiles) {
+        console.log("-> Nieuwe galerij-foto's gevonden, upload start...");
+        const systemType = document.getElementById('editSystemType').value || 'update';
+        const newFiles = pendingImages.edit.filter(img => img instanceof File);
+        const uploadedUrls = await uploadImages(systemType + '-' + Date.now(), newFiles);
+        const existingUrls = pendingImages.edit.filter(img => typeof img === 'string');
+        imageUrls = existingUrls.concat(uploadedUrls);
     }
 
     const updates = {
-      brand: document.getElementById('editBrand').value.trim(),
-      model: document.getElementById('editModel').value.trim(),
+      brand: brand,
+      model: model,
       logo_url: document.getElementById('editLogoUrl').value || null,
-      device_image_url: deviceImgUrl, 
       procedure: document.getElementById('editProcedure').value,
       parts: partsJson,
       faults: faultsJson,
@@ -1241,53 +1248,47 @@ function setupEventListeners() {
       manual_url: document.getElementById('editManualUrl').value || null
     };
 
-    // CV velden
-    if (systemType === 'cv-ketel') {
-      updates.o2_low = document.getElementById('editO2Low').value || null;
-      updates.o2_high = document.getElementById('editO2High').value || null;
-      updates.co2_low = document.getElementById('editCO2Low').value || null;
-      updates.co2_high = document.getElementById('editCO2High').value || null;
-      updates.maxco = document.getElementById('editMaxCO').value || null;
-    }
+    console.log("Stap 6: VERZENDEN NAAR SUPABASE...");
+    console.log("Data die verzonden wordt:", updates);
 
-    console.log("📡 Gegevens klaar voor Supabase:", updates);
-
-    // 4. DE DATABASE UPDATE (Met .select() om succes te forceren)
-    const { data, error, status } = await supabase
+    const { data, error } = await supabase
       .from('systems')
       .update(updates)
-      .eq('id', currentEditingId)
-      .select(); // Belangrijk: haal de gewijzigde rij direct op
+      .eq('id', id)
+      .select();
 
     if (error) {
-      console.error("❌ Supabase Fout:", error);
-      throw error;
+        console.error("STOPGEZET: Supabase gaf een error:", error);
+        throw error;
     }
 
-    // Controleer of er echt iets is aangepast
     if (!data || data.length === 0) {
-      throw new Error("De database gaf geen fout, maar er is niets aangepast. Bestaat het ID nog?");
+        console.warn("STOPGEZET: Supabase vond geen rij om aan te passen.");
+        alert("Opslaan mislukt: Kan het systeem niet vinden in de database.");
+        return;
     }
 
-    console.log("✅ Update bevestigd door database!", data[0]);
-
-    // 5. Update de lokale lijst direct
-    const systemIndex = systems.findIndex(s => s.id === currentEditingId);
+    console.log("Stap 7: OPSLAAN GELUKT!", data[0]);
+    
+    // UI bijwerken
+    const systemIndex = systems.findIndex(s => s.id === id);
     if (systemIndex !== -1) {
       systems[systemIndex] = { ...systems[systemIndex], ...updates };
     }
     
-    // UI verversen
     closeEditModal();
-    filterSystems(); // Teken de kaartjes opnieuw met de nieuwe data
+    filterSystems();
     alert('Systeem succesvol bijgewerkt!');
 
   } catch (error) {
-    console.error('❌ CRITIEKE FOUT:', error);
-    alert('Fout bij bijwerken: ' + error.message);
+    console.error("CRASH IN handleEditSubmit:", error);
+    alert("Er ging iets fout: " + error.message);
   } finally {
-    submitBtn.disabled = false;
-    submitBtn.textContent = originalText;
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.textContent = originalText;
+    }
+    console.log("--- EINDE DIAGNOSE ---");
   }
 }
     
