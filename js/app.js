@@ -1205,51 +1205,58 @@ function setupEventListeners() {
     }
 
     console.log("--- START DIAGNOSE OPSLAAN ---");
-    console.log("Stap 1: Verzamelen van tekstvelden...");
     
     const id = document.getElementById('editId').value;
-    const brand = document.getElementById('editBrand').value;
-    const model = document.getElementById('editModel').value;
+    const systemType = document.getElementById('editSystemType').value || 'update';
     
-    console.log(`Stap 2: Verwerken van onderdelen (parts)...`);
+    console.log("Stap 1: Tekstvelden en JSON data verzamelen...");
     const partsJson = collectPartsData('edit');
-
-    console.log("Stap 3: Verwerken van controlepunten (checks)...");
     const checksJson = await processChecksData('edit');
-
-    console.log("Stap 4: Verwerken van storingen (faults)...");
     const faultsJson = collectFaultsData('edit');
 
-    console.log("Stap 5: Foto-uploads controleren...");
-    let imageUrls = pendingImages.edit;
-    
-    // Check of er echt nieuwe bestanden zijn
-    const heeftNieuweFiles = pendingImages.edit.some(img => img instanceof File);
-    if (heeftNieuweFiles) {
-        console.log("-> Nieuwe galerij-foto's gevonden, upload start...");
-        const systemType = document.getElementById('editSystemType').value || 'update';
-        const newFiles = pendingImages.edit.filter(img => img instanceof File);
-        const uploadedUrls = await uploadImages(systemType + '-' + Date.now(), newFiles);
-        const existingUrls = pendingImages.edit.filter(img => typeof img === 'string');
-        imageUrls = existingUrls.concat(uploadedUrls);
-    }
-
+    // De basis updates
     const updates = {
-      brand: brand,
-      model: model,
+      brand: document.getElementById('editBrand').value.trim(),
+      model: document.getElementById('editModel').value.trim(),
       logo_url: document.getElementById('editLogoUrl').value || null,
       procedure: document.getElementById('editProcedure').value,
       parts: partsJson,
       faults: faultsJson,
       checks: checksJson, 
-      images: imageUrls,
       notes: document.getElementById('editNotes').value || null,
       handbook_date: document.getElementById('editHandbookDate').value || null,
       manual_url: document.getElementById('editManualUrl').value || null
     };
 
-    console.log("Stap 6: VERZENDEN NAAR SUPABASE...");
-    console.log("Data die verzonden wordt:", updates);
+    // STAP 1B: De instelwaardes toevoegen (DIT MISTE ERNET)
+    if (systemType === 'cv-ketel') {
+      console.log("-> CV-ketel waarden toevoegen aan update...");
+      updates.o2_low = document.getElementById('editO2Low').value || null;
+      updates.o2_high = document.getElementById('editO2High').value || null;
+      updates.co2_low = document.getElementById('editCO2Low').value || null;
+      updates.co2_high = document.getElementById('editCO2High').value || null;
+      updates.maxco = document.getElementById('editMaxCO').value || null;
+    }
+
+    console.log("Stap 2: Foto's verwerken...");
+    let deviceImgUrl = document.getElementById('editDeviceImage').dataset.currentUrl || null;
+    const deviceFile = document.getElementById('editDeviceImage').files[0];
+    if (deviceFile) {
+        deviceImgUrl = await uploadSingleFile(deviceFile);
+        updates.device_image_url = deviceImgUrl;
+    }
+
+    let imageUrls = pendingImages.edit;
+    const heeftNieuweFiles = pendingImages.edit.some(img => img instanceof File);
+    if (heeftNieuweFiles) {
+        const newFiles = pendingImages.edit.filter(img => img instanceof File);
+        const uploadedUrls = await uploadImages(systemType + '-' + Date.now(), newFiles);
+        const existingUrls = pendingImages.edit.filter(img => typeof img === 'string');
+        imageUrls = existingUrls.concat(uploadedUrls);
+    }
+    updates.images = imageUrls;
+
+    console.log("Stap 3: VERZENDEN NAAR SUPABASE...", updates);
 
     const { data, error } = await supabase
       .from('systems')
@@ -1257,20 +1264,15 @@ function setupEventListeners() {
       .eq('id', id)
       .select();
 
-    if (error) {
-        console.error("STOPGEZET: Supabase gaf een error:", error);
-        throw error;
-    }
+    if (error) throw error;
 
     if (!data || data.length === 0) {
-        console.warn("STOPGEZET: Supabase vond geen rij om aan te passen.");
-        alert("Opslaan mislukt: Kan het systeem niet vinden in de database.");
-        return;
+        throw new Error("Geen rij aangepast in de database.");
     }
 
-    console.log("Stap 7: OPSLAAN GELUKT!", data[0]);
+    console.log("Stap 4: OPSLAAN GELUKT!");
     
-    // UI bijwerken
+    // Lokale lijst bijwerken zodat het scherm direct klopt
     const systemIndex = systems.findIndex(s => s.id === id);
     if (systemIndex !== -1) {
       systems[systemIndex] = { ...systems[systemIndex], ...updates };
@@ -1282,13 +1284,12 @@ function setupEventListeners() {
 
   } catch (error) {
     console.error("CRASH IN handleEditSubmit:", error);
-    alert("Er ging iets fout: " + error.message);
+    alert("Er ging iets fout bij het opslaan: " + error.message);
   } finally {
     if (submitBtn) {
       submitBtn.disabled = false;
       submitBtn.textContent = originalText;
     }
-    console.log("--- EINDE DIAGNOSE ---");
   }
 }
     
