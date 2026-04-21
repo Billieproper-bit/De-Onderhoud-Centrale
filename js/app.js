@@ -481,7 +481,7 @@ function setupEventListeners() {
         checks.push({ subject, problem, solution, imgUrl: finalImageUrl });
       }
 
-      return checks.length > 0 ? JSON.stringify(checks) : null;
+      return checks;
     }
     
     function createSystemCard(system) {
@@ -540,47 +540,34 @@ function setupEventListeners() {
       }
 
       // 2. Content: MATERIALEN
-      let materialsContent = ''; // Hiermee maken we de variabele aan
-      
-      if (system.parts) {
-         try {
-           const parts = JSON.parse(system.parts);
-           if (Array.isArray(parts) && parts.length > 0) {
-             // We vullen de variabele met de tabel-header
-             materialsContent = '<div class="parts-list"><div class="parts-title" style="display:flex; align-items:center; gap:8px;"><svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>Benodigde pakkingen/artikelen</div><table class="parts-table"><thead><tr><th>Artikel</th><th>Art. nr.</th><th>Lev.</th></tr></thead><tbody>';
-             
-             // We voegen de rijen toe
-             materialsContent += parts.map(p => {
-               const badgeClass = p.supp === 'Rensa' ? 'supplier-rensa' : (p.supp === 'Wasco' ? 'supplier-wasco' : 'supplier-other');
-               
-               // Schoon artikelnummer voor de URL (geen spaties/punten)
-               const cleanArt = p.art ? p.art.toString().replace(/[\s.]/g, '') : "";
-               const displayArt = escapeHtml(p.art || "");
-               
-               let link = null;
-               if (cleanArt) {
-                 if (p.supp === 'Rensa') link = `https://rensa.nl/Product/${cleanArt}`;
-                 else if (p.supp === 'Wasco') link = `https://www.wasco.nl/artikel/${cleanArt}`;
-               }
-
-               const artLinkHtml = link 
-                 ? `<a href="${link}" target="_blank" style="color:var(--color-primary); text-decoration:none; border-bottom:1px dotted;">${displayArt} ↗</a>` 
-                 : displayArt;
-
-               return `<tr><td>${escapeHtml(p.desc)}</td><td style="font-family:monospace;">${artLinkHtml}</td><td><span class="supplier-badge ${badgeClass}">${escapeHtml(p.supp)}</span></td></tr>`;
-             }).join('');
-             
-             materialsContent += '</tbody></table></div>';
-           } else {
-             materialsContent = '<div style="padding:20px; text-align:center; color:var(--color-text-secondary);">Geen materialenlijst beschikbaar.</div>';
-           }
-         } catch(e) { 
-             console.error("JSON parse error bij parts:", e);
-             materialsContent = `<div class="parts-list"><div class="parts-title">Benodigde materialen</div><div class="parts-text">${escapeHtml(system.parts)}</div></div>`; 
-         }
-      } else {
-         materialsContent = '<div style="padding:20px; text-align:center; color:var(--color-text-secondary);">Geen materialen toegevoegd.</div>';
-      }
+      let materialsContent = '';
+    if (s.parts) {
+        try {
+        // Fix voor jsonb: als het al een lijst is, gebruik hem direct, anders parse hem
+        const parts = Array.isArray(s.parts) ? s.parts : JSON.parse(s.parts || '[]');
+        
+        if (parts.length > 0) {
+            materialsContent = `<div class="parts-list"><table class="parts-table"><thead><tr><th>Artikel</th><th>Art. nr.</th><th>Lev.</th></tr></thead><tbody>`;
+            materialsContent += parts.map(p => {
+                const cleanArt = p.art ? p.art.toString().replace(/[\s.]/g, '') : "";
+                let link = p.supp === 'Rensa' ? `https://rensa.nl/Product/${cleanArt}` : (p.supp === 'Wasco' ? `https://www.wasco.nl/artikel/${cleanArt}` : null);
+                const badge = p.supp === 'Rensa' ? 'badge-rensa' : (p.supp === 'Wasco' ? 'badge-wasco' : '');
+                
+                return `<tr>
+                    <td>${escapeHtml(p.desc)}</td>
+                    <td style="font-family:monospace;">${link ? `<a href="${link}" target="_blank" style="color:var(--color-primary);">${p.art} ↗</a>` : (p.art || '')}</td>
+                    <td><span class="${badge}">${p.supp || ''}</span></td>
+                </tr>`;
+            }).join('');
+            materialsContent += `</tbody></table></div>`;
+        } else {
+            materialsContent = '<p style="padding:10px; color:gray;">Geen materialen toegevoegd.</p>';
+        }
+    } catch (e) {
+        console.error("Fout bij laden materialen:", e);
+        materialsContent = '<p>Fout bij laden data.</p>';
+        }
+    }
 
       // 3. Content: CONTROLE
       let checksContent = '';
@@ -1220,10 +1207,10 @@ function setupEventListeners() {
       model: document.getElementById('editModel').value.trim(),
       logo_url: document.getElementById('editLogoUrl')?.value || null,
       procedure: document.getElementById('editProcedure').value,
-      parts: partsJson,
-      faults: faultsJson,
-      checks: checksJson, 
-      notes: document.getElementById('editNotes')?.value || null,
+      parts: collectPartsData('edit'), 
+      faults: collectFaultsData('edit'),
+      checks: await processChecksData('edit'),
+      notes: document.getElementById('editNotes')?.value || null
       handbook_date: document.getElementById('editHandbookDate')?.value || null,
       manual_url: document.getElementById('editManualUrl')?.value || null
     };
@@ -1518,7 +1505,7 @@ async function uploadSingleFile(file) {
             faults.push({ code, cause, solution });
         }
       });
-      return faults.length > 0 ? JSON.stringify(faults) : null;
+      return faults;
     }
 
     function populateFaultsForm(mode, jsonString) {
@@ -1562,7 +1549,7 @@ async function uploadSingleFile(file) {
       }
     });
 
-    return parts.length > 0 ? JSON.stringify(parts) : null;
+    return parts;
   } catch (err) {
     console.error("Fout in collectPartsData:", err);
     return null;
