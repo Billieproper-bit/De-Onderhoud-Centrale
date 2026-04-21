@@ -1209,24 +1209,31 @@ function setupEventListeners() {
     const systemType = document.getElementById('editSystemType').value || 'update';
     
     console.log("1. Data verzamelen...");
-    const partsJson = collectPartsData('edit');
-    const faultsJson = collectFaultsData('edit');
+    // We gaan er vanuit dat deze functies nu een ARRAY [] teruggeven
+    const partsArray = collectPartsData('edit'); 
+    const faultsArray = collectFaultsData('edit');
     
-    // We voegen een timeout toe aan de foto-verwerking
     console.log("2. Foto's verwerken (Controlepunten)...");
-    const checksJson = await Promise.race([
+    // processChecksData moet nu ook een ARRAY [] teruggeven
+    const checksArray = await Promise.race([
         processChecksData('edit'),
         new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout bij verwerken controle-foto's")), 15000))
     ]);
 
+    // HIER GEBEURT DE MAGIE VOOR DE KOLOMTYPES:
     const updates = {
       brand: document.getElementById('editBrand').value.trim(),
       model: document.getElementById('editModel').value.trim(),
       logo_url: document.getElementById('editLogoUrl')?.value || null,
       procedure: document.getElementById('editProcedure').value,
-      parts: partsJson,
-      faults: faultsJson,
-      checks: checksJson, 
+      
+      // 'parts' is een TEXT kolom -> we maken er een string van
+      parts: partsArray ? JSON.stringify(partsArray) : null,
+      
+      // 'faults' en 'checks' zijn JSONB -> we sturen de ARRAY direct
+      faults: faultsArray || [],
+      checks: checksArray || [], 
+      
       notes: document.getElementById('editNotes')?.value || null,
       handbook_date: document.getElementById('editHandbookDate')?.value || null,
       manual_url: document.getElementById('editManualUrl')?.value || null
@@ -1240,7 +1247,7 @@ function setupEventListeners() {
       updates.maxco = document.getElementById('editMaxCO')?.value || null;
     }
 
-    // Foto's uploaden
+    // Toestelfoto uploaden
     let deviceImgUrl = document.getElementById('editDeviceImage').dataset.currentUrl || null;
     const deviceFile = document.getElementById('editDeviceImage').files[0];
     if (deviceFile) {
@@ -1248,6 +1255,7 @@ function setupEventListeners() {
     }
     updates.device_image_url = deviceImgUrl;
 
+    // Galerij foto's uploaden
     let imageUrls = pendingImages.edit;
     if (pendingImages.edit.some(img => img instanceof File)) {
         const newFiles = pendingImages.edit.filter(img => img instanceof File);
@@ -1257,16 +1265,17 @@ function setupEventListeners() {
     }
     updates.images = imageUrls;
 
-    console.log("3. Verzenden naar database...");
-    // De database update met een timeout van 10 seconden
+    console.log("3. Verzenden naar database...", updates);
+    
+    // De database update met een ruimere timeout van 15 seconden
     const { data, error } = await Promise.race([
         supabase.from('systems').update(updates).eq('id', id).select(),
-        new Promise((_, reject) => setTimeout(() => reject(new Error("Database reageert niet (Timeout)")), 10000))
+        new Promise((_, reject) => setTimeout(() => reject(new Error("Database reageert niet (Timeout)")), 15000))
     ]);
 
     if (error) throw error;
 
-    // Lokale lijst bijwerken
+    // Lokale lijst bijwerken zodat de wijziging direct zichtbaar is
     const systemIndex = systems.findIndex(s => s.id === id);
     if (systemIndex !== -1) {
       systems[systemIndex] = { ...systems[systemIndex], ...updates };
@@ -1277,7 +1286,7 @@ function setupEventListeners() {
     alert('✅ Systeem succesvol bijgewerkt!');
 
   } catch (error) {
-    console.error("Fout:", error);
+    console.error("Fout bij opslaan:", error);
     alert("Opslaan mislukt: " + error.message);
   } finally {
     if (submitBtn) {
@@ -1552,7 +1561,7 @@ async function uploadSingleFile(file) {
       }
     });
 
-    return parts.length > 0 ? JSON.stringify(parts) : null;
+    return parts.length > 0 ? return parts; : null;
   } catch (err) {
     console.error("Fout in collectPartsData:", err);
     return null;
