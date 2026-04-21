@@ -1265,24 +1265,27 @@ function setupEventListeners() {
     }
     updates.images = imageUrls;
 
-    console.log("3. Verzenden naar database...", updates);
+console.log("3. Verzenden naar database (zonder select voor snelheid)...", updates);
     
-    // De database update met een ruimere timeout van 15 seconden
-    const { data, error } = await Promise.race([
-        supabase.from('systems').update(updates).eq('id', id).select(),
-        new Promise((_, reject) => setTimeout(() => reject(new Error("Database reageert niet (Timeout)")), 15000))
+    // We halen .select() weg en verhogen de timeout naar 40 seconden
+    const { error } = await Promise.race([
+        supabase.from('systems').update(updates).eq('id', id),
+        new Promise((_, reject) => setTimeout(() => reject(new Error("De database heeft te veel tijd nodig (40s Timeout). Probeer minder foto's of storingen tegelijk.")), 40000))
     ]);
 
     if (error) throw error;
 
-    // Lokale lijst bijwerken zodat de wijziging direct zichtbaar is
+    console.log("4. DATABASE UPDATE KLAAR!");
+
+    // Update de lokale lijst (systems array) direct in het geheugen
     const systemIndex = systems.findIndex(s => s.id === id);
     if (systemIndex !== -1) {
+      // We mixen de oude data met de nieuwe updates
       systems[systemIndex] = { ...systems[systemIndex], ...updates };
     }
     
     closeEditModal();
-    filterSystems();
+    filterSystems(); // Teken de kaartjes opnieuw op basis van de geüpdatete lijst
     alert('✅ Systeem succesvol bijgewerkt!');
 
   } catch (error) {
