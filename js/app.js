@@ -1519,7 +1519,7 @@ async function uploadSingleFile(file) {
         faults.push({ code, cause, solution });
     }
   });
-  return faults; // VERANDERING: Geen JSON.stringify meer
+  return faults;
 }
 
     function populateFaultsForm(mode, jsonString) {
@@ -1566,13 +1566,6 @@ async function uploadSingleFile(file) {
   } catch (err) {
     console.error("Fout in collectPartsData:", err);
     return [];
-  }
-}
-
-    return parts.length > 0 ? return parts;
-  } catch (err) {
-    console.error("Fout in collectPartsData:", err);
-    return null;
   }
 }
 
