@@ -1559,25 +1559,35 @@ async function uploadSingleFile(file) {
   }
 }
 
-    function populatePartsForm(mode, jsonString) {
-      const container = document.getElementById(mode + 'PartsContainer');
-      container.innerHTML = ''; 
-      
-      if (!jsonString) return; 
+    function populatePartsForm(mode, data) {
+  const container = document.getElementById(mode + 'PartsContainer');
+  container.innerHTML = ''; 
+  
+  if (!data) return; 
 
-      try {
-        const parts = JSON.parse(jsonString);
-        if (Array.isArray(parts)) {
-          parts.forEach(p => addPartRow(mode, p.desc, p.art, p.supp));
-          return;
-        }
-      } catch (e) {
-        const lines = jsonString.split('\n');
-        lines.forEach(line => {
-          if(line.trim()) addPartRow(mode, line, '', 'Overig');
-        });
+  // STAP A: Als de data al een echte lijst (Array) is (Nieuwe situatie door JSONB)
+  if (Array.isArray(data)) {
+    data.forEach(p => addPartRow(mode, p.desc, p.art, p.supp));
+    return;
+  }
+
+  // STAP B: Als de data een tekst (String) is (Oude records of legacy tekst)
+  if (typeof data === 'string') {
+    try {
+      const parts = JSON.parse(data);
+      if (Array.isArray(parts)) {
+        parts.forEach(p => addPartRow(mode, p.desc, p.art, p.supp));
+        return;
       }
+    } catch (e) {
+      // Als het geen JSON is, behandel het dan als gewone tekst-regels (oudste formaat)
+      const lines = data.split('\n');
+      lines.forEach(line => {
+        if(line.trim()) addPartRow(mode, line, '', 'Overig');
+      });
     }
+  }
+}
     
     function openLightbox(imageUrl) {
       document.getElementById('lightbox').classList.add('active');
