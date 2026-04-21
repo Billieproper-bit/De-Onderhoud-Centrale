@@ -1196,30 +1196,32 @@ function setupEventListeners() {
 
     async function handleEditSubmit(e) {
   if (e) e.preventDefault();
-  const submitBtn = document.querySelector('#editForm button[type="submit"]');
+  alert("Check 1: Functie gestart");
   
   try {
-    if (submitBtn) {
-      submitBtn.disabled = true;
-      submitBtn.textContent = "Verzenden...";
-    }
-
     const id = document.getElementById('editId').value;
     const systemType = document.getElementById('editSystemType').value || 'update';
     
-    console.log("DEBUG: Start verzamelen data voor ID:", id);
+    alert("Check 2: ID is " + id);
 
-    // Haal de data op (als Arrays)
-    const partsArray = collectPartsData('edit') || [];
-    const faultsArray = collectFaultsData('edit') || [];
-    const checksArray = await processChecksData('edit') || [];
+    // STAP A: Materialen verzamelen
+    const partsArray = collectPartsData('edit');
+    alert("Check 3: Materialen verzameld. Aantal: " + (partsArray ? partsArray.length : 0));
+
+    // STAP B: Storingen verzamelen
+    const faultsArray = collectFaultsData('edit');
+    alert("Check 4: Storingen verzameld");
+
+    // STAP C: Checks verzamelen (HIER GAAT HET VAAK MIS)
+    alert("Check 5: Start verwerken checks/foto's...");
+    const checksArray = await processChecksData('edit');
+    alert("Check 6: Checks klaar");
 
     const updates = {
       brand: document.getElementById('editBrand').value.trim(),
       model: document.getElementById('editModel').value.trim(),
       procedure: document.getElementById('editProcedure').value,
-      // We maken van parts ALTIJD een string voor de TEXT kolom
-      parts: JSON.stringify(partsArray), 
+      parts: JSON.stringify(partsArray),
       faults: faultsArray,
       checks: checksArray,
       logo_url: document.getElementById('editLogoUrl')?.value || null,
@@ -1236,47 +1238,24 @@ function setupEventListeners() {
       updates.maxco = document.getElementById('editMaxCO')?.value || null;
     }
 
-    // Foto-afhandeling
-    let deviceImgUrl = document.getElementById('editDeviceImage').dataset.currentUrl || null;
-    if (document.getElementById('editDeviceImage').files[0]) {
-        deviceImgUrl = await uploadSingleFile(document.getElementById('editDeviceImage').files[0]);
-    }
-    updates.device_image_url = deviceImgUrl;
+    alert("Check 7: Data pakket klaar. Nu verzenden...");
 
-    console.log("DEBUG: Data is klaar. Nu praten met Supabase...");
-
-    // DE KAALSTE UPDATE MOGELIJK
     const { error } = await supabase
       .from('systems')
       .update(updates)
       .eq('id', id);
 
     if (error) {
-        console.error("DEBUG: Supabase ERROR:", error);
-        alert("Database fout: " + error.message);
-        return;
+      alert("Check 8: DATABASE ERROR: " + error.message);
+      return;
     }
 
-    console.log("DEBUG: Update gelukt!");
-
-    // Update lokale lijst en sluit af
-    const systemIndex = systems.findIndex(s => s.id === id);
-    if (systemIndex !== -1) {
-      systems[systemIndex] = { ...systems[systemIndex], ...updates, parts: partsArray };
-    }
-    
-    closeEditModal();
-    filterSystems();
-    alert('✅ Gelukt!');
+    alert("Check 9: ALLES GELUKT!");
+    location.reload(); // Forceer herladen om alles te verversen
 
   } catch (err) {
-    console.error("DEBUG: Er ging iets vreselijk mis:", err);
-    alert("Fout: " + err.message);
-  } finally {
-    if (submitBtn) {
-      submitBtn.disabled = false;
-      submitBtn.textContent = "Opslaan";
-    }
+    alert("CRASH DETECTED: " + err.message);
+    console.error(err);
   }
 }
     
