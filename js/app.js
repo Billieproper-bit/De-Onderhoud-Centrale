@@ -8,7 +8,7 @@ let currentEditingId = null;
 let allUsers = [];
 let pendingImages = { add: [], edit: [] };
 
-// --- 1. INITIALISATIE & AUTH ---
+// --- 1. INITIALISATIE ---
 async function init() {
     const { data: { session } } = await supabase.auth.getSession();
 
@@ -27,7 +27,7 @@ async function init() {
 
     supabase.auth.onAuthStateChange(async (event, session) => {
         if (event === 'SIGNED_IN') {
-            location.reload(); 
+            if (!currentUser) location.reload(); 
         } else if (event === 'SIGNED_OUT') {
             showAuth();
         }
@@ -51,47 +51,14 @@ async function checkUserApproval(user) {
         }
         currentUserRole = data.role || 'user';
         return data.is_approved;
-    } catch (err) {
-        return false;
-    }
+    } catch (err) { return false; }
 }
 
-function showApp() {
-    document.getElementById('authContainer').classList.add('hidden');
-    document.getElementById('appContainer').classList.remove('hidden');
-    document.getElementById('userEmail').textContent = currentUser?.email;
-    updateUIForRole();
-}
-
-function showAuth() {
-    document.getElementById('authContainer').classList.remove('hidden');
-    document.getElementById('appContainer').classList.add('hidden');
-}
-
-function showPendingScreen(email) {
-    const container = document.getElementById('pendingScreen');
-    container.classList.remove('hidden');
-    document.getElementById('authContainer').classList.add('hidden');
-    document.getElementById('pendingMessage').innerHTML = `Hoi <b>${email}</b>, je account moet nog worden goedgekeurd door de beheerder.`;
-}
-
-function updateUIForRole() {
-    const canEdit = currentUserRole === 'admin' || currentUserRole === 'moderator';
-    const isAdmin = currentUserRole === 'admin';
-    document.getElementById('addSystemBtn').style.display = canEdit ? 'inline-flex' : 'none';
-    document.getElementById('adminBtn').style.display = isAdmin ? 'inline-flex' : 'none';
-    checkPendingNotifications();
-}
-
-// --- 2. DATA LADEN & FILTERS ---
+// --- 2. DATA & FILTERS ---
 async function loadData() {
     document.getElementById('loadingState')?.classList.remove('hidden');
     try {
-        const { data: systemsData, error } = await supabase
-            .from('systems')
-            .select('*')
-            .order('brand', { ascending: true });
-
+        const { data: systemsData, error } = await supabase.from('systems').select('*').order('brand', { ascending: true });
         if (error) throw error;
         systems = systemsData;
 
@@ -103,27 +70,8 @@ async function loadData() {
         updateBrandFilter();
         updateModelFilter();
         filterSystems();
-    } catch (error) {
-        console.error('Laden mislukt:', error);
-    } finally {
-        document.getElementById('loadingState')?.classList.add('hidden');
-    }
-}
-
-function updateBrandFilter() {
-    const select = document.getElementById('brandFilter');
-    const brands = [...new Set(systems.map(s => s.brand))].sort();
-    select.innerHTML = '<option value="all">Alle Merken</option>';
-    brands.forEach(b => select.innerHTML += `<option value="${b}">${b}</option>`);
-}
-
-function updateModelFilter() {
-    const select = document.getElementById('modelFilter');
-    const brand = document.getElementById('brandFilter').value;
-    const filtered = brand === 'all' ? systems : systems.filter(s => s.brand === brand);
-    const models = [...new Set(filtered.map(s => s.model))].sort();
-    select.innerHTML = '<option value="all">Alle Modellen</option>';
-    models.forEach(m => select.innerHTML += `<option value="${m}">${m}</option>`);
+    } catch (error) { console.error(error); }
+    finally { document.getElementById('loadingState')?.classList.add('hidden'); }
 }
 
 function filterSystems() {
@@ -141,26 +89,22 @@ function filterSystems() {
     });
 
     const grid = document.getElementById('cardsGrid');
-    const emptyState = document.getElementById('emptyState');
-
-    if (filtered.length === 0) {
-        grid.classList.add('hidden');
-        emptyState?.classList.remove('hidden');
-    } else {
-        // DIT IS DE BELANGRIJKE REGEL:
-        grid.classList.remove('hidden'); 
-        emptyState?.classList.add('hidden');
+    if (grid) {
         grid.innerHTML = filtered.map(s => createSystemCard(s)).join('');
+        grid.classList.remove('hidden');
     }
-
     document.getElementById('resultsCount').textContent = `${filtered.length} systemen gevonden`;
 }
 
-// --- 3. UI RENDERING (KAARTJES) ---
+// --- 3. DE KAARTJES (HERSTELD MET ALLE ITEMS) ---
 function createSystemCard(system) {
     const isFav = favorites.includes(system.id);
     const canEdit = currentUserRole === 'admin' || currentUserRole === 'moderator';
 
+    // A. Bepaal tab-naam op basis van type
+    let tabLabel = (['cv-ketel', 'warmtepomp'].includes(system.systemtype)) ? 'Afstelling' : 'Info';
+
+    // B. Materialen
     let materialsContent = '';
     if (system.parts) {
         try {
@@ -174,34 +118,104 @@ function createSystemCard(system) {
                 }).join('');
                 materialsContent += `</tbody></table></div>`;
             }
-        } catch (e) { materialsContent = '<p>Geen materialen beschikbaar.</p>'; }
+        } catch (e) { materialsContent = '<p>Geen materialen.</p>'; }
+    }
+
+    // C. Controlepunten
+    let checksContent = '';
+    if (system.checks) {
+        try {
+            const checks = Array.isArray(system.checks) ? system.checks : JSON.parse(system.checks);
+            checksContent = checks.map(c => `
+                <div class="check-card">
+                    <div class="check-title">${escapeHtml(c.subject)}</div>
+                    <div class="check-row"><div class="check-label">Probleem:</div><div>${escapeHtml(c.problem)}</div></div>
+                    <div class="check-row"><div class="check-label">Oplossing:</div><div>${escapeHtml(c.solution)}</div></div>
+                    ${c.imgUrl ? `<img src="${c.imgUrl}" class="check-img" onclick="openLightbox(this.src)">` : ''}
+                </div>`).join('');
+        } catch(e) { checksContent = '<p>Geen aandachtspunten.</p>'; }
+    }
+
+    // D. Storingen
+    let faultsContent = '';
+    if (system.faults) {
+        try {
+            const faults = Array.isArray(system.faults) ? system.faults : JSON.parse(system.faults);
+            faultsContent = faults.map(f => `
+                <div class="fault-row">
+                    <div class="fault-code">${escapeHtml(f.code)}</div>
+                    <div style="font-size:13px;">
+                        <div><b>Oorzaak:</b> ${escapeHtml(f.cause || f.problem || '')}</div>
+                        <div><b>Oplossing:</b> ${escapeHtml(f.solution || f.sol || '')}</div>
+                    </div>
+                </div>`).join('');
+        } catch(e) { faultsContent = '<p>Geen storingen.</p>'; }
+    }
+
+    // E. Galerij
+    let galleryHtml = '';
+    if (system.images && system.images.length > 0) {
+        galleryHtml = `<div class="image-gallery">${system.images.map(img => `<div class="gallery-item"><img src="${img}" onclick="openLightbox(this.src)"></div>`).join('')}</div>`;
+    }
+
+    // F. Waardes (O2/CO2)
+    let valuesHtml = '';
+    if (system.o2_low || system.o2_high || system.maxco) {
+        valuesHtml = `<div class="values-grid">
+            ${system.o2_low ? `<div class="value-item"><div class="value-label">O₂ Laag</div><div class="value-number">${system.o2_low}</div></div>` : ''}
+            ${system.o2_high ? `<div class="value-item"><div class="value-label">O₂ Hoog</div><div class="value-number">${system.o2_high}</div></div>` : ''}
+            ${system.maxco ? `<div class="value-item"><div class="value-label">Max CO</div><div class="value-number">${system.maxco} PPM</div></div>` : ''}
+        </div>`;
     }
 
     return `
     <div class="system-card" id="card-${system.id}">
       <div class="card-header">
         <div class="card-header-with-logo">
-          ${system.logo_url ? `<img src="${system.logo_url}" class="brand-logo" onerror="this.style.display='none'">` : ''}
+          ${system.logo_url ? `<img src="${system.logo_url}" class="brand-logo">` : ''}
           <div class="card-header-text">
             <div class="brand-label">${system.brand}</div>
             <div class="model-label">${system.model}</div>
+            ${system.handbook_date && system.handbook_date !== '1900-01-01' ? `<div class="card-meta">📅 ${new Date(system.handbook_date).toLocaleDateString('nl-NL')}</div>` : ''}
+            ${system.manual_url ? `<a href="${system.manual_url}" target="_blank" class="btn-link">Open handleiding ↗</a>` : ''}
           </div>
         </div>
         <div class="card-actions">
+          ${system.device_image_url ? `<button class="icon-btn" onclick="openLightbox('${system.device_image_url}')">📷</button>` : ''}
           <button class="icon-btn ${isFav ? 'active' : ''}" onclick="toggleFavorite('${system.id}')">★</button>
           ${canEdit ? `<button class="icon-btn" onclick="openEditModal('${system.id}')">✎</button>` : ''}
         </div>
       </div>
+
       <div class="tabs-nav">
-        <button class="tab-btn active" data-tab="maint" onclick="switchTab('${system.id}', 'maint')">Info</button>
+        <button class="tab-btn active" data-tab="maint" onclick="switchTab('${system.id}', 'maint')">${tabLabel}</button>
         <button class="tab-btn" data-tab="parts" onclick="switchTab('${system.id}', 'parts')">Materialen</button>
+        <button class="tab-btn" data-tab="checks" onclick="switchTab('${system.id}', 'checks')">Controle</button>
+        <button class="tab-btn" data-tab="faults" onclick="switchTab('${system.id}', 'faults')">Storingen</button>
       </div>
-      <div id="content-maint-${system.id}" class="tab-content active"><pre class="procedure-text">${system.procedure}</pre></div>
-      <div id="content-parts-${system.id}" class="tab-content">${materialsContent || 'Geen extra info'}</div>
+
+      <div id="content-maint-${system.id}" class="tab-content active">
+        <pre class="procedure-text">${system.procedure}</pre>
+        ${valuesHtml}
+        ${galleryHtml}
+        ${system.notes ? `<div class="notes-section"><b>Opmerkingen:</b><br>${system.notes}</div>` : ''}
+      </div>
+      <div id="content-parts-${system.id}" class="tab-content">${materialsContent || 'Geen materialen.'}</div>
+      <div id="content-checks-${system.id}" class="tab-content">${checksContent || 'Geen aandachtspunten.'}</div>
+      <div id="content-faults-${system.id}" class="tab-content">${faultsContent || 'Geen storingen.'}</div>
     </div>`;
 }
 
-// --- 4. BEWERKEN & OPSLAAN ---
+// --- 4. FUNCTIES & EVENTS ---
+function switchTab(id, tabName) {
+    const card = document.getElementById(`card-${id}`);
+    card.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    card.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    
+    card.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+    document.getElementById(`content-${tabName}-${id}`).classList.add('active');
+}
+
 async function handleEditSubmit(e) {
     if (e) e.preventDefault();
     const submitBtn = document.querySelector('#editForm button[type="submit"]');
@@ -212,45 +226,35 @@ async function handleEditSubmit(e) {
             brand: document.getElementById('editBrand').value.trim(),
             model: document.getElementById('editModel').value.trim(),
             procedure: document.getElementById('editProcedure').value,
-            parts: collectPartsData('edit'), // Stuurt Array naar jsonb kolom
-            notes: document.getElementById('editNotes')?.value || null
+            parts: collectPartsData('edit'),
+            faults: collectFaultsData('edit'),
+            checks: await processChecksData('edit'),
+            notes: document.getElementById('editNotes')?.value || null,
+            o2_low: document.getElementById('editO2Low')?.value || null,
+            o2_high: document.getElementById('editO2High')?.value || null,
+            maxco: document.getElementById('editMaxCO')?.value || null
         };
 
         const { error } = await supabase.from('systems').update(updates).eq('id', id);
         if (error) throw error;
         alert("✅ Bijgewerkt!");
         location.reload();
-    } catch (err) {
-        alert("Fout: " + err.message);
-        submitBtn.disabled = false;
-    }
+    } catch (err) { alert(err.message); submitBtn.disabled = false; }
 }
 
-// --- 5. HELPERS & CALCULATOR ---
-function calculateHVAC() {
-    const Hs = 35.17;
-    const gasStart = parseFloat(document.getElementById('gasStart').value) || 0;
-    const gasEind = parseFloat(document.getElementById('gasEind').value) || 0;
-    const flow = parseFloat(document.getElementById('calcFlow').value) || 0;
-    const tKoud = parseFloat(document.getElementById('calcTempKoud').value) || 0;
-    const tWarm = parseFloat(document.getElementById('calcTempWarm').value) || 0;
-
-    let belasting = 0;
-    if (gasEind > gasStart) {
-        belasting = ((gasEind - gasStart) / 180) * Hs;
-        document.getElementById('resBelastingHs').innerHTML = `Belasting (H<sub>s</sub>): ${belasting.toFixed(2)} kW`;
-    }
-
-    if (flow > 0 && tWarm > tKoud) {
-        const vermogen = ((flow / 60) / 1000 * 4186 * 983 * (tWarm - tKoud)) / 1000;
-        document.getElementById('resVermogen').textContent = `Vermogen: ${vermogen.toFixed(2)} kW`;
-        if (belasting > 0) {
-            const rendement = (vermogen / belasting) * 100;
-            document.getElementById('resRendement').textContent = `${rendement.toFixed(1)}%`;
-        }
-    }
+function initTheme() {
+    const saved = localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    document.body.setAttribute('data-theme', saved);
 }
 
+function toggleTheme() {
+    const current = document.body.getAttribute('data-theme');
+    const next = current === 'dark' ? 'light' : 'dark';
+    document.body.setAttribute('data-theme', next);
+    localStorage.setItem('theme', next);
+}
+
+// --- 5. HELPERS ---
 function collectPartsData(mode) {
     const rows = document.querySelectorAll(`#${mode}PartsContainer .part-input-row`);
     return Array.from(rows).map(row => ({
@@ -260,105 +264,111 @@ function collectPartsData(mode) {
     })).filter(p => p.desc || p.art);
 }
 
-function addPartRow(mode, desc = '', art = '', supp = 'Overig') {
-    const div = document.createElement('div');
-    div.className = 'part-input-row';
-    div.innerHTML = `
-        <input type="text" class="form-control part-desc" value="${desc}" placeholder="Omschrijving">
-        <input type="text" class="form-control part-art" value="${art}" placeholder="Art. nr.">
-        <select class="form-control part-supp">
-            <option value="Overig" ${supp === 'Overig' ? 'selected' : ''}>Overig</option>
-            <option value="Wasco" ${supp === 'Wasco' ? 'selected' : ''}>Wasco</option>
-            <option value="Rensa" ${supp === 'Rensa' ? 'selected' : ''}>Rensa</option>
-        </select>
-        <button type="button" onclick="this.parentElement.remove()">×</button>`;
-    document.getElementById(mode + 'PartsContainer').appendChild(div);
+async function processChecksData(mode) {
+    const rows = document.querySelectorAll(`#${mode}ChecksContainer .part-input-row`);
+    const data = [];
+    for (const row of rows) {
+        const subject = row.querySelector('.check-subject')?.value.trim();
+        if (subject) {
+            data.push({
+                subject,
+                problem: row.querySelector('.check-problem')?.value.trim(),
+                solution: row.querySelector('.check-solution')?.value.trim(),
+                imgUrl: row.querySelector('.check-existing-url')?.value || null
+            });
+        }
+    }
+    return data;
 }
 
-// --- 6. EVENT LISTENERS ---
-function setupEventListeners() {
-    document.getElementById('loginForm')?.addEventListener('submit', handleLogin);
-    document.getElementById('editForm')?.addEventListener('submit', handleEditSubmit);
-    document.getElementById('brandFilter')?.addEventListener('change', () => { updateModelFilter(); filterSystems(); });
-    document.getElementById('modelFilter')?.addEventListener('change', filterSystems);
-    document.getElementById('systemTypeFilter')?.addEventListener('change', filterSystems);
-    document.getElementById('favoritesFilter')?.addEventListener('change', filterSystems);
+function collectFaultsData(mode) {
+    const rows = document.querySelectorAll(`#${mode}FaultsContainer .part-input-row`);
+    return Array.from(rows).map(row => ({
+        code: row.querySelector('.fault-code-input')?.value.trim(),
+        cause: row.querySelector('.fault-cause-input')?.value.trim(),
+        solution: row.querySelector('.fault-sol-input')?.value.trim()
+    })).filter(f => f.code);
 }
 
-async function handleLogin(e) {
+// --- 6. EXPORTS & START ---
+window.toggleTheme = toggleTheme;
+window.handleLogin = async (e) => {
     e.preventDefault();
-    const email = document.getElementById('loginEmail').value;
-    const pass = document.getElementById('loginPassword').value;
-    const { error } = await supabase.auth.signInWithPassword({ email, password: pass });
-    if (error) alert(error.message);
-}
-
-// --- 7. OVERIGE UI ---
-function switchTab(id, tab) {
-    const card = document.getElementById(`card-${id}`);
-    card.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-    card.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-    card.querySelector(`[onclick*="${tab}"]`).classList.add('active');
-    document.getElementById(`content-${tab}-${id}`).classList.add('active');
-}
-
-function openEditModal(id) {
-    const s = systems.find(x => x.id === id);
-    if (!s) return;
-    currentEditingId = id;
-    document.getElementById('editId').value = id;
-    document.getElementById('editBrand').value = s.brand;
-    document.getElementById('editModel').value = s.model;
-    document.getElementById('editProcedure').value = s.procedure;
-    document.getElementById('editSystemType').value = s.systemtype;
-    
-    const container = document.getElementById('editPartsContainer');
-    container.innerHTML = '';
-    const parts = Array.isArray(s.parts) ? s.parts : (typeof s.parts === 'string' ? JSON.parse(s.parts || '[]') : []);
-    parts.forEach(p => addPartRow('edit', p.desc, p.art, p.supp));
-    
-    document.getElementById('editModal').classList.add('active');
-}
-
-async function checkPendingNotifications() {
-    if (currentUserRole !== 'admin') return;
-    const { count } = await supabase.from('user_roles').select('*', { count: 'exact', head: true }).eq('is_approved', false);
-    if (count > 0) document.getElementById('adminBadge').classList.remove('hidden');
-}
-
-function escapeHtml(t) {
-    const d = document.createElement('div');
-    d.textContent = t;
-    return d.innerHTML;
-}
-
-function initTheme() {
-    const t = localStorage.getItem('theme') || 'light';
-    document.body.setAttribute('data-theme', t);
-}
-
-// --- START ---
-init();
-
-// --- EXPORTS ---
-window.handleLogin = handleLogin;
-window.handleEditSubmit = handleEditSubmit;
-window.calculateHVAC = calculateHVAC;
+    const { error } = await supabase.auth.signInWithPassword({
+        email: document.getElementById('loginEmail').value,
+        password: document.getElementById('loginPassword').value
+    });
+    if (error) alert(error.message); else location.reload();
+};
 window.openCalcModal = () => document.getElementById('calcModal').classList.add('active');
 window.closeCalcModal = () => document.getElementById('calcModal').classList.remove('active');
-window.openEditModal = openEditModal;
-window.closeEditModal = () => document.getElementById('editModal').classList.remove('active');
-window.addPartRow = addPartRow;
-window.switchTab = switchTab;
+window.openLightbox = (src) => { 
+    document.getElementById('lightboxImg').src = src; 
+    document.getElementById('lightbox').classList.add('active'); 
+};
+window.closeLightbox = () => document.getElementById('lightbox').classList.remove('active');
 window.toggleFavorite = async (id) => {
     const isFav = favorites.includes(id);
     if (isFav) await supabase.from('favorites').delete().eq('user_id', currentUser.id).eq('system_id', id);
     else await supabase.from('favorites').insert({ user_id: currentUser.id, system_id: id });
     location.reload();
 };
-window.toggleTheme = () => {
-    const t = document.body.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
-    document.body.setAttribute('data-theme', t);
-    localStorage.setItem('theme', t);
+window.switchTab = switchTab;
+window.openEditModal = (id) => {
+    const s = systems.find(x => x.id === id);
+    if (!s) return;
+    document.getElementById('editId').value = id;
+    document.getElementById('editBrand').value = s.brand;
+    document.getElementById('editModel').value = s.model;
+    document.getElementById('editProcedure').value = s.procedure;
+    document.getElementById('editSystemType').value = s.systemtype;
+    
+    // Herstel parts
+    const cont = document.getElementById('editPartsContainer');
+    cont.innerHTML = '';
+    const parts = Array.isArray(s.parts) ? s.parts : JSON.parse(s.parts || '[]');
+    parts.forEach(p => addPartRow('edit', p.desc, p.art, p.supp));
+
+    document.getElementById('editModal').classList.add('active');
 };
-window.supabase = supabase;
+window.closeEditModal = () => document.getElementById('editModal').classList.remove('active');
+window.addPartRow = (mode, desc='', art='', supp='Overig') => {
+    const div = document.createElement('div');
+    div.className = 'part-input-row';
+    div.innerHTML = `
+        <input type="text" class="form-control part-desc" value="${desc}" placeholder="Omschrijving">
+        <input type="text" class="form-control part-art" value="${art}" placeholder="Art. nr.">
+        <select class="form-control part-supp">
+            <option value="Overig" ${supp==='Overig'?'selected':''}>Overig</option>
+            <option value="Wasco" ${supp==='Wasco'?'selected':''}>Wasco</option>
+            <option value="Rensa" ${supp==='Rensa'?'selected':''}>Rensa</option>
+        </select>
+        <button type="button" onclick="this.parentElement.remove()">×</button>`;
+    document.getElementById(`${mode}PartsContainer`).appendChild(div);
+};
+
+// UI helpers
+function showAuth() { document.getElementById('authContainer').classList.remove('hidden'); document.getElementById('appContainer').classList.add('hidden'); }
+function setupEventListeners() {
+    document.getElementById('loginForm')?.addEventListener('submit', window.handleLogin);
+    document.getElementById('editForm')?.addEventListener('submit', handleEditSubmit);
+    document.getElementById('brandFilter')?.addEventListener('change', () => { updateModelFilter(); filterSystems(); });
+    document.getElementById('modelFilter')?.addEventListener('change', filterSystems);
+    document.getElementById('systemTypeFilter')?.addEventListener('change', filterSystems);
+    document.getElementById('favoritesFilter')?.addEventListener('change', filterSystems);
+}
+function updateBrandFilter() {
+    const select = document.getElementById('brandFilter');
+    const brands = [...new Set(systems.map(s => s.brand))].sort();
+    select.innerHTML = '<option value="all">Alle Merken</option>' + brands.map(b => `<option value="${b}">${b}</option>`).join('');
+}
+function updateModelFilter() {
+    const brand = document.getElementById('brandFilter').value;
+    const select = document.getElementById('modelFilter');
+    const filtered = brand === 'all' ? systems : systems.filter(s => s.brand === brand);
+    const models = [...new Set(filtered.map(s => s.model))].sort();
+    select.innerHTML = '<option value="all">Alle Modellen</option>' + models.map(m => `<option value="${m}">${m}</option>`).join('');
+}
+function escapeHtml(t) { const d = document.createElement('div'); d.textContent = t; return d.innerHTML; }
+
+init();
