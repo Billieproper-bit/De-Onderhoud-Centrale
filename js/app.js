@@ -1255,17 +1255,24 @@ function setupEventListeners() {
     }
     updates.images = imageUrls;
 
-    console.log("📡 VERZENDEN NAAR DATABASE:", updates);
+    console.log("📡 VERZENDEN NAAR DATABASE (Debug mode)...", updates);
 
-    // DE UPDATE (Zonder .select() voor maximale snelheid)
-    const { error } = await supabase
+    // We gebruiken .select() om direct antwoord van de database te dwingen
+    const { data: updateData, error: updateError } = await supabase
       .from('systems')
       .update(updates)
-      .eq('id', id);
+      .eq('id', id)
+      .select();
 
-    if (error) throw error;
+    if (updateError) {
+      console.error("❌ Supabase gaf een directe foutmelding:", updateError);
+      alert("Database fout: " + updateError.message + " (Code: " + updateError.code + ")");
+      return; // We stoppen hier, zodat de modal open blijft en je de fout kunt zien
+    }
 
-    // Update de lokale lijst in het geheugen
+    console.log("✅ Update gelukt in database!", updateData);
+
+    // Update de lokale lijst in het geheugen (jouw bestaande logica)
     const systemIndex = systems.findIndex(s => s.id === id);
     if (systemIndex !== -1) {
       systems[systemIndex] = { ...systems[systemIndex], ...updates };
