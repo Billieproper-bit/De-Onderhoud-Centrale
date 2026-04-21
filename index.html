@@ -4,7 +4,11 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>De Onderhoud Centrale</title>
+  
+  <!-- Favicon Herstel -->
   <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+  
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   
   <style>
@@ -19,9 +23,11 @@
       --color-error: #c0152f;
       --color-success: #218D8D;
       --color-warning: #a84b2f;
+      --radius-base: 8px;
       --radius-lg: 12px;
       --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.04);
     }
+
     [data-theme="dark"] {
       --color-bg-primary: #1f2121;
       --color-surface: #262828;
@@ -29,43 +35,83 @@
       --color-text-secondary: rgba(167, 169, 169, 0.7);
       --color-primary: #32b8c6;
     }
+
+    /* Basis App Styling */
     * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
     body { font-family: -apple-system, system-ui, sans-serif; background: var(--color-bg-primary); color: var(--color-text); line-height: 1.5; overflow-x: hidden; }
+    html { overflow-y: auto !important; height: auto; }
     .container { width: 100%; max-width: 1280px; margin: 0 auto; padding: 0 15px; }
+
+    /* Header & Filters */
     .header { background: var(--color-surface); border-bottom: 1px solid var(--color-border); padding: 12px 0; }
     .filters { background: var(--color-surface); padding: 15px; border-radius: var(--radius-lg); margin: 16px 0; border: 1px solid var(--color-card-border); position: sticky; top: 10px; z-index: 100; box-shadow: var(--shadow-md); }
-    .filters-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+    .filters-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; }
+
+    /* Card Styling */
     .cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 20px; padding-bottom: 40px; }
-    .system-card { background: var(--color-surface); border: 1px solid var(--color-card-border); border-radius: var(--radius-lg); padding: 16px; position: relative; }
-    .card-header { display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px; }
-    .card-actions { position: absolute; top: 15px; right: 15px; display: flex; gap: 8px; }
-    .brand-label { font-size: 12px; font-weight: 800; text-transform: uppercase; color: var(--color-primary); letter-spacing: 1px; }
-    .model-label { font-size: 18px; font-weight: 700; line-height: 1.2; word-wrap: break-word; padding-right: 60px; }
-    .tabs-nav { display: flex; gap: 10px; border-bottom: 1px solid var(--color-border); margin-bottom: 15px; overflow-x: auto; }
+    .system-card { background: var(--color-surface); border: 1px solid var(--color-card-border); border-radius: var(--radius-lg); padding: 20px; position: relative; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+    
+    .card-header { display: flex; flex-direction: column; gap: 12px; margin-bottom: 16px; }
+    .card-header-with-logo { display: flex; flex-direction: column; align-items: flex-start; gap: 12px; }
+    .brand-logo { width: 48px; height: 48px; object-fit: contain; flex-shrink: 0; }
+    .card-header-text { width: 100%; }
+    .brand-label { font-size: 13px; font-weight: 800; text-transform: uppercase; color: var(--color-primary); letter-spacing: 1px; }
+    .model-label { font-size: 20px; font-weight: 700; line-height: 1.2; word-wrap: break-word; }
+    
+    .card-actions { position: absolute; top: 15px; right: 15px; display: flex; gap: 6px; }
+
+    @media (min-width: 600px) {
+      .card-header { flex-direction: row; justify-content: space-between; }
+      .card-header-with-logo { flex-direction: row; align-items: flex-start; }
+      .card-actions { position: static; }
+    }
+
+    /* Tabs */
+    .tabs-nav { display: flex; gap: 10px; border-bottom: 1px solid var(--color-border); margin-bottom: 15px; overflow-x: auto; padding-bottom: 5px; }
     .tab-btn { background: none; border: none; padding: 8px 4px; cursor: pointer; color: var(--color-text-secondary); font-weight: 600; font-size: 13px; white-space: nowrap; }
     .tab-btn.active { color: var(--color-primary); border-bottom: 2px solid var(--color-primary); }
     .tab-content { display: none; }
     .tab-content.active { display: block; }
-    .procedure-text { white-space: pre-wrap; font-family: inherit; font-size: 14px; color: var(--color-text-secondary); }
+
+    /* Content details */
+    .procedure-text { white-space: pre-wrap; font-family: inherit; font-size: 14px; color: var(--color-text-secondary); margin-bottom: 15px; }
     .values-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 10px 0; background: rgba(33,141,141,0.05); padding: 10px; border-radius: 8px; }
-    .value-item { font-size: 13px; }
-    .value-item b { color: var(--color-text); }
+    .check-card { border: 1px solid var(--color-border); padding: 10px; margin-bottom: 10px; border-radius: 8px; background: var(--color-bg-primary); }
+    .fault-row { display: flex; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--color-card-border); }
+    .fault-code { min-width: 50px; font-weight: bold; color: var(--color-error); }
+    .parts-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .parts-table th, .parts-table td { text-align: left; padding: 8px; border-bottom: 1px solid var(--color-card-border); }
+
+    /* Modals - HIER ZAT DE FOUT (display: none) */
+    .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; padding: 15px; }
+    .modal.active { display: flex; }
+    .modal-content { background: var(--color-surface); padding: 20px; border-radius: var(--radius-lg); width: 100%; max-width: 600px; max-height: 90vh; overflow-y: auto; }
+    .form-control { width: 100%; padding: 10px; border: 1px solid var(--color-border); border-radius: 8px; background: var(--color-bg-primary); color: var(--color-text); font-size: 16px !important; margin-bottom: 10px; }
+
+    /* Buttons */
     .btn { display: inline-flex; align-items: center; gap: 8px; padding: 8px 16px; border-radius: 8px; cursor: pointer; border: 1px solid var(--color-border); background: var(--color-surface); color: var(--color-text); font-size: 14px; }
     .btn-primary { background: var(--color-primary); color: white; border: none; }
-    .form-control { width: 100%; padding: 10px; border: 1px solid var(--color-border); border-radius: 8px; background: var(--color-bg-primary); color: var(--color-text); font-size: 16px !important; margin-bottom: 10px; }
-    .app-footer { margin-top: 40px; padding: 24px 0; border-top: 1px solid var(--color-border); text-align: center; color: var(--color-text-secondary); font-size: 13px; }
-    .hidden { display: none !important; }
+    .icon-btn { background: none; border: none; cursor: pointer; font-size: 18px; line-height: 1; }
+
+    /* Images */
+    .image-gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 8px; margin-top: 10px; }
+    .gallery-item { aspect-ratio: 1; border-radius: 8px; overflow: hidden; border: 1px solid var(--color-border); cursor: pointer; }
+    .gallery-item img { width: 100%; height: 100%; object-fit: contain; background: #f0f0f0; }
+    .check-img { max-width: 100%; max-height: 300px; object-fit: contain; border-radius: 6px; margin-top: 5px; cursor: pointer; }
     .lightbox { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 2000; align-items: center; justify-content: center; }
     .lightbox.active { display: flex; }
     .lightbox-img { max-width: 95%; max-height: 90%; object-fit: contain; }
+
+    .app-footer { margin-top: 40px; padding: 24px 0; border-top: 1px solid var(--color-border); text-align: center; color: var(--color-text-secondary); font-size: 13px; }
+    .hidden { display: none !important; }
   </style>
 </head>
 <body>
 
-  <!-- 1. LOGIN -->
-  <div id="authContainer" class="container" style="margin-top: 100px; max-width: 400px;">
+  <!-- LOGIN -->
+  <div id="authContainer" class="container" style="margin-top: 80px; max-width: 400px;">
     <div style="background: var(--color-surface); padding: 30px; border-radius: 20px; box-shadow: var(--shadow-md); text-align: center;">
-      <h2 style="margin-bottom: 20px;">OHC Login</h2>
+      <h2 style="margin-bottom: 20px;">De Onderhoud Centrale</h2>
       <form id="loginForm">
         <input type="email" id="loginEmail" placeholder="E-mail" class="form-control" required>
         <input type="password" id="loginPassword" placeholder="Wachtwoord" class="form-control" required>
@@ -74,7 +120,7 @@
     </div>
   </div>
 
-  <!-- 2. PENDING -->
+  <!-- WACHTSCHERM -->
   <div id="pendingScreen" class="hidden container" style="text-align: center; margin-top: 100px;">
     <h1>⏳</h1>
     <h2>Toegang in afwachting</h2>
@@ -83,11 +129,11 @@
     <button onclick="handleLogout()" class="btn" style="margin-top: 10px;">Uitloggen</button>
   </div>
 
-  <!-- 3. MAIN APP -->
+  <!-- APP CONTAINER -->
   <div id="appContainer" class="hidden">
     <div class="header">
       <div class="container" style="display: flex; justify-content: space-between; align-items: center;">
-        <h1 style="font-size: 20px; font-weight: 800; color: var(--color-primary);">OHC</h1>
+        <h1 style="font-size: 18px; font-weight: 800;">De Onderhoud Centrale</h1>
         <div style="display: flex; gap: 8px;">
           <button class="btn" onclick="openModal('calcModal')">🧮 Calculator</button>
           <button class="btn" onclick="toggleTheme()">🌓</button>
@@ -100,7 +146,7 @@
     <div class="container">
       <div class="filters">
         <div class="filters-row">
-          <input type="text" id="searchInput" class="form-control" placeholder="Snel zoeken..." oninput="filterSystems()">
+          <input type="text" id="searchInput" class="form-control" placeholder="Zoek merk of model..." oninput="filterSystems()">
           <select id="brandFilter" class="form-control" onchange="filterSystems()"></select>
           <select id="favoritesFilter" class="form-control" onchange="filterSystems()">
             <option value="all">Alle systemen</option>
@@ -109,7 +155,7 @@
         </div>
         <div id="resultsCount" style="font-size: 12px; margin-top: 10px; color: var(--color-text-secondary);">Laden...</div>
       </div>
-      <div id="loadingState" style="text-align: center; padding: 50px;">Laden...</div>
+      <div id="loadingState" style="text-align: center; padding: 50px;">Systemen worden geladen...</div>
       <div id="cardsGrid" class="cards-grid hidden"></div>
       
       <div class="app-footer">
@@ -118,21 +164,30 @@
     </div>
   </div>
 
-  <!-- MODALS -->
+  <!-- CALCULATOR MODAL -->
   <div id="calcModal" class="modal">
     <div class="modal-content">
-      <div class="modal-header"><h3>HVAC Calculator</h3><button class="btn" onclick="closeModal('calcModal')">×</button></div>
+      <div class="modal-header"><h3>HVAC Calculator (NEN)</h3><button class="btn" onclick="closeModal('calcModal')">×</button></div>
       <div class="modal-body">
         <label>Gasverbruik liters (180 sec)</label>
-        <div style="display: flex; gap: 5px;"><input type="number" id="gasStart" class="form-control" placeholder="Start" oninput="calculateHVAC()"><input type="number" id="gasEind" class="form-control" placeholder="Eind" oninput="calculateHVAC()"></div>
-        <div id="resBelastingHs" style="margin-top: 10px; font-weight: bold;">Belasting: - kW</div>
-        <hr style="margin: 15px 0;"><label>Flow (L/min)</label><input type="number" id="calcFlow" class="form-control" oninput="calculateHVAC()">
-        <div style="display: flex; gap: 5px;"><input type="number" id="calcTempKoud" class="form-control" placeholder="T-Koud" oninput="calculateHVAC()"><input type="number" id="calcTempWarm" class="form-control" placeholder="T-Warm" oninput="calculateHVAC()"></div>
-        <div id="resRendement" style="margin-top: 20px; font-size: 28px; font-weight: 800; text-align: center;">-%</div>
+        <div style="display: flex; gap: 5px; margin-top: 5px;">
+           <input type="number" id="gasStart" class="form-control" placeholder="Start" oninput="calculateHVAC()">
+           <input type="number" id="gasEind" class="form-control" placeholder="Eind" oninput="calculateHVAC()">
+        </div>
+        <div id="resBelastingHs" style="margin: 10px 0; font-weight: bold;">Belasting (H<sub>s</sub>): - kW</div>
+        <hr style="margin: 15px 0;">
+        <label>Waterzijdig (Flowbeker)</label>
+        <input type="number" id="calcFlow" class="form-control" placeholder="Flow (L/min)" oninput="calculateHVAC()" style="margin-top: 5px;">
+        <div style="display: flex; gap: 5px; margin-top: 5px;">
+          <input type="number" id="calcTempKoud" class="form-control" placeholder="T-Koud" oninput="calculateHVAC()">
+          <input type="number" id="calcTempWarm" class="form-control" placeholder="T-Warm" oninput="calculateHVAC()">
+        </div>
+        <div id="resRendement" style="margin-top: 20px; font-size: 32px; font-weight: 900; text-align: center; color: var(--color-primary);">-%</div>
       </div>
     </div>
   </div>
 
+  <!-- BEWERKEN MODAL -->
   <div id="editModal" class="modal">
     <div class="modal-content">
       <div class="modal-header"><h3>Systeem bewerken</h3><button class="btn" onclick="closeModal('editModal')">×</button></div>
@@ -144,7 +199,7 @@
         <label>CO2 Laag / Hoog</label><div style="display:flex; gap:5px;"><input type="text" id="editCO2Low" class="form-control"><input type="text" id="editCO2High" class="form-control"></div>
         <label>Procedure</label><textarea id="editProcedure" class="form-control" rows="5"></textarea>
         <div id="editPartsContainer"></div>
-        <button type="button" class="btn" onclick="addPartRow('edit')">+ Regel</button>
+        <button type="button" class="btn" onclick="addPartRow('edit')" style="margin-top:10px;">+ Regel</button>
         <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 20px;">Opslaan</button>
       </form>
     </div>
@@ -160,11 +215,6 @@
     let currentUser = null, currentUserRole = 'user', systems = [], favorites = [];
 
     async function init() {
-        // RESET UI: Verberg alles voor de check
-        document.getElementById('authContainer').classList.add('hidden');
-        document.getElementById('appContainer').classList.add('hidden');
-        document.getElementById('pendingScreen').classList.add('hidden');
-
         const { data: { session } } = await supabase.auth.getSession();
         if (session) {
             currentUser = session.user;
@@ -180,17 +230,20 @@
             document.getElementById('authContainer').classList.remove('hidden');
         }
         setupEventListeners();
+        document.body.setAttribute('data-theme', localStorage.getItem('theme') || 'light');
         document.getElementById('currentYear').textContent = new Date().getFullYear();
     }
 
     function showApp() {
+        document.getElementById('authContainer').classList.add('hidden');
         document.getElementById('appContainer').classList.remove('hidden');
         if(currentUserRole === 'admin') document.getElementById('adminBtn').style.display = 'inline-flex';
     }
 
     function showPendingScreen(email) {
+        document.getElementById('authContainer').classList.add('hidden');
         document.getElementById('pendingScreen').classList.remove('hidden');
-        document.getElementById('pendingMessage').textContent = `Hoi ${email}, je account wacht op goedkeuring.`;
+        document.getElementById('pendingMessage').textContent = `Hoi ${email}, je account moet nog worden goedgekeurd door de beheerder.`;
     }
 
     async function loadData() {
@@ -235,17 +288,39 @@
                     return `<tr><td>${p.desc}</td><td>${link ? `<a href="${link}" target="_blank" style="color:var(--color-primary);">${p.art} ↗</a>` : (p.art || '')}</td></tr>`;
                 }).join('') + `</tbody></table>`;
             }
-        } catch(e) { partsHtml = 'Fout bij laden.'; }
+        } catch(e) {}
+
+        let checksHtml = '';
+        try {
+            const checks = Array.isArray(s.checks) ? s.checks : JSON.parse(s.checks || '[]');
+            checksHtml = checks.map(c => `<div class="check-card"><b>${c.subject}</b><br><small>P: ${c.problem}</small><br><small>S: ${c.solution}</small>${c.imgUrl ? `<br><img src="${c.imgUrl}" class="check-img" onclick="openLightbox(this.src)">` : ''}</div>`).join('');
+        } catch(e) {}
+
+        let faultsHtml = '';
+        try {
+            const faults = Array.isArray(s.faults) ? s.faults : JSON.parse(s.faults || '[]');
+            faultsHtml = faults.map(f => `<div class="fault-row"><div class="fault-code">${f.code}</div><div><b>O:</b> ${f.cause || ''}<br><b>S:</b> ${f.solution || ''}</div></div>`).join('');
+        } catch(e) {}
+
+        let galleryHtml = '';
+        if (s.images && s.images.length > 0) {
+            galleryHtml = `<div class="image-gallery">${s.images.map(img => `<div class="gallery-item"><img src="${img}" onclick="openLightbox(this.src)"></div>`).join('')}</div>`;
+        }
 
         return `
         <div class="system-card" id="card-${s.id}">
             <div class="card-header">
-                <div class="card-header-text">
-                    <div class="brand-label">${s.brand}</div>
-                    <div class="model-label">${s.model}</div>
+                <div class="card-header-with-logo">
+                    ${s.logo_url ? `<img src="${s.logo_url}" class="brand-logo">` : ''}
+                    <div class="card-header-text">
+                        <div class="brand-label">${s.brand}</div>
+                        <div class="model-label">${s.model}</div>
+                        ${s.handbook_date && s.handbook_date !== '1900-01-01' ? `<div style="font-size:11px; color:orange;">📅 ${new Date(s.handbook_date).toLocaleDateString('nl-NL')}</div>` : ''}
+                    </div>
                 </div>
                 <div class="card-actions">
                     ${s.manual_url ? `<a href="${s.manual_url}" target="_blank" class="icon-btn" title="Handleiding">📄</a>` : ''}
+                    ${s.device_image_url ? `<button class="icon-btn" onclick="openLightbox('${s.device_image_url}')">📷</button>` : ''}
                     <button class="icon-btn ${isFav ? 'active' : ''}" onclick="toggleFavorite('${s.id}')">★</button>
                     ${canEdit ? `<button class="icon-btn" onclick="openEditModal('${s.id}')">✎</button>` : ''}
                 </div>
@@ -253,6 +328,8 @@
             <div class="tabs-nav">
                 <button class="tab-btn active" onclick="switchTab('${s.id}', 'info', event)">Afstelling</button>
                 <button class="tab-btn" onclick="switchTab('${s.id}', 'parts', event)">Materialen</button>
+                <button class="tab-btn" onclick="switchTab('${s.id}', 'checks', event)">Controle</button>
+                <button class="tab-btn" onclick="switchTab('${s.id}', 'faults', event)">Storingen</button>
             </div>
             <div id="content-info-${s.id}" class="tab-content active">
                 <div class="values-grid">
@@ -260,8 +337,11 @@
                     <div>CO2 Laag: <b>${s.co2_low || '-'}</b><br>CO2 Hoog: <b>${s.co2_high || '-'}</b></div>
                 </div>
                 <pre class="procedure-text">${s.procedure || 'Geen procedure.'}</pre>
+                ${galleryHtml}
             </div>
             <div id="content-parts-${s.id}" class="tab-content">${partsHtml || 'Geen info.'}</div>
+            <div id="content-checks-${s.id}" class="tab-content">${checksHtml || 'Geen info.'}</div>
+            <div id="content-faults-${s.id}" class="tab-content">${faultsHtml || 'Geen info.'}</div>
         </div>`;
     }
 
@@ -320,18 +400,18 @@
         if (error) alert(error.message); else location.reload();
     }
 
-    function collectPartsData(mode) {
-        return Array.from(document.querySelectorAll(`#${mode}PartsContainer .part-input-row`)).map(row => ({
-            desc: row.querySelector('.part-desc').value, art: row.querySelector('.part-art').value, supp: row.querySelector('select').value
-        })).filter(p => p.desc || p.art);
-    }
-
     function addPartRow(mode, desc='', art='', supp='Overig') {
         const div = document.createElement('div'); div.className = 'part-input-row';
         div.innerHTML = `<input type="text" class="form-control part-desc" value="${desc}" placeholder="Item"><input type="text" class="form-control part-art" value="${art}" placeholder="Nr">
         <select class="form-control"><option ${supp==='Overig'?'selected':''}>Overig</option><option ${supp==='Wasco'?'selected':''}>Wasco</option><option ${supp==='Rensa'?'selected':''}>Rensa</option></select>
         <button type="button" class="btn" onclick="this.parentElement.remove()">×</button>`;
         document.getElementById(`${mode}PartsContainer`).appendChild(div);
+    }
+
+    function collectPartsData(mode) {
+        return Array.from(document.querySelectorAll(`#${mode}PartsContainer .part-input-row`)).map(row => ({
+            desc: row.querySelector('.part-desc').value, art: row.querySelector('.part-art').value, supp: row.querySelector('select').value
+        })).filter(p => p.desc || p.art);
     }
 
     function openEditModal(id) {
