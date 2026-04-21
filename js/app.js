@@ -540,25 +540,17 @@ function setupEventListeners() {
       }
 
       // 2. Content: MATERIALEN
-      let materialsContent = '';
-      if (system.parts) {
-         try {
-           const parts = JSON.parse(system.parts);
-           if (Array.isArray(parts) && parts.length > 0) {
-             materialsContent = '<div class="parts-list"><div class="parts-title" style="display:flex; align-items:center; gap:8px;"><svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>Benodigde pakkingen/artikelen</div><table class="parts-table"><thead><tr><th>Artikel</th><th>Art. nr.</th><th>Lev.</th></tr></thead><tbody>';
-             
-             materialsContent += parts.map(p => {
+      materialsContent += parts.map(p => {
                const badgeClass = p.supp === 'Rensa' ? 'supplier-rensa' : (p.supp === 'Wasco' ? 'supplier-wasco' : 'supplier-other');
                
-               // Haal het artikelnummer op en haal spaties weg
-               const rawArt = p.art ? p.art.toString().trim() : "";
-               const displayArt = escapeHtml(rawArt);
+               // Schoon artikelnummer voor de URL (geen spaties/punten)
+               const cleanArt = p.art ? p.art.toString().replace(/[\s.]/g, '') : "";
+               const displayArt = escapeHtml(p.art || "");
                
-               // Bouw de link alleen als er een artikelnummer is
                let link = null;
-               if (rawArt) {
-                 if (p.supp === 'Rensa') link = `https://rensa.nl/Product/${rawArt}`;
-                 else if (p.supp === 'Wasco') link = `https://www.wasco.nl/artikel/${rawArt}`;
+               if (cleanArt) {
+                 if (p.supp === 'Rensa') link = `https://rensa.nl/Product/${cleanArt}`;
+                 else if (p.supp === 'Wasco') link = `https://www.wasco.nl/artikel/${cleanArt}`;
                }
 
                const artLinkHtml = link 
@@ -567,18 +559,6 @@ function setupEventListeners() {
 
                return `<tr><td>${escapeHtml(p.desc)}</td><td style="font-family:monospace;">${artLinkHtml}</td><td><span class="supplier-badge ${badgeClass}">${escapeHtml(p.supp)}</span></td></tr>`;
              }).join('');
-             
-             materialsContent += '</tbody></table></div>';
-           } else {
-             materialsContent = '<div style="padding:20px; text-align:center; color:var(--color-text-secondary);">Geen materialenlijst beschikbaar.</div>';
-           }
-         } catch(e) { 
-             console.error("JSON parse error bij parts:", e);
-             materialsContent = `<div class="parts-list"><div class="parts-title">Benodigde materialen</div><div class="parts-text">${escapeHtml(system.parts)}</div></div>`; 
-         }
-      } else {
-         materialsContent = '<div style="padding:20px; text-align:center; color:var(--color-text-secondary);">Geen materialen toegevoegd.</div>';
-      }
 
       // 3. Content: CONTROLE
       let checksContent = '';
@@ -1201,51 +1181,55 @@ function setupEventListeners() {
   try {
     if (submitBtn) {
       submitBtn.disabled = true;
-      submitBtn.textContent = "Bezig...";
+      submitBtn.textContent = "Bezig met opslaan...";
     }
 
-    console.log("--- START DIAGNOSE OPSLAAN ---");
-    
     const id = document.getElementById('editId').value;
     const systemType = document.getElementById('editSystemType').value || 'update';
     
-    console.log("Stap 1: Tekstvelden en JSON data verzamelen...");
+    // Verzamel JSON data
     const partsJson = collectPartsData('edit');
     const checksJson = await processChecksData('edit');
     const faultsJson = collectFaultsData('edit');
 
-    // De basis updates
+    // Basis object bouwen
     const updates = {
       brand: document.getElementById('editBrand').value.trim(),
       model: document.getElementById('editModel').value.trim(),
-      logo_url: document.getElementById('editLogoUrl').value || null,
+      logo_url: document.getElementById('editLogoUrl')?.value || null,
       procedure: document.getElementById('editProcedure').value,
       parts: partsJson,
       faults: faultsJson,
       checks: checksJson, 
-      notes: document.getElementById('editNotes').value || null,
-      handbook_date: document.getElementById('editHandbookDate').value || null,
-      manual_url: document.getElementById('editManualUrl').value || null
+      notes: document.getElementById('editNotes')?.value || null,
+      handbook_date: document.getElementById('editHandbookDate')?.value || null,
+      manual_url: document.getElementById('editManualUrl')?.value || null
     };
 
-    // STAP 1B: De instelwaardes toevoegen (DIT MISTE ERNET)
+    // Alleen CV-waarden toevoegen als het veld bestaat in de HTML
     if (systemType === 'cv-ketel') {
-      console.log("-> CV-ketel waarden toevoegen aan update...");
-      updates.o2_low = document.getElementById('editO2Low').value || null;
-      updates.o2_high = document.getElementById('editO2High').value || null;
-      updates.co2_low = document.getElementById('editCO2Low').value || null;
-      updates.co2_high = document.getElementById('editCO2High').value || null;
-      updates.maxco = document.getElementById('editMaxCO').value || null;
+      const o2L = document.getElementById('editO2Low');
+      const o2H = document.getElementById('editO2High');
+      const co2L = document.getElementById('editCO2Low');
+      const co2H = document.getElementById('editCO2High');
+      const maxC = document.getElementById('editMaxCO');
+
+      if(o2L) updates.o2_low = o2L.value || null;
+      if(o2H) updates.o2_high = o2H.value || null;
+      if(co2L) updates.co2_low = co2L.value || null;
+      if(co2H) updates.co2_high = co2H.value || null;
+      if(maxC) updates.maxco = maxC.value || null;
     }
 
-    console.log("Stap 2: Foto's verwerken...");
+    // Toestelfoto afhandelen
     let deviceImgUrl = document.getElementById('editDeviceImage').dataset.currentUrl || null;
     const deviceFile = document.getElementById('editDeviceImage').files[0];
     if (deviceFile) {
         deviceImgUrl = await uploadSingleFile(deviceFile);
-        updates.device_image_url = deviceImgUrl;
     }
+    updates.device_image_url = deviceImgUrl;
 
+    // Galerij foto's afhandelen
     let imageUrls = pendingImages.edit;
     const heeftNieuweFiles = pendingImages.edit.some(img => img instanceof File);
     if (heeftNieuweFiles) {
@@ -1256,8 +1240,7 @@ function setupEventListeners() {
     }
     updates.images = imageUrls;
 
-    console.log("Stap 3: VERZENDEN NAAR SUPABASE...", updates);
-
+    // VERZENDEN
     const { data, error } = await supabase
       .from('systems')
       .update(updates)
@@ -1267,24 +1250,23 @@ function setupEventListeners() {
     if (error) throw error;
 
     if (!data || data.length === 0) {
-        throw new Error("Geen rij aangepast in de database.");
+        throw new Error("De database heeft de wijziging niet doorgevoerd. Probeer het opnieuw.");
     }
 
-    console.log("Stap 4: OPSLAAN GELUKT!");
-    
-    // Lokale lijst bijwerken zodat het scherm direct klopt
+    // Update lokale lijst (Heel belangrijk voor de UI!)
     const systemIndex = systems.findIndex(s => s.id === id);
     if (systemIndex !== -1) {
+      // We behouden de oude data en overschrijven alleen de updates
       systems[systemIndex] = { ...systems[systemIndex], ...updates };
     }
     
     closeEditModal();
-    filterSystems();
-    alert('Systeem succesvol bijgewerkt!');
+    filterSystems(); // Direct scherm verversen
+    alert('✅ Systeem succesvol bijgewerkt!');
 
   } catch (error) {
-    console.error("CRASH IN handleEditSubmit:", error);
-    alert("Er ging iets fout bij het opslaan: " + error.message);
+    console.error("Fout bij opslaan:", error);
+    alert("Er ging iets mis: " + error.message);
   } finally {
     if (submitBtn) {
       submitBtn.disabled = false;
@@ -1541,24 +1523,23 @@ async function uploadSingleFile(file) {
     const rows = container.querySelectorAll('.part-input-row');
     const parts = [];
 
-    rows.forEach((row, index) => {
+    rows.forEach((row) => {
       const descEl = row.querySelector('.part-desc');
       const artEl = row.querySelector('.part-art');
       const suppEl = row.querySelector('.part-supp');
 
-      // Check of de elementen wel bestaan in deze rij
       if (descEl && artEl && suppEl) {
         const desc = descEl.value.trim();
         const art = artEl.value.trim();
         const supp = suppEl.value;
 
+        // Alleen toevoegen als er minstens een omschrijving OF art. nr is
         if (desc || art) {
           parts.push({ desc, art, supp });
         }
       }
     });
 
-    console.log(`Verzamelde onderdelen voor ${mode}:`, parts);
     return parts.length > 0 ? JSON.stringify(parts) : null;
   } catch (err) {
     console.error("Fout in collectPartsData:", err);
