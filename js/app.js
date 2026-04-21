@@ -1229,41 +1229,37 @@ function setupEventListeners() {
     const id = document.getElementById('editId').value;
     const systemType = document.getElementById('editSystemType').value || 'update';
     
-    // Verzamel JSON data
-    const partsJson = collectPartsData('edit');
-    const checksJson = await processChecksData('edit');
-    const faultsJson = collectFaultsData('edit');
+    console.log("🚀 Start opslaan voor ID:", id);
 
-    // Basis object bouwen
+    // 1. Data verzamelen (slechts ÉÉN keer aanroepen!)
+    const partsData = collectPartsData('edit');
+    const faultsData = collectFaultsData('edit');
+    const checksData = await processChecksData('edit'); 
+
+    // 2. Basis object bouwen
     const updates = {
       brand: document.getElementById('editBrand').value.trim(),
       model: document.getElementById('editModel').value.trim(),
-      logo_url: document.getElementById('editLogoUrl')?.value || null,
       procedure: document.getElementById('editProcedure').value,
-      parts: collectPartsData('edit'), 
-      faults: collectFaultsData('edit'),
-      checks: await processChecksData('edit'),
-      notes: document.getElementById('editNotes')?.value || null,
-      handbook_date: document.getElementById('editHandbookDate')?.value || null,
-      manual_url: document.getElementById('editManualUrl')?.value || null
+      parts: partsData,   // Direct als Array naar jsonb
+      faults: faultsData, // Direct als Array naar jsonb
+      checks: checksData, // Direct als Array naar jsonb
+      logo_url: document.getElementById('editLogoUrl') ? document.getElementById('editLogoUrl').value : null,
+      notes: document.getElementById('editNotes') ? document.getElementById('editNotes').value : null,
+      handbook_date: document.getElementById('editHandbookDate') ? document.getElementById('editHandbookDate').value : null,
+      manual_url: document.getElementById('editManualUrl') ? document.getElementById('editManualUrl').value : null
     };
 
-    // Alleen CV-waarden toevoegen als het veld bestaat in de HTML
+    // 3. Specifieke CV-waarden toevoegen
     if (systemType === 'cv-ketel') {
-      const o2L = document.getElementById('editO2Low');
-      const o2H = document.getElementById('editO2High');
-      const co2L = document.getElementById('editCO2Low');
-      const co2H = document.getElementById('editCO2High');
-      const maxC = document.getElementById('editMaxCO');
-
-      if(o2L) updates.o2_low = o2L.value || null;
-      if(o2H) updates.o2_high = o2H.value || null;
-      if(co2L) updates.co2_low = co2L.value || null;
-      if(co2H) updates.co2_high = co2H.value || null;
-      if(maxC) updates.maxco = maxC.value || null;
+      updates.o2_low = document.getElementById('editO2Low')?.value || null;
+      updates.o2_high = document.getElementById('editO2High')?.value || null;
+      updates.co2_low = document.getElementById('editCO2Low')?.value || null;
+      updates.co2_high = document.getElementById('editCO2High')?.value || null;
+      updates.maxco = document.getElementById('editMaxCO')?.value || null;
     }
 
-    // Toestelfoto afhandelen
+    // 4. Foto's (Toestel)
     let deviceImgUrl = document.getElementById('editDeviceImage').dataset.currentUrl || null;
     const deviceFile = document.getElementById('editDeviceImage').files[0];
     if (deviceFile) {
@@ -1271,10 +1267,9 @@ function setupEventListeners() {
     }
     updates.device_image_url = deviceImgUrl;
 
-    // Galerij foto's afhandelen
+    // 5. Foto's (Galerij)
     let imageUrls = pendingImages.edit;
-    const heeftNieuweFiles = pendingImages.edit.some(img => img instanceof File);
-    if (heeftNieuweFiles) {
+    if (pendingImages.edit.some(img => img instanceof File)) {
         const newFiles = pendingImages.edit.filter(img => img instanceof File);
         const uploadedUrls = await uploadImages(systemType + '-' + Date.now(), newFiles);
         const existingUrls = pendingImages.edit.filter(img => typeof img === 'string');
@@ -1282,33 +1277,25 @@ function setupEventListeners() {
     }
     updates.images = imageUrls;
 
-    // VERZENDEN
-    const { data, error } = await supabase
+    console.log("📡 Gegevens verzenden naar Supabase...");
+
+    // 6. DE UPDATE (Zonder .select() voor snelheid)
+    const { error } = await supabase
       .from('systems')
       .update(updates)
-      .eq('id', id)
-      .select();
+      .eq('id', id);
 
     if (error) throw error;
 
-    if (!data || data.length === 0) {
-        throw new Error("De database heeft de wijziging niet doorgevoerd. Probeer het opnieuw.");
-    }
+    console.log("✅ Database update succesvol");
 
-    // Update lokale lijst (Heel belangrijk voor de UI!)
-    const systemIndex = systems.findIndex(s => s.id === id);
-    if (systemIndex !== -1) {
-      // We behouden de oude data en overschrijven alleen de updates
-      systems[systemIndex] = { ...systems[systemIndex], ...updates };
-    }
-    
-    closeEditModal();
-    filterSystems(); // Direct scherm verversen
+    // 7. UI synchroniseren
     alert('✅ Systeem succesvol bijgewerkt!');
+    location.reload(); // De meest veilige manier om je lijst te verversen
 
   } catch (error) {
     console.error("Fout bij opslaan:", error);
-    alert("Er ging iets mis: " + error.message);
+    alert("Opslaan mislukt: " + error.message);
   } finally {
     if (submitBtn) {
       submitBtn.disabled = false;
