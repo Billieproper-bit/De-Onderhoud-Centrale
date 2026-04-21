@@ -1473,21 +1473,22 @@ async function uploadSingleFile(file) {
     }
 
     function addPartRow(mode, desc = '', art = '', supp = 'Overig') {
-      const container = document.getElementById(mode + 'PartsContainer');
-      const div = document.createElement('div');
-      div.className = 'part-input-row';
-      div.innerHTML = `
-        <input type="text" placeholder="Omschrijving" class="form-control part-desc" value="${escapeInput(desc)}">
-        <input type="text" placeholder="Art. nr." class="form-control part-art" value="${escapeInput(art)}">
-        <select class="form-control part-supp">
-          <option value="Overig" ${supp === 'Overig' ? 'selected' : ''}>Overig</option>
-          <option value="Rensa" ${supp === 'Rensa' ? 'selected' : ''}>Rensa</option>
-          <option value="Wasco" ${supp === 'Wasco' ? 'selected' : ''}>Wasco</option>
+    const container = document.getElementById(mode + 'PartsContainer');
+    if (!container) return;
+
+    const div = document.createElement('div');
+    div.className = 'part-input-row'; // DIT IS CRUCIAAL
+    div.innerHTML = `
+        <input type="text" class="form-control part-desc" value="${desc}" placeholder="Item">
+        <input type="text" class="form-control part-art" value="${art}" placeholder="Nr">
+        <select class="form-control" style="width:100px;">
+            <option value="Overig" ${supp==='Overig'?'selected':''}>Overig</option>
+            <option value="Wasco" ${supp==='Wasco'?'selected':''}>Wasco</option>
+            <option value="Rensa" ${supp==='Rensa'?'selected':''}>Rensa</option>
         </select>
-        <button type="button" class="remove-part-btn" onclick="this.parentElement.remove()">&times;</button>
-      `;
-      container.appendChild(div);
-    }
+        <button type="button" class="btn" style="padding: 5px 10px;" onclick="this.parentElement.remove()">×</button>`;
+    container.appendChild(div);
+}
 
     function switchTab(systemId, tabName) {
       const card = document.getElementById('card-' + systemId);
@@ -1560,35 +1561,22 @@ async function uploadSingleFile(file) {
 }
 
     function collectPartsData(mode) {
-  try {
-    const container = document.getElementById(mode + 'PartsContainer');
-    if (!container) return null;
+  // We zoeken specifiek alle divjes met de class 'part-input-row'
+  const rows = document.querySelectorAll(`#${mode}PartsContainer .part-input-row`);
+  const parts = [];
 
-    const rows = container.querySelectorAll('.part-input-row');
-    const parts = [];
+  rows.forEach(row => {
+    const desc = row.querySelector('.part-desc')?.value.trim();
+    const art = row.querySelector('.part-art')?.value.trim();
+    // Zoek het select-veld voor de leverancier (Rensa/Wasco/Overig)
+    const supp = row.querySelector('select')?.value || 'Overig';
 
-    rows.forEach((row) => {
-      const descEl = row.querySelector('.part-desc');
-      const artEl = row.querySelector('.part-art');
-      const suppEl = row.querySelector('.part-supp');
+    if (desc || art) {
+      parts.push({ desc, art, supp });
+    }
+  });
 
-      if (descEl && artEl && suppEl) {
-        const desc = descEl.value.trim();
-        const art = artEl.value.trim();
-        const supp = suppEl.value;
-
-        // Alleen toevoegen als er minstens een omschrijving OF art. nr is
-        if (desc || art) {
-          parts.push({ desc, art, supp });
-        }
-      }
-    });
-
-    return parts;
-  } catch (err) {
-    console.error("Fout in collectPartsData:", err);
-    return null;
-  }
+  return parts; // Geef de ARRAY terug, geen tekst!
 }
 
     function populatePartsForm(mode, data) {
