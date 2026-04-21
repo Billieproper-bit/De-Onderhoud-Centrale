@@ -1208,10 +1208,10 @@ function setupEventListeners() {
     const id = document.getElementById('editId').value;
     const systemType = document.getElementById('editSystemType').value || 'update';
     
-    // We verzamelen alles als schone Arrays []
-    const partsArray = collectPartsData('edit'); 
-    const faultsArray = collectFaultsData('edit');
-    const checksArray = await processChecksData('edit');
+    // 1. Data verzamelen
+    const partsArray = collectPartsData('edit') || []; 
+    const faultsArray = collectFaultsData('edit') || [];
+    const checksArray = await processChecksData('edit') || [];
 
     const updates = {
       brand: document.getElementById('editBrand').value.trim(),
@@ -1219,8 +1219,10 @@ function setupEventListeners() {
       logo_url: document.getElementById('editLogoUrl')?.value || null,
       procedure: document.getElementById('editProcedure').value,
       
-      // OMDAT DE KOLOMMEN NU JSONB ZIJN, STUREN WE DE ARRAYS DIRECT:
-      parts: partsArray,  
+      // FIX: 'parts' MOET een string zijn omdat je kolom 'TEXT' is in Supabase
+      parts: JSON.stringify(partsArray), 
+      
+      // 'faults' en 'checks' zijn JSONB, die mogen als Array []
       faults: faultsArray,
       checks: checksArray, 
       
@@ -1237,15 +1239,13 @@ function setupEventListeners() {
       updates.maxco = document.getElementById('editMaxCO')?.value || null;
     }
 
-    // Foto uploaden (Toestel)
-    let deviceImgUrl = document.getElementById('editDeviceImage').dataset.currentUrl || null;
+    // Foto's
+    updates.device_image_url = document.getElementById('editDeviceImage').dataset.currentUrl || null;
     const deviceFile = document.getElementById('editDeviceImage').files[0];
     if (deviceFile) {
-        deviceImgUrl = await uploadSingleFile(deviceFile);
+        updates.device_image_url = await uploadSingleFile(deviceFile);
     }
-    updates.device_image_url = deviceImgUrl;
 
-    // Foto's uploaden (Galerij)
     let imageUrls = pendingImages.edit;
     if (pendingImages.edit.some(img => img instanceof File)) {
         const newFiles = pendingImages.edit.filter(img => img instanceof File);
@@ -1255,27 +1255,28 @@ function setupEventListeners() {
     }
     updates.images = imageUrls;
 
-    console.log("📡 VERZENDEN NAAR DATABASE (Debug mode)...", updates);
+    console.log("📡 VERZENDEN NAAR DATABASE...");
 
-    // We gebruiken .select() om direct antwoord van de database te dwingen
-    const { data: updateData, error: updateError } = await supabase
+    // 2. DE UPDATE (Zonder .select() om 'hangen' bij RLS te voorkomen)
+    const { error } = await supabase
       .from('systems')
       .update(updates)
-      .eq('id', id)
-      .select();
+      .eq('id', id);
 
-    if (updateError) {
-      console.error("❌ Supabase gaf een directe foutmelding:", updateError);
-      alert("Database fout: " + updateError.message + " (Code: " + updateError.code + ")");
-      return; // We stoppen hier, zodat de modal open blijft en je de fout kunt zien
+    if (error) {
+      console.error("❌ Database gaf een fout:", error);
+      alert("Database fout: " + error.message);
+      throw error;
     }
 
-    console.log("✅ Update gelukt in database!", updateData);
+    console.log("✅ Update gelukt!");
 
-    // Update de lokale lijst in het geheugen (jouw bestaande logica)
+    // 3. Update lokale lijst
     const systemIndex = systems.findIndex(s => s.id === id);
     if (systemIndex !== -1) {
       systems[systemIndex] = { ...systems[systemIndex], ...updates };
+      // Zorg dat we de 'parts' weer als object opslaan voor de UI
+      systems[systemIndex].parts = partsArray; 
     }
     
     closeEditModal();
@@ -1284,7 +1285,7 @@ function setupEventListeners() {
 
   } catch (error) {
     console.error("Fout bij opslaan:", error);
-    alert("Opslaan mislukt: " + error.message);
+    alert("Er ging iets mis: " + error.message);
   } finally {
     if (submitBtn) {
       submitBtn.disabled = false;
