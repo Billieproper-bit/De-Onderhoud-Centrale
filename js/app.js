@@ -430,17 +430,28 @@ function setupEventListeners() {
     }
 
     // 2. Formulier vullen (bij bewerken)
-    function populateChecksForm(mode, jsonString) {
-      const container = document.getElementById(mode + 'ChecksContainer');
-      container.innerHTML = '';
-      if (!jsonString) return;
-      try {
-        const checks = JSON.parse(jsonString);
-        if (Array.isArray(checks)) {
-          checks.forEach(c => addCheckRow(mode, c.subject, c.problem, c.solution, c.imgUrl));
-        }
-      } catch (e) { console.error('Fout bij laden checks', e); }
-    }
+    function populateChecksForm(mode, data) {
+  const container = document.getElementById(mode + 'ChecksContainer');
+  if (!container) return;
+  container.innerHTML = '';
+  if (!data) return;
+
+  // STAP A: Als het al een lijst (Array) is
+  if (Array.isArray(data)) {
+    data.forEach(c => addCheckRow(mode, c.subject, c.problem, c.solution, c.imgUrl));
+    return;
+  }
+
+  // STAP B: Als het nog een tekst-string is (voor oude data)
+  if (typeof data === 'string') {
+    try {
+      const checks = JSON.parse(data);
+      if (Array.isArray(checks)) {
+        checks.forEach(c => addCheckRow(mode, c.subject, c.problem, c.solution, c.imgUrl));
+      }
+    } catch (e) { console.error('Fout bij laden checks uit string', e); }
+  }
+}
 
      // Deze functie is 'async' omdat hij moet wachten op uploads
     async function processChecksData(mode) {
@@ -1530,21 +1541,36 @@ async function uploadSingleFile(file) {
       return faults;
     }
 
-    function populateFaultsForm(mode, jsonString) {
-      const container = document.getElementById(mode + 'FaultsContainer');
-      container.innerHTML = '';
-      if (!jsonString) return;
-      try {
-        const faults = JSON.parse(jsonString);
-        if (Array.isArray(faults)) {
-          faults.forEach(f => {
-              const cause = f.cause || '';
-              const solution = f.solution || f.sol || ''; 
-              addFaultRow(mode, f.code, cause, solution);
-          });
-        }
-      } catch (e) { console.error('Fout bij laden storingen', e); }
-    }
+    function populateFaultsForm(mode, data) {
+  const container = document.getElementById(mode + 'FaultsContainer');
+  if (!container) return;
+  container.innerHTML = '';
+  if (!data) return;
+
+  // STAP A: Als het al een lijst (Array) is
+  if (Array.isArray(data)) {
+    data.forEach(f => {
+      const cause = f.cause || '';
+      const solution = f.solution || f.sol || ''; 
+      addFaultRow(mode, f.code, cause, solution);
+    });
+    return;
+  }
+
+  // STAP B: Als het nog een tekst-string is (voor oude data)
+  if (typeof data === 'string') {
+    try {
+      const faults = JSON.parse(data);
+      if (Array.isArray(faults)) {
+        faults.forEach(f => {
+          const cause = f.cause || '';
+          const solution = f.solution || f.sol || ''; 
+          addFaultRow(mode, f.code, cause, solution);
+        });
+      }
+    } catch (e) { console.error('Fout bij laden storingen uit string', e); }
+  }
+}
 
     function collectPartsData(mode) {
   try {
@@ -1578,25 +1604,36 @@ async function uploadSingleFile(file) {
   }
 }
 
-    function populatePartsForm(mode, jsonString) {
-      const container = document.getElementById(mode + 'PartsContainer');
-      container.innerHTML = ''; 
-      
-      if (!jsonString) return; 
+    function populatePartsForm(mode, data) {
+  const container = document.getElementById(mode + 'PartsContainer');
+  if (!container) return;
+  container.innerHTML = ''; 
+  
+  if (!data) return; 
 
-      try {
-        const parts = JSON.parse(jsonString);
-        if (Array.isArray(parts)) {
-          parts.forEach(p => addPartRow(mode, p.desc, p.art, p.supp));
-          return;
-        }
-      } catch (e) {
-        const lines = jsonString.split('\n');
-        lines.forEach(line => {
-          if(line.trim()) addPartRow(mode, line, '', 'Overig');
-        });
+  // STAP A: Als de data al een echte lijst (Array) is (Nieuwe situatie door JSONB)
+  if (Array.isArray(data)) {
+    data.forEach(p => addPartRow(mode, p.desc, p.art, p.supp));
+    return;
+  }
+
+  // STAP B: Als de data een tekst (String) is (Oude records)
+  if (typeof data === 'string') {
+    try {
+      const parts = JSON.parse(data);
+      if (Array.isArray(parts)) {
+        parts.forEach(p => addPartRow(mode, p.desc, p.art, p.supp));
+        return;
       }
+    } catch (e) {
+      // Als het gewone tekst is met nieuwe regels (het alleroudste formaat)
+      const lines = data.split('\n');
+      lines.forEach(line => {
+        if(line.trim()) addPartRow(mode, line, '', 'Overig');
+      });
     }
+  }
+}
     
     function openLightbox(imageUrl) {
       document.getElementById('lightbox').classList.add('active');
