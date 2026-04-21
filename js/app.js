@@ -540,7 +540,17 @@ function setupEventListeners() {
       }
 
       // 2. Content: MATERIALEN
-      materialsContent += parts.map(p => {
+      let materialsContent = ''; // Hiermee maken we de variabele aan
+      
+      if (system.parts) {
+         try {
+           const parts = JSON.parse(system.parts);
+           if (Array.isArray(parts) && parts.length > 0) {
+             // We vullen de variabele met de tabel-header
+             materialsContent = '<div class="parts-list"><div class="parts-title" style="display:flex; align-items:center; gap:8px;"><svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>Benodigde pakkingen/artikelen</div><table class="parts-table"><thead><tr><th>Artikel</th><th>Art. nr.</th><th>Lev.</th></tr></thead><tbody>';
+             
+             // We voegen de rijen toe
+             materialsContent += parts.map(p => {
                const badgeClass = p.supp === 'Rensa' ? 'supplier-rensa' : (p.supp === 'Wasco' ? 'supplier-wasco' : 'supplier-other');
                
                // Schoon artikelnummer voor de URL (geen spaties/punten)
@@ -559,6 +569,18 @@ function setupEventListeners() {
 
                return `<tr><td>${escapeHtml(p.desc)}</td><td style="font-family:monospace;">${artLinkHtml}</td><td><span class="supplier-badge ${badgeClass}">${escapeHtml(p.supp)}</span></td></tr>`;
              }).join('');
+             
+             materialsContent += '</tbody></table></div>';
+           } else {
+             materialsContent = '<div style="padding:20px; text-align:center; color:var(--color-text-secondary);">Geen materialenlijst beschikbaar.</div>';
+           }
+         } catch(e) { 
+             console.error("JSON parse error bij parts:", e);
+             materialsContent = `<div class="parts-list"><div class="parts-title">Benodigde materialen</div><div class="parts-text">${escapeHtml(system.parts)}</div></div>`; 
+         }
+      } else {
+         materialsContent = '<div style="padding:20px; text-align:center; color:var(--color-text-secondary);">Geen materialen toegevoegd.</div>';
+      }
 
       // 3. Content: CONTROLE
       let checksContent = '';
