@@ -1208,31 +1208,21 @@ function setupEventListeners() {
     const id = document.getElementById('editId').value;
     const systemType = document.getElementById('editSystemType').value || 'update';
     
-    console.log("1. Data verzamelen...");
-    // We gaan er vanuit dat deze functies nu een ARRAY [] teruggeven
+    // We verzamelen alles als schone Arrays []
     const partsArray = collectPartsData('edit'); 
     const faultsArray = collectFaultsData('edit');
-    
-    console.log("2. Foto's verwerken (Controlepunten)...");
-    // processChecksData moet nu ook een ARRAY [] teruggeven
-    const checksArray = await Promise.race([
-        processChecksData('edit'),
-        new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout bij verwerken controle-foto's")), 15000))
-    ]);
+    const checksArray = await processChecksData('edit');
 
-    // HIER GEBEURT DE MAGIE VOOR DE KOLOMTYPES:
     const updates = {
       brand: document.getElementById('editBrand').value.trim(),
       model: document.getElementById('editModel').value.trim(),
       logo_url: document.getElementById('editLogoUrl')?.value || null,
       procedure: document.getElementById('editProcedure').value,
       
-      // 'parts' is een TEXT kolom -> we maken er een string van
-      parts: partsArray ? JSON.stringify(partsArray) : null,
-      
-      // 'faults' en 'checks' zijn JSONB -> we sturen de ARRAY direct
-      faults: faultsArray || [],
-      checks: checksArray || [], 
+      // OMDAT DE KOLOMMEN NU JSONB ZIJN, STUREN WE DE ARRAYS DIRECT:
+      parts: partsArray,  
+      faults: faultsArray,
+      checks: checksArray, 
       
       notes: document.getElementById('editNotes')?.value || null,
       handbook_date: document.getElementById('editHandbookDate')?.value || null,
@@ -1247,7 +1237,7 @@ function setupEventListeners() {
       updates.maxco = document.getElementById('editMaxCO')?.value || null;
     }
 
-    // Toestelfoto uploaden
+    // Foto uploaden (Toestel)
     let deviceImgUrl = document.getElementById('editDeviceImage').dataset.currentUrl || null;
     const deviceFile = document.getElementById('editDeviceImage').files[0];
     if (deviceFile) {
@@ -1255,7 +1245,7 @@ function setupEventListeners() {
     }
     updates.device_image_url = deviceImgUrl;
 
-    // Galerij foto's uploaden
+    // Foto's uploaden (Galerij)
     let imageUrls = pendingImages.edit;
     if (pendingImages.edit.some(img => img instanceof File)) {
         const newFiles = pendingImages.edit.filter(img => img instanceof File);
@@ -1265,27 +1255,24 @@ function setupEventListeners() {
     }
     updates.images = imageUrls;
 
-console.log("3. Verzenden naar database (zonder select voor snelheid)...", updates);
-    
-    // We halen .select() weg en verhogen de timeout naar 40 seconden
-    const { error } = await Promise.race([
-        supabase.from('systems').update(updates).eq('id', id),
-        new Promise((_, reject) => setTimeout(() => reject(new Error("De database heeft te veel tijd nodig (40s Timeout). Probeer minder foto's of storingen tegelijk.")), 40000))
-    ]);
+    console.log("📡 VERZENDEN NAAR DATABASE:", updates);
+
+    // DE UPDATE (Zonder .select() voor maximale snelheid)
+    const { error } = await supabase
+      .from('systems')
+      .update(updates)
+      .eq('id', id);
 
     if (error) throw error;
 
-    console.log("4. DATABASE UPDATE KLAAR!");
-
-    // Update de lokale lijst (systems array) direct in het geheugen
+    // Update de lokale lijst in het geheugen
     const systemIndex = systems.findIndex(s => s.id === id);
     if (systemIndex !== -1) {
-      // We mixen de oude data met de nieuwe updates
       systems[systemIndex] = { ...systems[systemIndex], ...updates };
     }
     
     closeEditModal();
-    filterSystems(); // Teken de kaartjes opnieuw op basis van de geüpdatete lijst
+    filterSystems();
     alert('✅ Systeem succesvol bijgewerkt!');
 
   } catch (error) {
