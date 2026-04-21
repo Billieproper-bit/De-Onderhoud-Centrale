@@ -1197,35 +1197,32 @@ function setupEventListeners() {
     async function handleEditSubmit(e) {
   if (e) e.preventDefault();
   const submitBtn = document.querySelector('#editForm button[type="submit"]');
-  const originalText = submitBtn ? submitBtn.textContent : "Opslaan";
-
+  
   try {
     if (submitBtn) {
       submitBtn.disabled = true;
-      submitBtn.textContent = "Bezig met opslaan...";
+      submitBtn.textContent = "Verzenden...";
     }
 
     const id = document.getElementById('editId').value;
     const systemType = document.getElementById('editSystemType').value || 'update';
     
-    // 1. Data verzamelen
-    const partsArray = collectPartsData('edit') || []; 
+    console.log("DEBUG: Start verzamelen data voor ID:", id);
+
+    // Haal de data op (als Arrays)
+    const partsArray = collectPartsData('edit') || [];
     const faultsArray = collectFaultsData('edit') || [];
     const checksArray = await processChecksData('edit') || [];
 
     const updates = {
       brand: document.getElementById('editBrand').value.trim(),
       model: document.getElementById('editModel').value.trim(),
-      logo_url: document.getElementById('editLogoUrl')?.value || null,
       procedure: document.getElementById('editProcedure').value,
-      
-      // FIX: 'parts' MOET een string zijn omdat je kolom 'TEXT' is in Supabase
+      // We maken van parts ALTIJD een string voor de TEXT kolom
       parts: JSON.stringify(partsArray), 
-      
-      // 'faults' en 'checks' zijn JSONB, die mogen als Array []
       faults: faultsArray,
-      checks: checksArray, 
-      
+      checks: checksArray,
+      logo_url: document.getElementById('editLogoUrl')?.value || null,
       notes: document.getElementById('editNotes')?.value || null,
       handbook_date: document.getElementById('editHandbookDate')?.value || null,
       manual_url: document.getElementById('editManualUrl')?.value || null
@@ -1239,57 +1236,46 @@ function setupEventListeners() {
       updates.maxco = document.getElementById('editMaxCO')?.value || null;
     }
 
-    // Foto's
-    updates.device_image_url = document.getElementById('editDeviceImage').dataset.currentUrl || null;
-    const deviceFile = document.getElementById('editDeviceImage').files[0];
-    if (deviceFile) {
-        updates.device_image_url = await uploadSingleFile(deviceFile);
+    // Foto-afhandeling
+    let deviceImgUrl = document.getElementById('editDeviceImage').dataset.currentUrl || null;
+    if (document.getElementById('editDeviceImage').files[0]) {
+        deviceImgUrl = await uploadSingleFile(document.getElementById('editDeviceImage').files[0]);
     }
+    updates.device_image_url = deviceImgUrl;
 
-    let imageUrls = pendingImages.edit;
-    if (pendingImages.edit.some(img => img instanceof File)) {
-        const newFiles = pendingImages.edit.filter(img => img instanceof File);
-        const uploadedUrls = await uploadImages(systemType + '-' + Date.now(), newFiles);
-        const existingUrls = pendingImages.edit.filter(img => typeof img === 'string');
-        imageUrls = existingUrls.concat(uploadedUrls);
-    }
-    updates.images = imageUrls;
+    console.log("DEBUG: Data is klaar. Nu praten met Supabase...");
 
-    console.log("📡 VERZENDEN NAAR DATABASE...");
-
-    // 2. DE UPDATE (Zonder .select() om 'hangen' bij RLS te voorkomen)
+    // DE KAALSTE UPDATE MOGELIJK
     const { error } = await supabase
       .from('systems')
       .update(updates)
       .eq('id', id);
 
     if (error) {
-      console.error("❌ Database gaf een fout:", error);
-      alert("Database fout: " + error.message);
-      throw error;
+        console.error("DEBUG: Supabase ERROR:", error);
+        alert("Database fout: " + error.message);
+        return;
     }
 
-    console.log("✅ Update gelukt!");
+    console.log("DEBUG: Update gelukt!");
 
-    // 3. Update lokale lijst
+    // Update lokale lijst en sluit af
     const systemIndex = systems.findIndex(s => s.id === id);
     if (systemIndex !== -1) {
-      systems[systemIndex] = { ...systems[systemIndex], ...updates };
-      // Zorg dat we de 'parts' weer als object opslaan voor de UI
-      systems[systemIndex].parts = partsArray; 
+      systems[systemIndex] = { ...systems[systemIndex], ...updates, parts: partsArray };
     }
     
     closeEditModal();
     filterSystems();
-    alert('✅ Systeem succesvol bijgewerkt!');
+    alert('✅ Gelukt!');
 
-  } catch (error) {
-    console.error("Fout bij opslaan:", error);
-    alert("Er ging iets mis: " + error.message);
+  } catch (err) {
+    console.error("DEBUG: Er ging iets vreselijk mis:", err);
+    alert("Fout: " + err.message);
   } finally {
     if (submitBtn) {
       submitBtn.disabled = false;
-      submitBtn.textContent = originalText;
+      submitBtn.textContent = "Opslaan";
     }
   }
 }
