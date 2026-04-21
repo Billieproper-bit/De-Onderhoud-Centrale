@@ -1194,62 +1194,114 @@ function setupEventListeners() {
       }
     }
 
-    async function handleEditSubmit(e) {
-  if (e) e.preventDefault();
-  alert("Check 1: Functie gestart");
-  
+    async function handleAddSubmit(e) {
+  e.preventDefault();
+  alert("Check 1: Systeem toevoegen gestart");
+
+  const submitBtn = e.target.querySelector('button[type="submit"]');
+  const originalText = submitBtn ? submitBtn.textContent : "Opslaan";
+
   try {
-    const id = document.getElementById('editId').value;
-    const systemType = document.getElementById('editSystemType').value || 'update';
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.textContent = "Bezig...";
+    }
+
+    const systemType = document.getElementById('addSystemType').value;
+    const brand = document.getElementById('addBrand').value.trim();
+    const model = document.getElementById('addModel').value.trim();
+
+    if (!brand || !model) {
+      alert("⚠️ Merk en Model zijn verplicht!");
+      throw new Error("Verplichte velden missen");
+    }
     
-    alert("Check 2: ID is " + id);
+    alert("Check 2: Basisgegevens opgehaald: " + brand + " " + model);
 
-    // STAP A: Materialen verzamelen
-    const partsArray = collectPartsData('edit');
-    alert("Check 3: Materialen verzameld. Aantal: " + (partsArray ? partsArray.length : 0));
+    // 1. Data verzamelen
+    const partsArray = collectPartsData('add') || [];
+    alert("Check 3: Materialen verzameld (" + partsArray.length + " stuks)");
 
-    // STAP B: Storingen verzamelen
-    const faultsArray = collectFaultsData('edit');
+    const faultsArray = collectFaultsData('add') || [];
     alert("Check 4: Storingen verzameld");
 
-    // STAP C: Checks verzamelen (HIER GAAT HET VAAK MIS)
-    alert("Check 5: Start verwerken checks/foto's...");
-    const checksArray = await processChecksData('edit');
-    alert("Check 6: Checks klaar");
+    const checksArray = await processChecksData('add') || [];
+    alert("Check 5: Controlepunten/foto's klaar");
 
-    const updates = {
-      brand: document.getElementById('editBrand').value.trim(),
-      model: document.getElementById('editModel').value.trim(),
-      procedure: document.getElementById('editProcedure').value,
+    // 2. Foto's uploaden
+    let deviceImgUrl = null;
+    const deviceFileEl = document.getElementById('addDeviceImage');
+    if (deviceFileEl && deviceFileEl.files.length > 0) {
+      alert("Check 6: Start uploaden hoofdfoto...");
+      deviceImgUrl = await uploadSingleFile(deviceFileEl.files[0]);
+    }
+
+    let imageUrls = [];
+    if (pendingImages.add && pendingImages.add.length > 0) {
+      alert("Check 7: Start uploaden galerij (" + pendingImages.add.length + " foto's)...");
+      imageUrls = await uploadImages(systemType + '-' + Date.now(), pendingImages.add);
+    }
+
+    // 3. Object bouwen
+    const newSystem = {
+      systemtype: systemType,
+      brand: brand,
+      model: model,
+      logo_url: document.getElementById('addLogoUrl')?.value || null,
+      device_image_url: deviceImgUrl,
+      procedure: document.getElementById('addProcedure').value,
+      // Omdat de kolom 'parts' TEXT is, maken we er een string van:
       parts: JSON.stringify(partsArray),
       faults: faultsArray,
       checks: checksArray,
-      logo_url: document.getElementById('editLogoUrl')?.value || null,
-      notes: document.getElementById('editNotes')?.value || null,
-      handbook_date: document.getElementById('editHandbookDate')?.value || null,
-      manual_url: document.getElementById('editManualUrl')?.value || null
+      images: imageUrls,
+      notes: document.getElementById('addNotes')?.value || null,
+      handbook_date: document.getElementById('addHandbookDate')?.value || null,
+      manual_url: document.getElementById('addManualUrl')?.value || null
     };
 
     if (systemType === 'cv-ketel') {
-      updates.o2_low = document.getElementById('editO2Low')?.value || null;
-      updates.o2_high = document.getElementById('editO2High')?.value || null;
-      updates.co2_low = document.getElementById('editCO2Low')?.value || null;
-      updates.co2_high = document.getElementById('editCO2High')?.value || null;
-      updates.maxco = document.getElementById('editMaxCO')?.value || null;
+      newSystem.o2_low = document.getElementById('addO2Low')?.value || null;
+      newSystem.o2_high = document.getElementById('addO2High')?.value || null;
+      newSystem.co2_low = document.getElementById('addCO2Low')?.value || null;
+      newSystem.co2_high = document.getElementById('addCO2High')?.value || null;
+      newSystem.maxco = document.getElementById('addMaxCO')?.value || null;
     }
 
-    alert("Check 7: Data pakket klaar. Nu verzenden...");
+    alert("Check 8: Data is klaar voor verzending naar Supabase.");
 
-    const { error } = await supabase
+    // 4. DATABASE INSERT
+    const { data, error } = await supabase
       .from('systems')
-      .update({ brand: document.getElementById('editBrand').value })
-      .eq('id', id);
+      .insert([newSystem])
+      .select();
 
     if (error) {
-      alert("Check 8: Zelfs de MINIMALE test faalt: " + error.message);
-    } else {
-      alert("Check 9: MINIMALE TEST GELUKT! Het ligt dus aan de grote hoeveelheid data van de artikelen.");
+      alert("Check 9: DATABASE FOUT: " + error.message);
+      throw error;
     }
+
+    alert("Check 10: GELUKT! Systeem is toegevoegd.");
+    
+    if (data && data.length > 0) {
+      systems.push(data[0]);
+    }
+
+    pendingImages.add = [];
+    closeAddModal();
+    updateBrandFilter();
+    updateModelFilter();
+    filterSystems();
+
+  } catch (error) {
+    alert("FOUTMELDING: " + error.message);
+    console.error('Crash details:', error);
+  } finally {
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.textContent = originalText;
+    }
+  }
 }
     
     function handleDrop(e, mode) {
