@@ -1210,7 +1210,7 @@ function setupEventListeners() {
       parts: collectPartsData('edit'), 
       faults: collectFaultsData('edit'),
       checks: await processChecksData('edit'),
-      notes: document.getElementById('editNotes')?.value || null
+      notes: document.getElementById('editNotes')?.value || null,
       handbook_date: document.getElementById('editHandbookDate')?.value || null,
       manual_url: document.getElementById('editManualUrl')?.value || null
     };
