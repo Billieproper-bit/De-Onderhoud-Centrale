@@ -1577,22 +1577,30 @@ async function uploadSingleFile(file) {
 }
 
     function collectPartsData(mode) {
-  // We zoeken specifiek alle divjes met de class 'part-input-row'
-  const rows = document.querySelectorAll(`#${mode}PartsContainer .part-input-row`);
-  const parts = [];
+    const rows = document.querySelectorAll(`#${mode}PartsContainer .part-input-row`);
+    const data = [];
+    rows.forEach(row => {
+        const descEl = row.querySelector('.part-desc');
+        const artEl = row.querySelector('.part-art');
+        const suppEl = row.querySelector('select');
 
-  rows.forEach(row => {
-    const desc = row.querySelector('.part-desc')?.value.trim();
-    const art = row.querySelector('.part-art')?.value.trim();
-    // Zoek het select-veld voor de leverancier (Rensa/Wasco/Overig)
-    const supp = row.querySelector('select')?.value || 'Overig';
+        if (descEl && artEl) {
+            const desc = descEl.value.trim();
+            const art = artEl.value.trim();
+            const supp = suppEl ? suppEl.value : 'Overig';
 
-    if (desc || art) {
-      parts.push({ desc, art, supp });
-    }
-  });
-
-  return parts; // Geef de ARRAY terug, geen tekst!
+            // Alleen toevoegen als er echt tekst is
+            if (desc !== "" || art !== "") {
+                data.push({ 
+                    desc: desc, 
+                    art: art, 
+                    supp: supp 
+                });
+            }
+        }
+    });
+    console.log("Verzamelde onderdelen:", data);
+    return data; // Stuurt een schone Array terug
 }
 
     function populatePartsForm(mode, data) {
