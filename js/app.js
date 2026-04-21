@@ -541,39 +541,53 @@ function setupEventListeners() {
 
       // 2. Content: MATERIALEN
       let materialsContent = '';
-    if (s.parts) {
-        try {
-        // Fix voor jsonb: als het al een lijst is, gebruik hem direct, anders parse hem
-        const parts = Array.isArray(s.parts) ? s.parts : JSON.parse(s.parts || '[]');
-        
-        if (parts.length > 0) {
-            materialsContent = `<div class="parts-list"><table class="parts-table"><thead><tr><th>Artikel</th><th>Art. nr.</th><th>Lev.</th></tr></thead><tbody>`;
-            materialsContent += parts.map(p => {
-                const cleanArt = p.art ? p.art.toString().replace(/[\s.]/g, '') : "";
-                let link = p.supp === 'Rensa' ? `https://rensa.nl/Product/${cleanArt}` : (p.supp === 'Wasco' ? `https://www.wasco.nl/artikel/${cleanArt}` : null);
-                const badge = p.supp === 'Rensa' ? 'badge-rensa' : (p.supp === 'Wasco' ? 'badge-wasco' : '');
-                
-                return `<tr>
-                    <td>${escapeHtml(p.desc)}</td>
-                    <td style="font-family:monospace;">${link ? `<a href="${link}" target="_blank" style="color:var(--color-primary);">${p.art} ↗</a>` : (p.art || '')}</td>
-                    <td><span class="${badge}">${p.supp || ''}</span></td>
-                </tr>`;
-            }).join('');
-            materialsContent += `</tbody></table></div>`;
-        } else {
-            materialsContent = '<p style="padding:10px; color:gray;">Geen materialen toegevoegd.</p>';
-        }
-    } catch (e) {
-        console.error("Fout bij laden materialen:", e);
-        materialsContent = '<p>Fout bij laden data.</p>';
-        }
-    }
+      if (system.parts) {
+         try {
+           // HYBRIDE FIX: Check of het al een lijst is, anders parsen
+           const parts = Array.isArray(system.parts) ? system.parts : JSON.parse(system.parts || '[]');
+           
+           if (Array.isArray(parts) && parts.length > 0) {
+             materialsContent = '<div class="parts-list"><div class="parts-title" style="display:flex; align-items:center; gap:8px;"><svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>Benodigde pakkingen/artikelen</div><table class="parts-table"><thead><tr><th>Artikel</th><th>Art. nr.</th><th>Lev.</th></tr></thead><tbody>';
+             
+             materialsContent += parts.map(p => {
+               const badgeClass = p.supp === 'Rensa' ? 'supplier-rensa' : (p.supp === 'Wasco' ? 'supplier-wasco' : 'supplier-other');
+               
+               // Schoon artikelnummer voor de URL (geen spaties/punten)
+               const cleanArt = p.art ? p.art.toString().replace(/[\s.]/g, '') : "";
+               const displayArt = escapeHtml(p.art || "");
+               
+               let link = null;
+               if (cleanArt) {
+                 if (p.supp === 'Rensa') link = `https://rensa.nl/Product/${cleanArt}`;
+                 else if (p.supp === 'Wasco') link = `https://www.wasco.nl/artikel/${cleanArt}`;
+               }
+
+               const artLinkHtml = link 
+                 ? `<a href="${link}" target="_blank" style="color:var(--color-primary); text-decoration:none; border-bottom:1px dotted;">${displayArt} ↗</a>` 
+                 : displayArt;
+
+               return `<tr><td>${escapeHtml(p.desc)}</td><td style="font-family:monospace;">${artLinkHtml}</td><td><span class="supplier-badge ${badgeClass}">${escapeHtml(p.supp)}</span></td></tr>`;
+             }).join('');
+             
+             materialsContent += '</tbody></table></div>';
+           } else {
+             materialsContent = '<div style="padding:20px; text-align:center; color:var(--color-text-secondary);">Geen materialenlijst beschikbaar.</div>';
+           }
+         } catch(e) { 
+             console.error("Fout bij laden materialen:", e);
+             materialsContent = '<div style="padding:20px; text-align:center; color:var(--color-error);">Fout bij verwerken materialen.</div>';
+         }
+      } else {
+         materialsContent = '<div style="padding:20px; text-align:center; color:var(--color-text-secondary);">Geen materialen toegevoegd.</div>';
+      }
 
       // 3. Content: CONTROLE
       let checksContent = '';
       if (system.checks) {
         try {
-            const checks = JSON.parse(system.checks);
+            // HYBRIDE FIX: Check of het al een lijst is, anders parsen
+            const checks = Array.isArray(system.checks) ? system.checks : JSON.parse(system.checks || '[]');
+            
             if (Array.isArray(checks) && checks.length > 0) {
                 checksContent = checks.map(c => `
                     <div class="check-card">
@@ -592,7 +606,10 @@ function setupEventListeners() {
             } else {
                 checksContent = '<div style="padding:20px; text-align:center; color:var(--color-text-secondary);">Geen aandachtspunten bekend.</div>';
             }
-        } catch(e) { checksContent = 'Data error'; }
+        } catch(e) { 
+            console.error("Fout bij laden controlepunten:", e);
+            checksContent = '<div style="padding:20px; text-align:center; color:var(--color-error);">Fout bij verwerken controle-data.</div>'; 
+        }
       } else {
         checksContent = '<div style="padding:20px; text-align:center; color:var(--color-text-secondary);">Nog geen aandachtspunten toegevoegd.</div>';
       }
@@ -601,7 +618,9 @@ function setupEventListeners() {
       let faultsContent = '';
       if (system.faults) {
         try {
-            const faults = JSON.parse(system.faults);
+            // HIER ZIT DE FIX: we checken of het al een lijst is, anders parsen we het
+            const faults = Array.isArray(system.faults) ? system.faults : JSON.parse(system.faults || '[]');
+            
             if (Array.isArray(faults) && faults.length > 0) {
                 faultsContent = faults.map(f => {
                     const cause = f.cause || '';
@@ -618,7 +637,10 @@ function setupEventListeners() {
             } else {
                 faultsContent = '<div style="padding:20px; text-align:center; color:var(--color-text-secondary);">Geen storingen bekend.</div>';
             }
-        } catch(e) { faultsContent = 'Data error'; }
+        } catch(e) { 
+            console.error("Fout bij laden storingen:", e);
+            faultsContent = '<div style="padding:20px; text-align:center; color:var(--color-error);">Fout bij verwerken data.</div>'; 
+        }
       } else {
         faultsContent = '<div style="padding:20px; text-align:center; color:var(--color-text-secondary);">Nog geen storingen toegevoegd.</div>';
       }
