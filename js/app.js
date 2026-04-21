@@ -481,7 +481,7 @@ function setupEventListeners() {
     }
   }
 
-  return checks.length > 0 ? JSON.stringify(checks) : null;
+  return checks;
 }
     
     function createSystemCard(system) {
@@ -1505,20 +1505,22 @@ async function uploadSingleFile(file) {
     }
 
     function collectFaultsData(mode) {
-      const container = document.getElementById(mode + 'FaultsContainer');
-      const rows = container.querySelectorAll('.part-input-row');
-      const faults = [];
-      rows.forEach(row => {
-        const code = row.querySelector('.fault-code-input').value.trim();
-        const cause = row.querySelector('.fault-cause-input').value.trim();
-        const solution = row.querySelector('.fault-sol-input').value.trim();
-        
-        if (code || cause || solution) {
-            faults.push({ code, cause, solution });
-        }
-      });
-      return faults.length > 0 ? JSON.stringify(faults) : null;
+  const container = document.getElementById(mode + 'FaultsContainer');
+  if (!container) return [];
+
+  const rows = container.querySelectorAll('.part-input-row');
+  const faults = [];
+  rows.forEach(row => {
+    const code = row.querySelector('.fault-code-input')?.value.trim();
+    const cause = row.querySelector('.fault-cause-input')?.value.trim();
+    const solution = row.querySelector('.fault-sol-input')?.value.trim();
+    
+    if (code || cause || solution) {
+        faults.push({ code, cause, solution });
     }
+  });
+  return faults; // VERANDERING: Geen JSON.stringify meer
+}
 
     function populateFaultsForm(mode, jsonString) {
       const container = document.getElementById(mode + 'FaultsContainer');
@@ -1539,7 +1541,7 @@ async function uploadSingleFile(file) {
     function collectPartsData(mode) {
   try {
     const container = document.getElementById(mode + 'PartsContainer');
-    if (!container) return null;
+    if (!container) return []; // Geef lege lijst terug als container niet bestaat
 
     const rows = container.querySelectorAll('.part-input-row');
     const parts = [];
@@ -1554,12 +1556,18 @@ async function uploadSingleFile(file) {
         const art = artEl.value.trim();
         const supp = suppEl.value;
 
-        // Alleen toevoegen als er minstens een omschrijving OF art. nr is
         if (desc || art) {
           parts.push({ desc, art, supp });
         }
       }
     });
+
+    return parts; 
+  } catch (err) {
+    console.error("Fout in collectPartsData:", err);
+    return [];
+  }
+}
 
     return parts.length > 0 ? return parts; : null;
   } catch (err) {
