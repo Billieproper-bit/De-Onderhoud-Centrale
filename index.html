@@ -1,376 +1,419 @@
 <!DOCTYPE html>
 <html lang="nl">
+  
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>De Onderhoud Centrale</title>
+
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+
+<meta name="apple-mobile-web-app-title" content="Onderhoud">
+
+<meta name="theme-color" content="#218D8D"> 
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+ 
+  <!-- Iconen -->
   <link rel="icon" type="image/x-icon" href="favicon.ico">
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  
-  <style>
-    :root {
-      --color-bg-primary: #fcfcf9;
-      --color-surface: #fffdfd;
-      --color-text: #134252;
-      --color-text-secondary: #626c71;
-      --color-primary: #218D8D;
-      --color-border: rgba(94, 82, 64, 0.2);
-      --color-card-border: rgba(94, 82, 64, 0.12);
-      --color-error: #c0152f;
-      --color-success: #218D8D;
-      --color-warning: #a84b2f;
-      --radius-lg: 12px;
-    }
-    [data-theme="dark"] {
-      --color-bg-primary: #1f2121;
-      --color-surface: #262828;
-      --color-text: #f5f5f5;
-      --color-text-secondary: rgba(167, 169, 169, 0.7);
-      --color-primary: #32b8c6;
-    }
-    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-    body { font-family: -apple-system, system-ui, sans-serif; background: var(--color-bg-primary); color: var(--color-text); line-height: 1.5; overflow-x: hidden; }
-    .container { width: 100%; max-width: 1280px; margin: 0 auto; padding: 0 15px; }
-    .header { background: var(--color-surface); border-bottom: 1px solid var(--color-border); padding: 12px 0; }
-    .filters { background: var(--color-surface); padding: 15px; border-radius: var(--radius-lg); margin: 16px 0; border: 1px solid var(--color-card-border); position: sticky; top: 10px; z-index: 100; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
-    .filters-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
-    .cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 20px; padding-bottom: 40px; }
-    .system-card { background: var(--color-surface); border: 1px solid var(--color-card-border); border-radius: var(--radius-lg); padding: 16px; position: relative; }
-    .card-header { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
-    .brand-label { font-size: 11px; font-weight: 800; text-transform: uppercase; color: var(--color-primary); letter-spacing: 1px; }
-    .model-label { font-size: 18px; font-weight: 700; line-height: 1.2; padding-right: 70px; }
-    .card-actions { position: absolute; top: 15px; right: 15px; display: flex; gap: 6px; }
-    
-    .tabs-nav { display: flex; gap: 10px; border-bottom: 1px solid var(--color-border); margin-bottom: 12px; }
-    .tab-btn { background: none; border: none; padding: 6px 2px; cursor: pointer; color: var(--color-text-secondary); font-weight: 600; font-size: 13px; }
-    .tab-btn.active { color: var(--color-primary); border-bottom: 2px solid var(--color-primary); }
-    .tab-content { display: none; }
-    .tab-content.active { display: block; }
-
-    /* Waardes Grid */
-    .values-container { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
-    .value-box { background: rgba(33,141,141,0.05); padding: 8px; border-radius: 6px; border-left: 3px solid var(--color-primary); }
-    .value-box small { font-size: 10px; text-transform: uppercase; color: var(--color-text-secondary); display: block; }
-    .value-box span { font-weight: 700; font-size: 13px; }
-
-    /* Leverancier Badges */
-    .badge-rensa { background: #e30613; color: white; padding: 2px 5px; border-radius: 4px; font-size: 10px; font-weight: bold; }
-    .badge-wasco { background: #004d99; color: white; padding: 2px 5px; border-radius: 4px; font-size: 10px; font-weight: bold; }
-
-    /* Modals */
-    .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; padding: 15px; }
-    .modal.active { display: flex; }
-    .modal-content { background: var(--color-surface); padding: 20px; border-radius: var(--radius-lg); width: 100%; max-width: 550px; max-height: 90vh; overflow-y: auto; }
-    .form-control { width: 100%; padding: 10px; border: 1px solid var(--color-border); border-radius: 6px; background: var(--color-bg-primary); color: var(--color-text); font-size: 16px !important; margin-bottom: 10px; }
-    .btn { display: inline-flex; align-items: center; gap: 8px; padding: 8px 16px; border-radius: 8px; cursor: pointer; border: 1px solid var(--color-border); background: var(--color-surface); color: var(--color-text); font-size: 13px; font-weight: 600; }
-    .btn-primary { background: var(--color-primary); color: white; border: none; }
-    .icon-btn { background: none; border: none; cursor: pointer; font-size: 16px; }
-    .procedure-text { white-space: pre-wrap; font-family: inherit; font-size: 13px; color: var(--color-text-secondary); }
-    .app-footer { text-align: center; padding: 20px; font-size: 12px; color: var(--color-text-secondary); margin-top: 20px; border-top: 1px solid var(--color-border); }
-  </style>
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+  <link rel="stylesheet" href="css/style.css">
 </head>
+  
 <body>
-
-  <div id="authContainer" class="container" style="margin-top: 80px; max-width: 350px;">
-    <div style="background: var(--color-surface); padding: 25px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); text-align: center;">
-      <h2 style="margin-bottom: 20px;">De Onderhoud Centrale</h2>
-      <form id="loginForm">
-        <input type="email" id="loginEmail" placeholder="E-mail" class="form-control" required>
-        <input type="password" id="loginPassword" placeholder="Wachtwoord" class="form-control" required>
-        <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center;">Inloggen</button>
+  <!-- AUTHENTICATIE SCHERM -->
+  <div id="authContainer" class="full-screen-center" style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh;">
+    <div style="background: var(--color-surface); padding: 40px; border-radius: 24px; box-shadow: var(--shadow-md); width: 100%; max-width: 400px; text-align: center;">
+      <h1 style="margin-bottom: 10px;">De Onderhoud Centrale</h1>
+      <p style="color: var(--color-text-secondary); margin-bottom: 30px;">Log in voor toegang</p>
+      <form id="loginForm" style="display: flex; flex-direction: column; gap: 15px;">
+        <input type="email" id="loginEmail" placeholder="E-mailadres" required style="padding: 12px; border: 1px solid var(--color-border); border-radius: 8px; background: var(--color-bg-primary); color: var(--color-text);">
+        <input type="password" id="loginPassword" placeholder="Wachtwoord" required style="padding: 12px; border: 1px solid var(--color-border); border-radius: 8px; background: var(--color-bg-primary); color: var(--color-text);">
+        <button type="submit" class="btn btn-primary" style="padding: 14px; justify-content: center;">Inloggen</button>
+        <div style="text-align: center; margin-top: 10px; font-size: 14px; color: var(--color-text-secondary);">
+          Nog geen account? 
+          <button type="button" onclick="openRegisterModal()" style="background: none; border: none; color: var(--color-primary); cursor: pointer; text-decoration: underline; font-weight: 600; padding: 0;">
+            Maak een account aan
+          </button>
+        </div>
       </form>
+    </div>
+  </div> 
+
+  <!-- WACHTSCHERM (Wordt getoond als account nog niet is goedgekeurd) -->
+  <div id="pendingScreen" class="full-screen-center hidden" style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; text-align: center;">
+    <h1 style="font-size: 48px; margin-bottom: 20px;">⏳</h1>
+    <h2>Toegang in afwachting</h2>
+    <p id="pendingMessage" style="color: var(--color-text-secondary); margin: 20px 0; max-width: 400px;"></p>
+    <div style="display: flex; gap: 10px;">
+      <button onclick="location.reload()" class="btn btn-primary">Check status</button>
+      <button onclick="supabase.auth.signOut()" class="btn">Uitloggen</button>
     </div>
   </div>
 
+  <!-- DE HOOFD APP -->
   <div id="appContainer" class="hidden">
-    <div class="header"><div class="container" style="display: flex; justify-content: space-between; align-items: center;">
-      <h1 style="font-size: 16px;">OHC</h1>
-      <div style="display: flex; gap: 8px;">
-        <button class="btn" onclick="openModal('calcModal')">🧮 Calc</button>
-        <button class="btn" onclick="toggleTheme()">🌓</button>
-        <button class="btn" id="adminBtn" style="display: none;" onclick="openModal('adminModal')">⚙️</button>
-        <button class="btn" onclick="supabase.auth.signOut().then(() => location.reload())">Uitloggen</button>
+    <div class="header">
+      <div class="container">
+        <div class="header-content">
+          <div class="header-title">
+            <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+            </svg>
+            <div>
+              <h1>De Onderhoud Centrale</h1>
+              <div class="header-subtitle">Afstelinstructies en doelwaarden voor CV-ketels, Warmtepompen en WTW/MV</div>
+            </div>
+          </div>
+          <div class="header-actions">
+            <button class="btn icon-btn" id="themeToggle" title="Wissel dark/light mode">
+              <svg class="icon" id="themeIcon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
+              </svg>
+            </button>
+            <button class="btn" onclick="openCalcModal()">
+              <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width:18px; height:18px;">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+              </svg>
+                Calculator
+            </button>
+            <div class="admin-actions-wrapper" style="position: relative;">
+              <span id="adminBadge" class="badge-notification hidden">0</span>
+              <button class="btn icon-btn admin-toggle-btn" id="adminToggleBtn" type="button" style="display: none;" title="Beheer">
+                <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0l.284 1.174a1 1 0 00.97.758h1.518a1 1 0 01.894.553l.76 1.52a1 1 0 01-.116 1.034l-.96 1.28a1 1 0 000 1.2l.96 1.28a1 1 0 01.116 1.034l-.76 1.52a1 1 0 01-.894.553h-1.518a1 1 0 00-.97.758l-.284 1.174c-.426 1.756-2.924 1.756-3.35 0l-.284-1.174a1 1 0 00-.97-.758H7.253a1 1 0 01-.894-.553l-.76-1.52a1 1 0 01.116-1.034l.96-1.28a1 1 0 000-1.2l-.96-1.28a1 1 0 01-.116-1.034l.76-1.52a1 1 0 01.894-.553h1.518a1 1 0 00.97-.758l.284-1.174z"></path>
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9a3 3 0 100 6 3 3 0 000-6z"></path>
+                </svg>
+              </button>
+              <div class="admin-actions" id="adminActions">
+                <button class="btn" id="adminBtn" style="display: none;">Gebruikersbeheer</button>
+                <button class="btn" id="addSystemBtn" style="display: none;">Systeem toevoegen</button>
+                <button class="btn" id="auditBtn" style="display: none;">Audit Log</button>
+              </div>
+            </div>
+            <span id="userEmail" style="font-size: 14px; color: var(--color-text-secondary);"></span>
+            <button class="btn" id="logoutBtn">Uitloggen</button>
+          </div>
+        </div>
       </div>
-    </div></div>
+    </div>
 
     <div class="container">
-      <div class="filters">
+      <div class="filters">          
         <div class="filters-row">
-          <input type="text" id="searchInput" class="form-control" placeholder="Zoek merk/model..." oninput="filterSystems()">
-          <select id="brandFilter" class="form-control" onchange="filterSystems()"></select>
-          <select id="favoritesFilter" class="form-control" onchange="filterSystems()">
-            <option value="all">Alles</option>
-            <option value="favorites">★ Favorieten</option>
-          </select>
+          <div class="form-group">
+            <label class="filter-label">Categorie</label>
+            <select id="systemTypeFilter" class="form-control">
+              <option value="">Alle Categorieën</option>
+              <option value="cv-ketel">CV-ketels</option>
+              <option value="warmtepomp">Warmtepompen</option>
+              <option value="mv-wtw">MV/WTW</option>
+              <option value="appendages">Appendages</option>
+              <option value="waterzijdig">Waterzijdig</option>
+              <option value="rookgasafvoer">Rookgasafvoer</option>
+              <option value="thermostaten">Thermostaten</option>
+              <option value="collectief">Collectief</option>
+              <option value="overig">Overig</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="filter-label">Merk</label>
+            <select id="brandFilter" class="form-control">
+              <option value="all">Alle Merken</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="filter-label">Model</label>
+            <select id="modelFilter" class="form-control">
+              <option value="all">Alle Modellen</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="filter-label">Favorieten</label>
+            <select id="favoritesFilter" class="form-control">
+              <option value="all">Alles tonen</option>
+              <option value="favorites">Alleen favorieten</option>
+            </select>
+          </div>
         </div>
-        <div id="resultsCount" style="font-size: 11px; margin-top: 10px; color: gray;">Laden...</div>
+        <div class="results-count" id="resultsCount">Laden...</div>
       </div>
-      <div id="loadingState" style="text-align: center; padding: 40px;">Systemen laden...</div>
+
+      <div id="loadingState" class="loading">
+        <p>Systemen laden...</p>
+      </div>
       <div id="cardsGrid" class="cards-grid hidden"></div>
-      
+      <div id="emptyState" class="empty-state hidden">
+        <p>Geen systemen gevonden met de opgegeven criteria</p>
+      </div>
       <div class="app-footer">
-        &copy; 2026 <strong style="cursor: pointer;" onclick="activateEasterEgg()">K.W. Diets</strong>. Alle rechten voorbehouden.
+          &copy; <span id="currentYear"></span> <strong id="copyrightName" style="cursor: pointer; user-select: none;">K.W. Diets</strong>. Alle rechten voorbehouden.
       </div>
-    </div>
+    </div> 
   </div>
 
-  <!-- CALC MODAL -->
-  <div id="calcModal" class="modal">
-    <div class="modal-content">
-      <div class="modal-header"><h3>HVAC Calculator</h3><button class="icon-btn" onclick="closeModal('calcModal')">×</button></div>
+  <!-- 1. ADMIN MODAL -->
+  <div id="adminModal" class="modal">
+    <div class="modal-content wide">
+      <div class="modal-header">
+        <h2 class="modal-title">Gebruikersbeheer</h2>
+        <button class="icon-btn" onclick="closeAdminModal()">&times;</button>
+      </div>
       <div class="modal-body">
-        <label>Gas liters (180 sec)</label>
-        <div style="display: flex; gap: 5px;"><input type="number" id="gasStart" class="form-control" placeholder="Start" oninput="calculateHVAC()"><input type="number" id="gasEind" class="form-control" placeholder="Eind" oninput="calculateHVAC()"></div>
-        <div id="resBelastingHs" style="font-weight: bold; margin: 10px 0;">Belasting: - kW</div>
-        <hr><br>
-        <label>Water (L/min)</label><input type="number" id="calcFlow" class="form-control" oninput="calculateHVAC()">
-        <div style="display: flex; gap: 5px;"><input type="number" id="calcTempKoud" class="form-control" placeholder="T-Koud" oninput="calculateHVAC()"><input type="number" id="calcTempWarm" class="form-control" placeholder="T-Warm" oninput="calculateHVAC()"></div>
-        <div id="resRendement" style="font-size: 28px; font-weight: 800; text-align: center; margin-top: 15px; color: var(--color-primary);">-%</div>
+        <div class="admin-section">
+          <h3>⏳ Wacht op goedkeuring</h3>
+          <div id="pendingUsersList"></div>
+        </div>
+        <div class="admin-section">
+          <h3>Alle gebruikers</h3>
+          <table class="user-table">
+            <thead><tr><th>E-mail</th><th>Rol</th><th>Acties</th></tr></thead>
+            <tbody id="usersTableBody"></tbody>
+          </table>
+        </div>
       </div>
     </div>
   </div>
 
-  <!-- EDIT MODAL -->
-  <div id="editModal" class="modal">
-    <div class="modal-content">
-      <div class="modal-header"><h3>Systeem bewerken</h3><button class="icon-btn" onclick="closeModal('editModal')">×</button></div>
-      <form id="editForm">
-        <input type="hidden" id="editId">
-        <label>Merk</label><input type="text" id="editBrand" class="form-control" required>
-        <label>Model</label><input type="text" id="editModel" class="form-control" required>
-        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px;">
-          <div><label>O2 Laag</label><input type="text" id="editO2Low" class="form-control"></div>
-          <div><label>O2 Hoog</label><input type="text" id="editO2High" class="form-control"></div>
-          <div><label>CO2 Laag</label><input type="text" id="editCO2Low" class="form-control"></div>
-          <div><label>CO2 Hoog</label><input type="text" id="editCO2High" class="form-control"></div>
-        </div>
-        <label>Procedure</label><textarea id="editProcedure" class="form-control" rows="4"></textarea>
-        
-        <div style="margin-top: 15px;">
-          <label><b>Materialen</b></label>
-          <div id="editPartsContainer"></div>
-          <button type="button" class="btn" onclick="addPartRow('edit')" style="margin-bottom:15px;">+ Regel</button>
-        </div>
+  <!-- 2. AUDIT LOG MODAL -->
+  <div id="auditModal" class="modal">
+    <div class="modal-content wide">
+      <div class="modal-header"><h2>Audit Log</h2><button class="icon-btn" onclick="closeAuditModal()">&times;</button></div>
+      <div class="modal-body">
+        <input type="text" id="auditSearchInput" class="form-control" placeholder="Zoek...">
+        <table class="user-table"><tbody id="auditTableBody"></tbody></table>
+      </div>
+    </div>
+  </div>
 
-        <div style="margin-top: 15px;">
-          <label><b>Controlepunten</b></label>
-          <div id="editChecksContainer"></div>
-          <button type="button" class="btn" onclick="addCheckRow('edit')" style="margin-bottom:15px;">+ Controle</button>
-        </div>
+  <!-- 3. TOEVOEGEN MODAL (VOLLEDIG) -->
+  <div id="addModal" class="modal">
+    <div class="modal-content wide">
+      <div class="modal-header"><h2>Nieuw systeem toevoegen</h2><button class="icon-btn" onclick="closeAddModal()">&times;</button></div>
+      <form id="addForm">
+        <div class="modal-body">
+          <div class="form-group">
+            <label>Systeem Type</label>
+            <select id="addSystemType" class="form-control" required onchange="updateAddFieldsForSystemType(this.value)">
+              <option value="cv-ketel">CV-ketel</option>
+              <option value="warmtepomp">Warmtepomp</option>
+              <option value="mv-wtw">MV/WTW</option>
+              <option value="appendages">Appendages</option>
+              <option value="rookgasafvoer">Rookgasafvoer</option>
+              <option value="thermostaten">Thermostaten</option>
+              <option value="waterzijdig">Waterzijdig</option>
+              <option value="collectief">Collectief</option>
+              <option value="overig">Overig</option>
+            </select>
+          </div>
+          <div class="form-group"><label>Merk</label><input type="text" id="addBrand" class="form-control" required></div>
+          <div class="form-group"><label>Model</label><input type="text" id="addModel" class="form-control" required></div>
+          <div class="form-group"><label>Logo URL</label><input type="url" id="addLogoUrl" class="form-control"></div>
+          <div class="form-group"><label>Toestel Foto</label><input type="file" id="addDeviceImage" class="form-control" accept="image/*"></div>
+          <div class="form-group"><label>Procedure</label><textarea id="addProcedure" class="form-control" rows="5" required></textarea></div>
 
-        <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 15px; justify-content: center;">Opslaan</button>
+          <!-- Dynamische velden voor CV -->
+          <div id="addCvKetelFields">
+            <div class="form-group"><label>O₂ Laaglast</label><input type="text" id="addO2Low" class="form-control"></div>
+            <div class="form-group"><label>O₂ Hooglast</label><input type="text" id="addO2High" class="form-control"></div>
+            <div class="form-group"><label>CO₂ Laaglast</label><input type="text" id="addCO2Low" class="form-control"></div>
+            <div class="form-group"><label>CO₂ Hooglast</label><input type="text" id="addCO2High" class="form-control"></div>
+            <div class="form-group"><label>Max CO (PPM)</label><input type="text" id="addMaxCO" class="form-control"></div>
+          </div>
+          
+          <div id="addWarmtepompFields" style="display:none;"><p>Geen specifieke meetwaarden voor warmtepompen.</p></div>
+          <div id="addWtwMvFields" style="display:none;"><p>Geen specifieke meetwaarden voor WTW/MV.</p></div>
+          <div id="addOtherFields" style="display:none;"><p>Geen extra velden nodig.</p></div>
+
+          <div class="form-group">
+            <label>Galerij Foto's (max 5)</label>
+            <div class="upload-zone" id="addUploadZone" onclick="document.getElementById('addImageInput').click()">
+              <p>Klik of sleep foto's hierheen</p>
+              <input type="file" id="addImageInput" multiple accept="image/*" style="display:none" onchange="handleImageSelect(this.files, 'add')">
+              <div id="addImageCount">0/5 foto's</div>
+            </div>
+            <div id="addImageGallery" class="image-gallery"></div>
+          </div>
+
+          <div class="form-group"><label>Materialen</label><div id="addPartsContainer"></div><button type="button" class="btn" onclick="addPartRow('add')">+ Regel</button></div>
+          <div class="form-group"><label>Controlepunten</label><div id="addChecksContainer"></div><button type="button" class="btn" onclick="addCheckRow('add')">+ Controle</button></div>
+          <div class="form-group"><label>Storingen</label><div id="addFaultsContainer"></div><button type="button" class="btn" onclick="addFaultRow('add')">+ Storing</button></div>
+          
+          <div class="form-group"><label>Opmerkingen</label><textarea id="addNotes" class="form-control"></textarea></div>
+          <div class="form-group"><label>Datum Handleiding</label><input type="date" id="addHandbookDate" class="form-control"></div>
+          <div class="form-group"><label>Link Handleiding</label><input type="url" id="addManualUrl" class="form-control"></div>
+        </div>
+        <div class="modal-footer"><button type="submit" class="btn btn-primary">Opslaan</button></div>
       </form>
     </div>
   </div>
 
-  <div id="lightbox" class="lightbox" onclick="this.classList.remove('active')"><img id="lightboxImg" class="lightbox-img"></div>
+  <!-- 4. BEWERKEN MODAL (VOLLEDIG) -->
+  <div id="editModal" class="modal">
+    <div class="modal-content wide">
+      <div class="modal-header"><h2>Systeem bewerken</h2><button class="icon-btn" onclick="closeEditModal()">&times;</button></div>
+      <form id="editForm">
+        <input type="hidden" id="editId">
+        <input type="hidden" id="editSystemType">
+        <div class="modal-body">
+          <div class="form-group"><label>Merk</label><input type="text" id="editBrand" class="form-control" required></div>
+          <div class="form-group"><label>Model</label><input type="text" id="editModel" class="form-control" required></div>
+          <div class="form-group"><label>Logo URL</label><input type="url" id="editLogoUrl" class="form-control"></div>
+          <div class="form-group"><label>Toestel Foto</label><input type="file" id="editDeviceImage" class="form-control"><div id="editDeviceImagePreview"></div></div>
+          <div class="form-group"><label>Procedure</label><textarea id="editProcedure" class="form-control" rows="5" required></textarea></div>
 
-  <script>
-    const SUPABASE_URL = 'https://srsnjifezttivawxnndu.supabase.co';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNyc25qaWZlenR0aXZhd3hubmR1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQwNzY1MjcsImV4cCI6MjA3OTY1MjUyN30.5RmDp3QgAYX7yDS39KwoRtHc6c9Kp-wGKGYeJctoY7w';
-    var supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+          <div id="cvKetelFields">
+            <div class="form-group"><label>O₂ Laaglast</label><input type="text" id="editO2Low" class="form-control"></div>
+            <div class="form-group"><label>O₂ Hooglast</label><input type="text" id="editO2High" class="form-control"></div>
+            <div class="form-group"><label>CO₂ Laaglast</label><input type="text" id="editCO2Low" class="form-control"></div>
+            <div class="form-group"><label>CO₂ Hooglast</label><input type="text" id="editCO2High" class="form-control"></div>
+            <div class="form-group"><label>Max CO (PPM)</label><input type="text" id="editMaxCO" class="form-control"></div>
+          </div>
+          
+          <div id="warmtepompFields" style="display:none;"></div>
+          <div id="otherFields" style="display:none;"></div>
 
-    let currentUser = null, currentUserRole = 'user', systems = [], favorites = [];
+          <div class="form-group">
+            <label>Galerij Foto's</label>
+            <div class="upload-zone" onclick="document.getElementById('editImageInput').click()">
+              <input type="file" id="editImageInput" multiple accept="image/*" style="display:none" onchange="handleImageSelect(this.files, 'edit')">
+              <div id="editImageCount">0/5 foto's</div>
+            </div>
+            <div id="editImageGallery" class="image-gallery"></div>
+          </div>
 
-    async function init() {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (session) {
-            currentUser = session.user;
-            const { data } = await supabase.from('user_roles').select('is_approved, role').eq('user_id', currentUser.id).maybeSingle();
-            if (data && data.is_approved) {
-                currentUserRole = data.role;
-                document.getElementById('authContainer').classList.add('hidden');
-                document.getElementById('appContainer').classList.remove('hidden');
-                if(currentUserRole === 'admin') document.getElementById('adminBtn').style.display = 'inline-flex';
-                await loadData();
-            }
-        }
-        setupEventListeners();
-        document.body.setAttribute('data-theme', localStorage.getItem('theme') || 'light');
-    }
+          <div class="form-group"><label>Materialen</label><div id="editPartsContainer"></div><button type="button" class="btn" onclick="addPartRow('edit')">+ Regel</button></div>
+          <div class="form-group"><label>Controlepunten</label><div id="editChecksContainer"></div><button type="button" class="btn" onclick="addCheckRow('edit')">+ Controle</button></div>
+          <div class="form-group"><label>Storingen</label><div id="editFaultsContainer"></div><button type="button" class="btn" onclick="addFaultRow('edit')">+ Storing</button></div>
+          
+          <div class="form-group"><label>Opmerkingen</label><textarea id="editNotes" class="form-control"></textarea></div>
+          <div class="form-group"><label>Datum Handleiding</label><input type="date" id="editHandbookDate" class="form-control"></div>
+          <div class="form-group"><label>Link Handleiding</label><input type="url" id="editManualUrl" class="form-control"></div>
+        </div>
+        <div class="modal-footer"><button type="submit" class="btn btn-primary">Bijwerken</button></div>
+      </form>
+    </div>
+  </div>
 
-    async function loadData() {
-        const { data } = await supabase.from('systems').select('*').order('brand', { ascending: true });
-        systems = data || [];
-        const { data: favs } = await supabase.from('favorites').select('system_id').eq('user_id', currentUser.id);
-        favorites = favs ? favs.map(f => f.system_id) : [];
-        const brands = [...new Set(systems.map(s => s.brand))].sort();
-        document.getElementById('brandFilter').innerHTML = '<option value="all">Alle Merken</option>' + brands.map(b => `<option value="${b}">${b}</option>`).join('');
-        filterSystems();
-        document.getElementById('loadingState').classList.add('hidden');
-    }
-
-    function filterSystems() {
-        const term = document.getElementById('searchInput').value.toLowerCase();
-        const brand = document.getElementById('brandFilter').value;
-        const favsOnly = document.getElementById('favoritesFilter').value === 'favorites';
-        const filtered = systems.filter(s => {
-            const matchSearch = s.brand.toLowerCase().includes(term) || s.model.toLowerCase().includes(term);
-            const matchBrand = brand === 'all' || s.brand === brand;
-            const matchFav = !favsOnly || favorites.includes(s.id);
-            return matchSearch && matchBrand && matchFav;
-        });
-        const grid = document.getElementById('cardsGrid');
-        grid.innerHTML = filtered.map(s => createSystemCard(s)).join('');
-        grid.classList.remove('hidden');
-        document.getElementById('resultsCount').textContent = `${filtered.length} gevonden`;
-    }
-
-    function createSystemCard(s) {
-        const isFav = favorites.includes(s.id);
-        const canEdit = ['admin', 'moderator'].includes(currentUserRole);
+  <!-- START CALCULATOR MODAL -->
+  <div id="calcModal" class="modal">
+    <div class="modal-content wide">
+      <div class="modal-header">
+        <h2>HVAC Calculator (NEN-norm)</h2>
+        <button class="icon-btn" onclick="closeCalcModal()">&times;</button>
+      </div>
+      <div class="modal-body">
         
-        let partsHtml = '';
-        try {
-            const parts = Array.isArray(s.parts) ? s.parts : JSON.parse(s.parts || '[]');
-            if (parts.length > 0) {
-                partsHtml = '<table class="parts-table"><tbody>' + parts.map(p => {
-                    const cleanNr = p.art ? p.art.toString().replace(/[\s.]/g, '') : '';
-                    const link = p.supp === 'Rensa' ? `https://rensa.nl/Product/${cleanNr}` : (p.supp === 'Wasco' ? `https://www.wasco.nl/artikel/${cleanNr}` : null);
-                    const badge = p.supp === 'Rensa' ? 'badge-rensa' : (p.supp === 'Wasco' ? 'badge-wasco' : '');
-                    return `<tr><td>${p.desc}</td><td>${link ? `<a href="${link}" target="_blank" style="color:var(--color-primary);">${p.art} ↗</a>` : (p.art || '')} <span class="${badge}">${p.supp || ''}</span></td></tr>`;
-                }).join('') + '</tbody></table>';
-            }
-        } catch(e) {}
-
-        let checksHtml = '';
-        try {
-            const checks = Array.isArray(s.checks) ? s.checks : JSON.parse(s.checks || '[]');
-            checksHtml = checks.map(c => `<div class="check-card"><b>${c.subject}</b><br><small>P: ${c.problem}</small><br><small>S: ${c.solution}</small>${c.imgUrl ? `<img src="${c.imgUrl}" class="check-img" onclick="openLightbox(this.src)">` : ''}</div>`).join('');
-        } catch(e) {}
-
-        let faultsHtml = '';
-        try {
-            const faults = Array.isArray(s.faults) ? s.faults : JSON.parse(s.faults || '[]');
-            faultsHtml = faults.map(f => `<div class="fault-row"><div class="fault-code">${f.code}</div><div>O: ${f.cause}<br>S: ${f.solution}</div></div>`).join('');
-        } catch(e) {}
-
-        return `
-        <div class="system-card" id="card-${s.id}">
-            <div class="card-header">
-                <div class="card-header-text">
-                    <div class="brand-label">${s.brand}</div>
-                    <div class="model-label">${s.model}</div>
-                </div>
-                <div class="card-actions">
-                    ${s.manual_url ? `<a href="${s.manual_url}" target="_blank" class="icon-btn">📄</a>` : ''}
-                    <button class="icon-btn ${isFav ? 'active' : ''}" onclick="toggleFavorite('${s.id}')">★</button>
-                    ${canEdit ? `<button class="icon-btn" onclick="openEditModal('${s.id}')">✎</button>` : ''}
-                </div>
+        <!-- 1. BELASTING (GAS) -->
+        <div style="background: var(--color-bg-primary); padding: 15px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid var(--color-primary);">
+          <h3 style="font-size: 14px; margin-bottom: 5px;">1. Belasting (P<sub>in</sub>) berekenen</h3>
+          <p style="font-size: 12px; color: var(--color-text-secondary); margin-bottom: 10px;">
+            <i>Werkwijze: Zet ketel op vollast. Meet het gasverbruik gedurende precies <b>180 seconden</b>.</i>
+          </p>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+            <div class="form-group">
+              <label>Startstand (Liters)</label>
+              <input type="number" id="gasStart" class="form-control" placeholder="0" oninput="calculateHVAC()">
             </div>
-            <div class="tabs-nav">
-                <button class="tab-btn active" onclick="switchTab('${s.id}', 'info', event)">Afstelling</button>
-                <button class="tab-btn" onclick="switchTab('${s.id}', 'parts', event)">Materialen</button>
-                <button class="tab-btn" onclick="switchTab('${s.id}', 'checks', event)">Controle</button>
-                <button class="tab-btn" onclick="switchTab('${s.id}', 'faults', event)">Storingen</button>
+            <div class="form-group">
+              <label>Eindstand (Liters)</label>
+              <input type="number" id="gasEind" class="form-control" placeholder="Bijv. 50" oninput="calculateHVAC()">
             </div>
-            <div id="content-info-${s.id}" class="tab-content active">
-                <div class="values-container">
-                    <div class="value-box"><small>O2 Laag / Hoog</small><span>${s.o2_low || '-'} / ${s.o2_high || '-'}</span></div>
-                    <div class="value-box"><small>CO2 Laag / Hoog</small><span>${s.co2_low || '-'} / ${s.co2_high || '-'}</span></div>
-                </div>
-                <pre class="procedure-text">${s.procedure || 'Geen procedure.'}</pre>
+          </div>
+          <div id="resBelastingHs" style="font-weight: bold; color: var(--color-text); margin-top: 10px;">Belasting (H<sub>s</sub>): - kW</div>
+          <div id="resBelastingHi" style="font-size: 12px; color: var(--color-text-secondary);">Belasting (H<sub>i</sub>): - kW</div>
+          <p style="font-size: 11px; margin-top: 5px; color: var(--color-warning);">Vergelijk H<sub>s</sub> met Q<sub>n</sub> op het typeplaatje.</p>
+        </div>
+
+        <!-- 2. VERMOGEN (WATER) -->
+        <div style="background: var(--color-bg-primary); padding: 15px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid var(--color-primary);">
+          <h3 style="font-size: 14px; margin-bottom: 5px;">2. Nuttig Vermogen (P<sub>nuttig</sub>)</h3>
+          <p style="font-size: 12px; color: var(--color-text-secondary); margin-bottom: 10px;">
+            <i>Meet de flow met een flowbeker en noteer de temperaturen.</i>
+          </p>
+          <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
+            <div class="form-group">
+              <label>Flow (L/min)</label>
+              <input type="number" id="calcFlow" class="form-control" placeholder="L/min" oninput="calculateHVAC()">
             </div>
-            <div id="content-parts-${s.id}" class="tab-content">${partsHtml || 'Geen materialen.'}</div>
-            <div id="content-checks-${s.id}" class="tab-content">${checksHtml || 'Geen controlepunten.'}</div>
-            <div id="content-faults-${s.id}" class="tab-content">${faultsHtml || 'Geen storingen.'}</div>
-        </div>`;
-    }
+            <div class="form-group">
+              <label>T-Koud (°C)</label>
+              <input type="number" id="calcTempKoud" class="form-control" placeholder="10" oninput="calculateHVAC()">
+            </div>
+            <div class="form-group">
+              <label>T-Warm (°C)</label>
+              <input type="number" id="calcTempWarm" class="form-control" placeholder="60" oninput="calculateHVAC()">
+            </div>
+          </div>
+          <div id="resVermogen" style="margin-top: 10px; font-weight: bold; color: var(--color-primary);">Vermogen (P): - kW</div>
+        </div>
 
-    async function handleEditSubmit(e) {
-        e.preventDefault();
-        const id = document.getElementById('editId').value;
-        const updates = {
-            brand: document.getElementById('editBrand').value,
-            model: document.getElementById('editModel').value,
-            procedure: document.getElementById('editProcedure').value,
-            o2_low: document.getElementById('editO2Low').value, o2_high: document.getElementById('editO2High').value,
-            co2_low: document.getElementById('editCO2Low').value, co2_high: document.getElementById('editCO2High').value,
-            parts: collectPartsData('edit'),
-            checks: collectChecksData('edit')
-        };
-        const { error } = await supabase.from('systems').update(updates).eq('id', id);
-        if (error) alert(error.message); else location.reload();
-    }
+        <!-- 3. RENDEMENT -->
+        <div id="resRendementBox" style="text-align: center; padding: 20px; border: 2px solid var(--color-border); border-radius: 12px; background: white;">
+          <div style="font-size: 12px; text-transform: uppercase; color: var(--color-text-secondary); letter-spacing: 1px;">
+            Actueel Rendement (&eta;)
+          </div>
+          <div id="resRendement" style="font-size: 32px; font-weight: 800; color: var(--color-primary);">-%</div>
+          <p style="font-size: 11px; color: var(--color-text-secondary); margin-top: 5px;">
+            Berekend op basis van Belasting (H<sub>s</sub>)
+          </p>
+        </div>
 
-    function calculateHVAC() {
-        const s = parseFloat(document.getElementById('gasStart').value) || 0, e = parseFloat(document.getElementById('gasEind').value) || 0;
-        if (e > s) {
-            const bel = ((e - s) / 180) * 35.17;
-            document.getElementById('resBelastingHs').innerHTML = `Belasting: <b>${bel.toFixed(2)} kW</b>`;
-            const f = parseFloat(document.getElementById('calcFlow').value) || 0, tk = parseFloat(document.getElementById('calcTempKoud').value) || 0, tw = parseFloat(document.getElementById('calcTempWarm').value) || 0;
-            if (f > 0 && tw > tk) {
-                const verm = ((f / 60) / 1000 * 4186 * 983 * (tw - tk)) / 1000;
-                document.getElementById('resRendement').textContent = ((verm / bel) * 100).toFixed(1) + '%';
-            }
-        }
-    }
+      </div> <!-- Sluit modal-body af <--- DEZE GING MIS -->
+    </div> <!-- Sluit modal-content af <--- DEZE GING MIS -->
+  </div> <!-- Sluit calcModal af <--- DEZE GING MIS -->
 
-    function addPartRow(mode, desc='', art='', supp='Overig') {
-        const div = document.createElement('div'); div.className = 'part-input-row';
-        div.innerHTML = `<input type="text" class="form-control part-desc" value="${desc}" placeholder="Item"><input type="text" class="form-control part-art" value="${art}" placeholder="Nr">
-        <select class="form-control" style="width:100px;"><option ${supp==='Overig'?'selected':''}>Overig</option><option ${supp==='Wasco'?'selected':''}>Wasco</option><option ${supp==='Rensa'?'selected':''}>Rensa</option></select>
-        <button type="button" class="btn" onclick="this.parentElement.remove()">×</button>`;
-        document.getElementById(`${mode}PartsContainer`).appendChild(div);
-    }
+  <!-- 5. LIGHTBOX (NU VOLLEDIG VRIJSTAAND) -->
+  <div id="lightbox" class="lightbox">
+    <div class="lightbox-content">
+      <img id="lightboxImg" class="lightbox-img" alt="Uitvergrote foto">
+      <button class="lightbox-close" onclick="closeLightbox()">&times;</button>
+    </div>
+  </div>
+  
+  <button id="scrollTopBtn" class="btn btn-primary" style="position:fixed; bottom:20px; right:20px; display:none; border-radius:50%; width:50px; height:50px; padding:0; z-index:99; justify-content:center; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+    <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width:24px; height:24px;">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"></path>
+    </svg>
+  </button>
 
-    function addCheckRow(mode, sub='', prob='', sol='') {
-        const div = document.createElement('div'); div.className = 'check-card';
-        div.innerHTML = `<input type="text" class="form-control check-subject" value="${sub}" placeholder="Onderwerp"><textarea class="form-control check-problem" placeholder="Probleem">${prob}</textarea><textarea class="form-control check-solution" placeholder="Oplossing">${sol}</textarea><button type="button" class="btn" onclick="this.parentElement.remove()">Verwijder</button>`;
-        document.getElementById(`${mode}ChecksContainer`).appendChild(div);
-    }
+  <!-- SCRIPTS -->
+  <!-- 1. Laad eerst de Supabase bibliotheek -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  
+  <!-- 2. Laad daarna pas jouw eigen app logica als module -->
+  <script type="module" src="./js/app.js"></script>
 
-    function collectPartsData(mode) {
-        return Array.from(document.querySelectorAll(`#${mode}PartsContainer .part-input-row`)).map(row => ({
-            desc: row.querySelector('.part-desc').value, art: row.querySelector('.part-art').value, supp: row.querySelector('select').value
-        })).filter(p => p.desc || p.art);
-    }
-
-    function collectChecksData(mode) {
-        return Array.from(document.querySelectorAll(`#${mode}ChecksContainer .check-card`)).map(row => ({
-            subject: row.querySelector('.check-subject').value, problem: row.querySelector('.check-problem').value, solution: row.querySelector('.check-solution').value
-        })).filter(c => c.subject);
-    }
-
-    function openEditModal(id) {
-        const s = systems.find(x => x.id === id);
-        document.getElementById('editId').value = id;
-        document.getElementById('editBrand').value = s.brand; document.getElementById('editModel').value = s.model;
-        document.getElementById('editO2Low').value = s.o2_low || ''; document.getElementById('editO2High').value = s.o2_high || '';
-        document.getElementById('editCO2Low').value = s.co2_low || ''; document.getElementById('editCO2High').value = s.co2_high || '';
-        document.getElementById('editProcedure').value = s.procedure || '';
-        const pCont = document.getElementById('editPartsContainer'); pCont.innerHTML = '';
-        (Array.isArray(s.parts) ? s.parts : JSON.parse(s.parts || '[]')).forEach(p => addPartRow('edit', p.desc, p.art, p.supp));
-        const cCont = document.getElementById('editChecksContainer'); cCont.innerHTML = '';
-        (Array.isArray(s.checks) ? s.checks : JSON.parse(s.checks || '[]')).forEach(c => addCheckRow('edit', c.subject, c.problem, c.solution));
-        openModal('editModal');
-    }
-
-    function setupEventListeners() {
-        document.getElementById('loginForm')?.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const { error } = await supabase.auth.signInWithPassword({ email: document.getElementById('loginEmail').value, password: document.getElementById('loginPassword').value });
-            if (error) alert(error.message); else location.reload();
-        });
-        document.getElementById('editForm')?.addEventListener('submit', handleEditSubmit);
-    }
-
-    function switchTab(id, tab, e) {
-        const card = document.getElementById(`card-${id}`);
-        card.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-        card.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-        document.getElementById(`content-${tab}-${id}`).classList.add('active');
-        e.target.classList.add('active');
-    }
-
-    function toggleTheme() { const t = document.body.getAttribute('data-theme') === 'dark' ? 'light' : 'dark'; document.body.setAttribute('data-theme', t); localStorage.setItem('theme', t); }
-    function openModal(id) { document.getElementById(id).classList.add('active'); }
-    function closeModal(id) { document.getElementById(id).classList.remove('active'); }
-    function openLightbox(src) { document.getElementById('lightboxImg').src = src; document.getElementById('lightbox').classList.add('active'); }
-    function closeLightbox() { document.getElementById('lightbox').classList.remove('active'); }
-    function activateEasterEgg() { alert("Easter Egg! App-kleuren veranderd."); document.documentElement.style.setProperty('--color-primary', '#6C10F3'); }
-
-    init();
-  </script>
+  <!-- 6. REGISTRATIE MODAL -->
+  <div id="registerModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title">Nieuw account registreren</h2>
+        <button class="icon-btn" onclick="closeRegisterModal()">&times;</button>
+      </div>
+      <form id="registerForm">
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="registerEmail">E-mail</label>
+            <input type="email" id="registerEmail" class="form-control" required placeholder="monteur@bedrijf.nl">
+          </div>
+          <div class="form-group">
+            <label for="registerPassword">Wachtwoord</label>
+            <input type="password" id="registerPassword" class="form-control" required placeholder="Minimaal 6 tekens">
+          </div>
+          <div class="form-group">
+            <label for="registerPassword2">Herhaal wachtwoord</label>
+            <input type="password" id="registerPassword2" class="form-control" required placeholder="Bevestig wachtwoord">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn" onclick="closeRegisterModal()">Annuleren</button>
+          <button type="submit" class="btn btn-primary">Account aanmaken</button>
+        </div>
+      </form>
+    </div>
+  </div>
+  
 </body>
 </html>
