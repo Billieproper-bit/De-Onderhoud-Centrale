@@ -141,7 +141,18 @@ function filterSystems() {
     });
 
     const grid = document.getElementById('cardsGrid');
-    grid.innerHTML = filtered.map(s => createSystemCard(s)).join('');
+    const emptyState = document.getElementById('emptyState');
+
+    if (filtered.length === 0) {
+        grid.classList.add('hidden');
+        emptyState?.classList.remove('hidden');
+    } else {
+        // DIT IS DE BELANGRIJKE REGEL:
+        grid.classList.remove('hidden'); 
+        emptyState?.classList.add('hidden');
+        grid.innerHTML = filtered.map(s => createSystemCard(s)).join('');
+    }
+
     document.getElementById('resultsCount').textContent = `${filtered.length} systemen gevonden`;
 }
 
