@@ -1279,15 +1279,31 @@ function setupEventListeners() {
 
     console.log("📡 Gegevens verzenden naar Supabase...");
 
-    // 6. DE UPDATE (Zonder .select() voor snelheid)
-    const { error } = await supabase
-      .from('systems')
-      .update(updates)
-      .eq('id', id);
+    // 6. DE UPDATE 
+    const databaseDeadline = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error("De database reageert niet binnen 10 seconden. Controleer je internet of log opnieuw in.")), 10000)
+    );
 
-    if (error) throw error;
+    try {
+        // We laten de update 'racen' tegen de klok
+        const updateActie = supabase.from('systems').update(updates).eq('id', id);
+        
+        const { error } = await Promise.race([updateActie, databaseDeadline]);
 
-    console.log("✅ Database update succesvol");
+        if (error) {
+            console.error("❌ Database gaf een fout:", error);
+            alert("Database weigert update: " + error.message);
+            return;
+        }
+
+        console.log("✅ Update succesvol!");
+        alert('✅ Systeem succesvol bijgewerkt!');
+        location.reload();
+
+    } catch (deadlineError) {
+        console.error("⏱️ Timeout:", deadlineError.message);
+        alert("Opslaan mislukt: " + deadlineError.message);
+    }
 
     // 7. UI synchroniseren
     alert('✅ Systeem succesvol bijgewerkt!');
