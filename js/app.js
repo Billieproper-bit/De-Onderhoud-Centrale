@@ -1242,21 +1242,14 @@ function setupEventListeners() {
 
     const { error } = await supabase
       .from('systems')
-      .update(updates)
+      .update({ brand: document.getElementById('editBrand').value })
       .eq('id', id);
 
     if (error) {
-      alert("Check 8: DATABASE ERROR: " + error.message);
-      return;
+      alert("Check 8: Zelfs de MINIMALE test faalt: " + error.message);
+    } else {
+      alert("Check 9: MINIMALE TEST GELUKT! Het ligt dus aan de grote hoeveelheid data van de artikelen.");
     }
-
-    alert("Check 9: ALLES GELUKT!");
-    location.reload(); // Forceer herladen om alles te verversen
-
-  } catch (err) {
-    alert("CRASH DETECTED: " + err.message);
-    console.error(err);
-  }
 }
     
     function handleDrop(e, mode) {
