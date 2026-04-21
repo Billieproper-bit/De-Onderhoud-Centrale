@@ -444,45 +444,45 @@ function setupEventListeners() {
 
      // Deze functie is 'async' omdat hij moet wachten op uploads
     async function processChecksData(mode) {
-      const container = document.getElementById(mode + 'ChecksContainer');
-      const rows = Array.from(container.children); // Maak er een array van
-      const checks = [];
+  const container = document.getElementById(mode + 'ChecksContainer');
+  if (!container) return null;
 
-      for (const row of rows) {
-        const subject = row.querySelector('.check-subject').value.trim();
-        const problem = row.querySelector('.check-problem').value.trim();
-        const solution = row.querySelector('.check-solution').value.trim();
-        const fileInput = row.querySelector('.check-file');
-        const existingUrl = row.querySelector('.check-existing-url').value;
+  // Gebruik querySelectorAll om alleen de echte invoer-rijen te pakken
+  const rows = container.querySelectorAll('.part-input-row');
+  const checks = [];
 
-        if (!subject && !problem) continue; // Lege regels overslaan
+  for (const row of rows) {
+    try {
+      const subjectEl = row.querySelector('.check-subject');
+      const problemEl = row.querySelector('.check-problem');
+      const solutionEl = row.querySelector('.check-solution');
+      const fileInput = row.querySelector('.check-file');
+      const existingUrl = row.querySelector('.check-existing-url')?.value || '';
 
-        let finalImageUrl = existingUrl;
+      if (!subjectEl) continue; // Sla over als het geen echte rij is
 
-        // Als er een nieuwe foto is gekozen, uploaden we die nu direct
-        if (fileInput.files.length > 0) {
-           const file = fileInput.files[0];
-           const fileExt = file.name.split('.').pop();
-           const fileName = 'check-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9) + '.' + fileExt;
-           
-           try {
-             const { data, error } = await supabase.storage
-               .from('system-images')
-               .upload(fileName, file, { upsert: true });
-               
-             if (!error) {
-               finalImageUrl = 'https://srsnjifezttivawxnndu.supabase.co/storage/v1/object/public/system-images/' + fileName;
-             }
-           } catch(err) {
-             console.error('Foto upload fout bij controlepunt', err);
-           }
-        }
+      const subject = subjectEl.value.trim();
+      const problem = problemEl ? problemEl.value.trim() : '';
+      const solution = solutionEl ? solutionEl.value.trim() : '';
 
-        checks.push({ subject, problem, solution, imgUrl: finalImageUrl });
+      if (!subject && !problem) continue;
+
+      let finalImageUrl = existingUrl;
+
+      if (fileInput && fileInput.files && fileInput.files.length > 0) {
+         console.log("Uploaden foto voor check:", subject);
+         const file = fileInput.files[0];
+         finalImageUrl = await uploadSingleFile(file);
       }
 
-      return checks.length > 0 ? JSON.stringify(checks) : null;
+      checks.push({ subject, problem, solution, imgUrl: finalImageUrl });
+    } catch (err) {
+      console.warn("Fout bij verwerken van één check-rij, overslaan...", err);
     }
+  }
+
+  return checks.length > 0 ? JSON.stringify(checks) : null;
+}
     
     function createSystemCard(system) {
       const isFavorite = favorites.includes(system.id);
@@ -1196,7 +1196,6 @@ function setupEventListeners() {
 
     async function handleEditSubmit(e) {
   if (e) e.preventDefault();
-  
   const submitBtn = document.querySelector('#editForm button[type="submit"]');
   const originalText = submitBtn ? submitBtn.textContent : "Opslaan";
 
@@ -1209,12 +1208,17 @@ function setupEventListeners() {
     const id = document.getElementById('editId').value;
     const systemType = document.getElementById('editSystemType').value || 'update';
     
-    // Verzamel JSON data
+    console.log("1. Data verzamelen...");
     const partsJson = collectPartsData('edit');
-    const checksJson = await processChecksData('edit');
     const faultsJson = collectFaultsData('edit');
+    
+    // We voegen een timeout toe aan de foto-verwerking
+    console.log("2. Foto's verwerken (Controlepunten)...");
+    const checksJson = await Promise.race([
+        processChecksData('edit'),
+        new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout bij verwerken controle-foto's")), 15000))
+    ]);
 
-    // Basis object bouwen
     const updates = {
       brand: document.getElementById('editBrand').value.trim(),
       model: document.getElementById('editModel').value.trim(),
@@ -1228,22 +1232,15 @@ function setupEventListeners() {
       manual_url: document.getElementById('editManualUrl')?.value || null
     };
 
-    // Alleen CV-waarden toevoegen als het veld bestaat in de HTML
     if (systemType === 'cv-ketel') {
-      const o2L = document.getElementById('editO2Low');
-      const o2H = document.getElementById('editO2High');
-      const co2L = document.getElementById('editCO2Low');
-      const co2H = document.getElementById('editCO2High');
-      const maxC = document.getElementById('editMaxCO');
-
-      if(o2L) updates.o2_low = o2L.value || null;
-      if(o2H) updates.o2_high = o2H.value || null;
-      if(co2L) updates.co2_low = co2L.value || null;
-      if(co2H) updates.co2_high = co2H.value || null;
-      if(maxC) updates.maxco = maxC.value || null;
+      updates.o2_low = document.getElementById('editO2Low')?.value || null;
+      updates.o2_high = document.getElementById('editO2High')?.value || null;
+      updates.co2_low = document.getElementById('editCO2Low')?.value || null;
+      updates.co2_high = document.getElementById('editCO2High')?.value || null;
+      updates.maxco = document.getElementById('editMaxCO')?.value || null;
     }
 
-    // Toestelfoto afhandelen
+    // Foto's uploaden
     let deviceImgUrl = document.getElementById('editDeviceImage').dataset.currentUrl || null;
     const deviceFile = document.getElementById('editDeviceImage').files[0];
     if (deviceFile) {
@@ -1251,10 +1248,8 @@ function setupEventListeners() {
     }
     updates.device_image_url = deviceImgUrl;
 
-    // Galerij foto's afhandelen
     let imageUrls = pendingImages.edit;
-    const heeftNieuweFiles = pendingImages.edit.some(img => img instanceof File);
-    if (heeftNieuweFiles) {
+    if (pendingImages.edit.some(img => img instanceof File)) {
         const newFiles = pendingImages.edit.filter(img => img instanceof File);
         const uploadedUrls = await uploadImages(systemType + '-' + Date.now(), newFiles);
         const existingUrls = pendingImages.edit.filter(img => typeof img === 'string');
@@ -1262,33 +1257,28 @@ function setupEventListeners() {
     }
     updates.images = imageUrls;
 
-    // VERZENDEN
-    const { data, error } = await supabase
-      .from('systems')
-      .update(updates)
-      .eq('id', id)
-      .select();
+    console.log("3. Verzenden naar database...");
+    // De database update met een timeout van 10 seconden
+    const { data, error } = await Promise.race([
+        supabase.from('systems').update(updates).eq('id', id).select(),
+        new Promise((_, reject) => setTimeout(() => reject(new Error("Database reageert niet (Timeout)")), 10000))
+    ]);
 
     if (error) throw error;
 
-    if (!data || data.length === 0) {
-        throw new Error("De database heeft de wijziging niet doorgevoerd. Probeer het opnieuw.");
-    }
-
-    // Update lokale lijst (Heel belangrijk voor de UI!)
+    // Lokale lijst bijwerken
     const systemIndex = systems.findIndex(s => s.id === id);
     if (systemIndex !== -1) {
-      // We behouden de oude data en overschrijven alleen de updates
       systems[systemIndex] = { ...systems[systemIndex], ...updates };
     }
     
     closeEditModal();
-    filterSystems(); // Direct scherm verversen
+    filterSystems();
     alert('✅ Systeem succesvol bijgewerkt!');
 
   } catch (error) {
-    console.error("Fout bij opslaan:", error);
-    alert("Er ging iets mis: " + error.message);
+    console.error("Fout:", error);
+    alert("Opslaan mislukt: " + error.message);
   } finally {
     if (submitBtn) {
       submitBtn.disabled = false;
