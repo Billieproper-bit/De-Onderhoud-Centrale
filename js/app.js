@@ -7,16 +7,14 @@ let favorites = [];
 let currentEditingId = null;
 let allUsers = [];
 let pendingImages = { add: [], edit: [] };
-let auditLogs = [];
 
-// --- INITIALISATIE ---
+// --- 1. INITIALISATIE & AUTH ---
 async function init() {
     const { data: { session } } = await supabase.auth.getSession();
 
     if (session) {
         currentUser = session.user;
         const isApproved = await checkUserApproval(session.user);
-
         if (isApproved) {
             showApp();
             await loadData();
@@ -29,7 +27,7 @@ async function init() {
 
     supabase.auth.onAuthStateChange(async (event, session) => {
         if (event === 'SIGNED_IN') {
-            location.reload(); // Ververs om alles schoon te laden
+            location.reload(); 
         } else if (event === 'SIGNED_OUT') {
             showAuth();
         }
@@ -58,7 +56,34 @@ async function checkUserApproval(user) {
     }
 }
 
-// --- DATA LADEN & FILTERS ---
+function showApp() {
+    document.getElementById('authContainer').classList.add('hidden');
+    document.getElementById('appContainer').classList.remove('hidden');
+    document.getElementById('userEmail').textContent = currentUser?.email;
+    updateUIForRole();
+}
+
+function showAuth() {
+    document.getElementById('authContainer').classList.remove('hidden');
+    document.getElementById('appContainer').classList.add('hidden');
+}
+
+function showPendingScreen(email) {
+    const container = document.getElementById('pendingScreen');
+    container.classList.remove('hidden');
+    document.getElementById('authContainer').classList.add('hidden');
+    document.getElementById('pendingMessage').innerHTML = `Hoi <b>${email}</b>, je account moet nog worden goedgekeurd door de beheerder.`;
+}
+
+function updateUIForRole() {
+    const canEdit = currentUserRole === 'admin' || currentUserRole === 'moderator';
+    const isAdmin = currentUserRole === 'admin';
+    document.getElementById('addSystemBtn').style.display = canEdit ? 'inline-flex' : 'none';
+    document.getElementById('adminBtn').style.display = isAdmin ? 'inline-flex' : 'none';
+    checkPendingNotifications();
+}
+
+// --- 2. DATA LADEN & FILTERS ---
 async function loadData() {
     document.getElementById('loadingState')?.classList.remove('hidden');
     try {
@@ -85,6 +110,22 @@ async function loadData() {
     }
 }
 
+function updateBrandFilter() {
+    const select = document.getElementById('brandFilter');
+    const brands = [...new Set(systems.map(s => s.brand))].sort();
+    select.innerHTML = '<option value="all">Alle Merken</option>';
+    brands.forEach(b => select.innerHTML += `<option value="${b}">${b}</option>`);
+}
+
+function updateModelFilter() {
+    const select = document.getElementById('modelFilter');
+    const brand = document.getElementById('brandFilter').value;
+    const filtered = brand === 'all' ? systems : systems.filter(s => s.brand === brand);
+    const models = [...new Set(filtered.map(s => s.model))].sort();
+    select.innerHTML = '<option value="all">Alle Modellen</option>';
+    models.forEach(m => select.innerHTML += `<option value="${m}">${m}</option>`);
+}
+
 function filterSystems() {
     const type = document.getElementById('systemTypeFilter').value;
     const brand = document.getElementById('brandFilter').value;
@@ -99,23 +140,16 @@ function filterSystems() {
         return matchType && matchBrand && matchModel && matchFav;
     });
 
-    renderSystems(filtered);
-}
-
-// --- UI RENDERING ---
-function renderSystems(list) {
     const grid = document.getElementById('cardsGrid');
-    if (!grid) return;
-    grid.innerHTML = list.map(s => createSystemCard(s)).join('');
-    grid.classList.remove('hidden');
-    document.getElementById('resultsCount').textContent = `${list.length} systemen gevonden`;
+    grid.innerHTML = filtered.map(s => createSystemCard(s)).join('');
+    document.getElementById('resultsCount').textContent = `${filtered.length} systemen gevonden`;
 }
 
+// --- 3. UI RENDERING (KAARTJES) ---
 function createSystemCard(system) {
     const isFav = favorites.includes(system.id);
     const canEdit = currentUserRole === 'admin' || currentUserRole === 'moderator';
 
-    // Materialen Sectie (JSONB proof)
     let materialsContent = '';
     if (system.parts) {
         try {
@@ -129,7 +163,7 @@ function createSystemCard(system) {
                 }).join('');
                 materialsContent += `</tbody></table></div>`;
             }
-        } catch (e) { materialsContent = '<p>Fout bij laden materialen</p>'; }
+        } catch (e) { materialsContent = '<p>Geen materialen beschikbaar.</p>'; }
     }
 
     return `
@@ -140,7 +174,6 @@ function createSystemCard(system) {
           <div class="card-header-text">
             <div class="brand-label">${system.brand}</div>
             <div class="model-label">${system.model}</div>
-            ${system.handbook_date && system.handbook_date !== '1900-01-01' ? `<div class="card-meta">📅 ${new Date(system.handbook_date).toLocaleDateString('nl-NL')}</div>` : ''}
           </div>
         </div>
         <div class="card-actions">
@@ -149,174 +182,71 @@ function createSystemCard(system) {
         </div>
       </div>
       <div class="tabs-nav">
-        <button class="tab-btn active" onclick="switchTab('${system.id}', 'maint')">Info</button>
-        <button class="tab-btn" onclick="switchTab('${system.id}', 'parts')">Materialen</button>
+        <button class="tab-btn active" data-tab="maint" onclick="switchTab('${system.id}', 'maint')">Info</button>
+        <button class="tab-btn" data-tab="parts" onclick="switchTab('${system.id}', 'parts')">Materialen</button>
       </div>
       <div id="content-maint-${system.id}" class="tab-content active"><pre class="procedure-text">${system.procedure}</pre></div>
-      <div id="content-parts-${system.id}" class="tab-content">${materialsContent || 'Geen info'}</div>
+      <div id="content-parts-${system.id}" class="tab-content">${materialsContent || 'Geen extra info'}</div>
     </div>`;
 }
 
-// --- OPSLAAN & BEWERKEN ---
+// --- 4. BEWERKEN & OPSLAAN ---
 async function handleEditSubmit(e) {
     if (e) e.preventDefault();
     const submitBtn = document.querySelector('#editForm button[type="submit"]');
-    const originalText = submitBtn.textContent;
-
     try {
         submitBtn.disabled = true;
-        submitBtn.textContent = "Bezig...";
-
         const id = document.getElementById('editId').value;
-        const systemType = document.getElementById('editSystemType').value;
-
-        // Data verzamelen (Arrays)
-        const partsArray = collectPartsData('edit');
-        const faultsArray = collectFaultsData('edit');
-        const checksArray = await processChecksData('edit');
-
         const updates = {
             brand: document.getElementById('editBrand').value.trim(),
             model: document.getElementById('editModel').value.trim(),
             procedure: document.getElementById('editProcedure').value,
-            parts: partsArray, // Let op: als je kolom nog TEXT is, gebruik: JSON.stringify(partsArray)
-            faults: faultsArray,
-            checks: checksArray,
-            notes: document.getElementById('editNotes')?.value || null,
-            manual_url: document.getElementById('editManualUrl')?.value || null,
-            handbook_date: document.getElementById('editHandbookDate')?.value || null
+            parts: collectPartsData('edit'), // Stuurt Array naar jsonb kolom
+            notes: document.getElementById('editNotes')?.value || null
         };
 
-        if (systemType === 'cv-ketel') {
-            updates.o2_low = document.getElementById('editO2Low')?.value || null;
-            updates.o2_high = document.getElementById('editO2High')?.value || null;
-            updates.maxco = document.getElementById('editMaxCO')?.value || null;
-        }
-
-        // De Database Update
-        const { error } = await Promise.race([
-            supabase.from('systems').update(updates).eq('id', id),
-            new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 15000))
-        ]);
-
+        const { error } = await supabase.from('systems').update(updates).eq('id', id);
         if (error) throw error;
-
-        alert("✅ Systeem bijgewerkt!");
+        alert("✅ Bijgewerkt!");
         location.reload();
-    } catch (error) {
-        alert("Fout bij opslaan: " + error.message);
-    } finally {
+    } catch (err) {
+        alert("Fout: " + err.message);
         submitBtn.disabled = false;
-        submitBtn.textContent = originalText;
     }
 }
 
-// --- CALCULATOR (NEN-NORM) ---
+// --- 5. HELPERS & CALCULATOR ---
 function calculateHVAC() {
     const Hs = 35.17;
-    const rho = 983;
-    const c = 4186;
-
     const gasStart = parseFloat(document.getElementById('gasStart').value) || 0;
     const gasEind = parseFloat(document.getElementById('gasEind').value) || 0;
-    const flowLmin = parseFloat(document.getElementById('calcFlow').value) || 0;
+    const flow = parseFloat(document.getElementById('calcFlow').value) || 0;
     const tKoud = parseFloat(document.getElementById('calcTempKoud').value) || 0;
     const tWarm = parseFloat(document.getElementById('calcTempWarm').value) || 0;
 
     let belasting = 0;
-    let vermogen = 0;
-
     if (gasEind > gasStart) {
         belasting = ((gasEind - gasStart) / 180) * Hs;
         document.getElementById('resBelastingHs').innerHTML = `Belasting (H<sub>s</sub>): ${belasting.toFixed(2)} kW`;
     }
 
-    if (flowLmin > 0 && tWarm > tKoud) {
-        vermogen = ((flowLmin / 60) / 1000 * c * rho * (tWarm - tKoud)) / 1000;
+    if (flow > 0 && tWarm > tKoud) {
+        const vermogen = ((flow / 60) / 1000 * 4186 * 983 * (tWarm - tKoud)) / 1000;
         document.getElementById('resVermogen').textContent = `Vermogen: ${vermogen.toFixed(2)} kW`;
-    }
-
-    const resRen = document.getElementById('resRendement');
-    if (belasting > 0 && vermogen > 0 && resRen) {
-        const rendement = (vermogen / belasting) * 100;
-        resRen.textContent = `${rendement.toFixed(1)}%`;
-        resRen.style.color = rendement > 90 ? 'var(--color-success)' : 'var(--color-warning)';
-    }
-}
-
-// --- HELPERS ---
-function collectPartsData(mode) {
-    const rows = document.querySelectorAll(`#${mode}PartsContainer .part-input-row`);
-    const data = [];
-    rows.forEach(row => {
-        const desc = row.querySelector('.part-desc')?.value.trim();
-        const art = row.querySelector('.part-art')?.value.trim();
-        const supp = row.querySelector('.part-supp')?.value;
-        if (desc || art) data.push({ desc, art, supp });
-    });
-    return data;
-}
-
-async function processChecksData(mode) {
-    const rows = document.querySelectorAll(`#${mode}ChecksContainer .part-input-row`);
-    const data = [];
-    for (const row of rows) {
-        const subject = row.querySelector('.check-subject')?.value.trim();
-        if (subject) {
-            data.push({
-                subject,
-                problem: row.querySelector('.check-problem')?.value.trim(),
-                solution: row.querySelector('.check-solution')?.value.trim(),
-                imgUrl: row.querySelector('.check-existing-url')?.value || null
-            });
+        if (belasting > 0) {
+            const rendement = (vermogen / belasting) * 100;
+            document.getElementById('resRendement').textContent = `${rendement.toFixed(1)}%`;
         }
     }
-    return data;
 }
 
-// --- AUTH & ADMIN ---
-async function handleLogin(e) {
-    e.preventDefault();
-    const email = document.getElementById('loginEmail').value;
-    const pass = document.getElementById('loginPassword').value;
-    const { error } = await supabase.auth.signInWithPassword({ email, password: pass });
-    if (error) alert("Login fout: " + error.message);
-}
-
-async function deleteUser(userId, email) {
-    if (!confirm(`Gebruiker ${email} verwijderen?`)) return;
-    const { error } = await supabase.rpc('delete_user_by_id', { user_id: userId });
-    if (error) alert(error.message);
-    else location.reload();
-}
-
-// --- BOILERPLATE / UI ---
-function switchTab(id, tab) {
-    const card = document.getElementById(`card-${id}`);
-    card.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-    card.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-    card.querySelector(`[onclick*="${tab}"]`).classList.add('active');
-    document.getElementById(`content-${tab}-${id}`).classList.add('active');
-}
-
-function openEditModal(id) {
-    const s = systems.find(x => x.id === id);
-    if (!s) return;
-    currentEditingId = id;
-    document.getElementById('editId').value = id;
-    document.getElementById('editBrand').value = s.brand;
-    document.getElementById('editModel').value = s.model;
-    document.getElementById('editProcedure').value = s.procedure;
-    document.getElementById('editSystemType').value = s.systemtype;
-    populatePartsForm('edit', s.parts);
-    document.getElementById('editModal').classList.add('active');
-}
-
-function populatePartsForm(mode, data) {
-    const container = document.getElementById(mode + 'PartsContainer');
-    container.innerHTML = '';
-    const parts = Array.isArray(data) ? data : (typeof data === 'string' ? JSON.parse(data || '[]') : []);
-    parts.forEach(p => addPartRow(mode, p.desc, p.art, p.supp));
+function collectPartsData(mode) {
+    const rows = document.querySelectorAll(`#${mode}PartsContainer .part-input-row`);
+    return Array.from(rows).map(row => ({
+        desc: row.querySelector('.part-desc')?.value.trim(),
+        art: row.querySelector('.part-art')?.value.trim(),
+        supp: row.querySelector('.part-supp')?.value
+    })).filter(p => p.desc || p.art);
 }
 
 function addPartRow(mode, desc = '', art = '', supp = 'Overig') {
@@ -334,34 +264,90 @@ function addPartRow(mode, desc = '', art = '', supp = 'Overig') {
     document.getElementById(mode + 'PartsContainer').appendChild(div);
 }
 
+// --- 6. EVENT LISTENERS ---
+function setupEventListeners() {
+    document.getElementById('loginForm')?.addEventListener('submit', handleLogin);
+    document.getElementById('editForm')?.addEventListener('submit', handleEditSubmit);
+    document.getElementById('brandFilter')?.addEventListener('change', () => { updateModelFilter(); filterSystems(); });
+    document.getElementById('modelFilter')?.addEventListener('change', filterSystems);
+    document.getElementById('systemTypeFilter')?.addEventListener('change', filterSystems);
+    document.getElementById('favoritesFilter')?.addEventListener('change', filterSystems);
+}
+
+async function handleLogin(e) {
+    e.preventDefault();
+    const email = document.getElementById('loginEmail').value;
+    const pass = document.getElementById('loginPassword').value;
+    const { error } = await supabase.auth.signInWithPassword({ email, password: pass });
+    if (error) alert(error.message);
+}
+
+// --- 7. OVERIGE UI ---
+function switchTab(id, tab) {
+    const card = document.getElementById(`card-${id}`);
+    card.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    card.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    card.querySelector(`[onclick*="${tab}"]`).classList.add('active');
+    document.getElementById(`content-${tab}-${id}`).classList.add('active');
+}
+
+function openEditModal(id) {
+    const s = systems.find(x => x.id === id);
+    if (!s) return;
+    currentEditingId = id;
+    document.getElementById('editId').value = id;
+    document.getElementById('editBrand').value = s.brand;
+    document.getElementById('editModel').value = s.model;
+    document.getElementById('editProcedure').value = s.procedure;
+    document.getElementById('editSystemType').value = s.systemtype;
+    
+    const container = document.getElementById('editPartsContainer');
+    container.innerHTML = '';
+    const parts = Array.isArray(s.parts) ? s.parts : (typeof s.parts === 'string' ? JSON.parse(s.parts || '[]') : []);
+    parts.forEach(p => addPartRow('edit', p.desc, p.art, p.supp));
+    
+    document.getElementById('editModal').classList.add('active');
+}
+
+async function checkPendingNotifications() {
+    if (currentUserRole !== 'admin') return;
+    const { count } = await supabase.from('user_roles').select('*', { count: 'exact', head: true }).eq('is_approved', false);
+    if (count > 0) document.getElementById('adminBadge').classList.remove('hidden');
+}
+
 function escapeHtml(t) {
     const d = document.createElement('div');
     d.textContent = t;
     return d.innerHTML;
 }
 
+function initTheme() {
+    const t = localStorage.getItem('theme') || 'light';
+    document.body.setAttribute('data-theme', t);
+}
+
 // --- START ---
 init();
 
-// --- WINDOW EXPORTS ---
+// --- EXPORTS ---
 window.handleLogin = handleLogin;
 window.handleEditSubmit = handleEditSubmit;
+window.calculateHVAC = calculateHVAC;
 window.openCalcModal = () => document.getElementById('calcModal').classList.add('active');
 window.closeCalcModal = () => document.getElementById('calcModal').classList.remove('active');
-window.calculateHVAC = calculateHVAC;
 window.openEditModal = openEditModal;
 window.closeEditModal = () => document.getElementById('editModal').classList.remove('active');
+window.addPartRow = addPartRow;
+window.switchTab = switchTab;
 window.toggleFavorite = async (id) => {
     const isFav = favorites.includes(id);
     if (isFav) await supabase.from('favorites').delete().eq('user_id', currentUser.id).eq('system_id', id);
     else await supabase.from('favorites').insert({ user_id: currentUser.id, system_id: id });
     location.reload();
 };
-window.deleteUser = deleteUser;
-window.addPartRow = addPartRow;
-window.switchTab = switchTab;
 window.toggleTheme = () => {
     const t = document.body.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
     document.body.setAttribute('data-theme', t);
     localStorage.setItem('theme', t);
 };
+window.supabase = supabase;
