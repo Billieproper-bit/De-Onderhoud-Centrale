@@ -13,7 +13,6 @@
       --color-text: #134252;
       --color-text-secondary: #626c71;
       --color-primary: #218D8D;
-      --color-primary-hover: #1d7480;
       --color-border: rgba(94, 82, 64, 0.2);
       --color-card-border: rgba(94, 82, 64, 0.12);
       --color-error: #c0152f;
@@ -23,7 +22,6 @@
       --radius-lg: 12px;
       --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.04);
     }
-
     [data-theme="dark"] {
       --color-bg-primary: #1f2121;
       --color-surface: #262828;
@@ -31,69 +29,41 @@
       --color-text-secondary: rgba(167, 169, 169, 0.7);
       --color-primary: #32b8c6;
     }
-
     * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
     body { font-family: -apple-system, system-ui, sans-serif; background: var(--color-bg-primary); color: var(--color-text); line-height: 1.5; overflow-x: hidden; }
-    
     .container { width: 100%; max-width: 1280px; margin: 0 auto; padding: 0 15px; }
-    
-    /* Header & Filters */
     .header { background: var(--color-surface); border-bottom: 1px solid var(--color-border); padding: 12px 0; }
     .filters { background: var(--color-surface); padding: 15px; border-radius: var(--radius-lg); margin: 16px 0; border: 1px solid var(--color-card-border); position: sticky; top: 10px; z-index: 100; box-shadow: var(--shadow-md); }
     .filters-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
-
-    /* Cards */
     .cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 20px; padding-bottom: 40px; }
     .system-card { background: var(--color-surface); border: 1px solid var(--color-card-border); border-radius: var(--radius-lg); padding: 16px; position: relative; }
-    
-    /* Responsive Header in Card */
     .card-header { display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px; }
-    .card-header-with-logo { display: flex; flex-direction: column; gap: 10px; }
-    .card-header-text { width: 100%; }
-    .brand-label { font-size: 12px; font-weight: 800; text-transform: uppercase; color: var(--color-primary); }
-    .model-label { font-size: 18px; font-weight: 700; }
     .card-actions { position: absolute; top: 15px; right: 15px; display: flex; gap: 8px; }
-
-    @media (min-width: 600px) {
-      .card-header { flex-direction: row; justify-content: space-between; }
-      .card-header-with-logo { flex-direction: row; }
-      .card-actions { position: static; }
-    }
-
-    /* Tabs */
+    .brand-label { font-size: 12px; font-weight: 800; text-transform: uppercase; color: var(--color-primary); }
+    .model-label { font-size: 18px; font-weight: 700; padding-right: 80px; }
     .tabs-nav { display: flex; gap: 10px; border-bottom: 1px solid var(--color-border); margin-bottom: 15px; overflow-x: auto; padding-bottom: 5px; }
     .tab-btn { background: none; border: none; padding: 8px 4px; cursor: pointer; color: var(--color-text-secondary); font-weight: 600; font-size: 13px; white-space: nowrap; }
     .tab-btn.active { color: var(--color-primary); border-bottom: 2px solid var(--color-primary); }
     .tab-content { display: none; }
     .tab-content.active { display: block; }
-
-    /* Utility */
     .btn { display: inline-flex; align-items: center; gap: 8px; padding: 8px 16px; border-radius: var(--radius-base); cursor: pointer; border: 1px solid var(--color-border); background: var(--color-surface); color: var(--color-text); font-size: 14px; }
     .btn-primary { background: var(--color-primary); color: white; border: none; }
     .form-control { width: 100%; padding: 10px; border: 1px solid var(--color-border); border-radius: var(--radius-base); background: var(--color-bg-primary); color: var(--color-text); font-size: 16px !important; }
     .hidden { display: none !important; }
     .procedure-text { white-space: pre-wrap; font-family: inherit; font-size: 14px; }
-    
-    /* Modals */
-    .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; padding: 10px; }
-    .modal.active { display: flex; }
-    .modal-content { background: var(--color-surface); padding: 20px; border-radius: var(--radius-lg); width: 100%; max-width: 600px; max-height: 90vh; overflow-y: auto; }
-    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-
-    /* Table Styles */
     .parts-table { width: 100%; border-collapse: collapse; font-size: 13px; }
     .parts-table th { text-align: left; padding: 8px; border-bottom: 2px solid var(--color-border); }
     .parts-table td { padding: 8px; border-bottom: 1px solid var(--color-card-border); }
     .fault-row { display: flex; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--color-card-border); }
-    .fault-code { min-width: 50px; font-weight: bold; color: var(--color-error); }
-
-    /* Images */
+    .fault-code { min-width: 60px; font-weight: bold; color: var(--color-error); }
+    .check-card { border: 1px solid var(--color-border); padding: 10px; margin-bottom: 10px; border-radius: 8px; background: var(--color-bg-primary); }
     .image-gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 8px; margin-top: 10px; }
     .gallery-item { aspect-ratio: 1; border-radius: 8px; overflow: hidden; cursor: pointer; border: 1px solid var(--color-border); }
     .gallery-item img { width: 100%; height: 100%; object-fit: cover; }
     .lightbox { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 2000; align-items: center; justify-content: center; }
     .lightbox.active { display: flex; }
     .lightbox-img { max-width: 95%; max-height: 90%; object-fit: contain; }
+    .part-input-row { display: flex; gap: 5px; margin-bottom: 8px; align-items: center; }
   </style>
 </head>
 <body>
@@ -101,11 +71,11 @@
   <!-- AUTH -->
   <div id="authContainer" class="container" style="margin-top: 50px; max-width: 400px;">
     <div style="background: var(--color-surface); padding: 30px; border-radius: 20px; box-shadow: var(--shadow-md); text-align: center;">
-      <h2>De Onderhoud Centrale</h2>
+      <h2>OHC</h2>
       <p style="margin-bottom: 20px; color: var(--color-text-secondary);">Log in voor toegang</p>
       <form id="loginForm">
-        <input type="email" id="loginEmail" placeholder="E-mail" class="form-control" style="margin-bottom: 10px;" required>
-        <input type="password" id="loginPassword" placeholder="Wachtwoord" class="form-control" style="margin-bottom: 20px;" required>
+        <input type="email" id="loginEmail" placeholder="E-mail" class="form-control" style="margin-bottom: 10px;" required autocomplete="email">
+        <input type="password" id="loginPassword" placeholder="Wachtwoord" class="form-control" style="margin-bottom: 20px;" required autocomplete="current-password">
         <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center;">Inloggen</button>
       </form>
     </div>
@@ -115,12 +85,12 @@
   <div id="appContainer" class="hidden">
     <div class="header">
       <div class="container" style="display: flex; justify-content: space-between; align-items: center;">
-        <h1 style="font-size: 18px;">OHC</h1>
+        <h1 style="font-size: 18px;">De Onderhoud Centrale</h1>
         <div style="display: flex; gap: 8px;">
           <button class="btn" onclick="openCalcModal()">🧮 Calculator</button>
-          <button class="btn" id="themeToggle" onclick="toggleTheme()">🌓</button>
+          <button class="btn" onclick="toggleTheme()">🌓</button>
           <button class="btn" id="adminBtn" style="display: none;" onclick="openAdminModal()">⚙️</button>
-          <button class="btn" onclick="supabase.auth.signOut()">Uitloggen</button>
+          <button class="btn" onclick="handleLogout()">Uitloggen</button>
         </div>
       </div>
     </div>
@@ -128,14 +98,15 @@
     <div class="container">
       <div class="filters">
         <div class="filters-row">
-          <input type="text" id="searchInput" class="form-control" placeholder="Zoek merk of model..." oninput="filterSystems()">
+          <input type="text" id="searchInput" class="form-control" placeholder="Zoek..." oninput="filterSystems()">
           <select id="systemTypeFilter" class="form-control" onchange="filterSystems()">
             <option value="">Alle Categorieën</option>
             <option value="cv-ketel">CV-ketels</option>
             <option value="warmtepomp">Warmtepompen</option>
             <option value="mv-wtw">MV/WTW</option>
+            <option value="appendages">Appendages</option>
           </select>
-          <select id="brandFilter" class="form-control" onchange="updateModelFilter(); filterSystems();"></select>
+          <select id="brandFilter" class="form-control" onchange="filterSystems()"></select>
           <select id="favoritesFilter" class="form-control" onchange="filterSystems()">
             <option value="all">Alles</option>
             <option value="favorites">Favorieten</option>
@@ -144,61 +115,64 @@
         <div id="resultsCount" style="font-size: 12px; margin-top: 10px; color: var(--color-text-secondary);">Laden...</div>
         <button id="addSystemBtn" class="btn btn-primary" style="margin-top: 10px; display: none;" onclick="openAddModal()">+ Systeem Toevoegen</button>
       </div>
-
-      <div id="loadingState" style="text-align: center; padding: 50px;">Systemen laden...</div>
+      <div id="loadingState" style="text-align: center; padding: 50px;">Laden...</div>
       <div id="cardsGrid" class="cards-grid hidden"></div>
     </div>
   </div>
 
-  <!-- MODALS -->
+  <!-- CALCULATOR MODAL -->
   <div id="calcModal" class="modal">
     <div class="modal-content">
-      <div class="modal-header"><h3>HVAC Calculator (NEN)</h3><button onclick="closeCalcModal()">×</button></div>
+      <div class="modal-header"><h3>HVAC Calculator (NEN)</h3><button class="btn" onclick="closeCalcModal()">×</button></div>
       <div class="modal-body">
-        <label>Gasverbruik in 180 sec (Liters)</label>
-        <input type="number" id="gasStart" class="form-control" placeholder="Start" oninput="calculateHVAC()">
-        <input type="number" id="gasEind" class="form-control" placeholder="Eind" oninput="calculateHVAC()" style="margin-top:5px;">
+        <label>Gasverbruik liters (180 sec)</label>
+        <div style="display: flex; gap: 5px; margin-top: 5px;">
+           <input type="number" id="gasStart" class="form-control" placeholder="Start" oninput="calculateHVAC()">
+           <input type="number" id="gasEind" class="form-control" placeholder="Eind" oninput="calculateHVAC()">
+        </div>
+        <div id="resBelastingHs" style="margin-top: 10px; font-weight: bold;">Belasting: - kW</div>
         <hr style="margin: 15px 0;">
-        <label>Flow (L/min)</label>
-        <input type="number" id="calcFlow" class="form-control" oninput="calculateHVAC()">
+        <label>Waterzijdig</label>
+        <input type="number" id="calcFlow" class="form-control" placeholder="Flow (L/min)" oninput="calculateHVAC()" style="margin-top: 5px;">
         <div style="display: flex; gap: 5px; margin-top: 5px;">
           <input type="number" id="calcTempKoud" class="form-control" placeholder="T-Koud" oninput="calculateHVAC()">
           <input type="number" id="calcTempWarm" class="form-control" placeholder="T-Warm" oninput="calculateHVAC()">
         </div>
-        <div id="resBox" style="margin-top: 20px; padding: 15px; background: var(--color-bg-primary); border-radius: 10px; text-align: center;">
-          <div id="resBelastingHs">Belasting: - kW</div>
-          <div id="resVermogen">Vermogen: - kW</div>
-          <div id="resRendement" style="font-size: 24px; font-weight: 800; margin-top: 10px;">-%</div>
-        </div>
+        <div id="resRendement" style="margin-top: 20px; font-size: 28px; font-weight: 800; text-align: center;">-%</div>
       </div>
     </div>
   </div>
 
+  <!-- EDIT MODAL -->
   <div id="editModal" class="modal">
-    <div class="modal-content">
-      <div class="modal-header"><h3>Systeem bewerken</h3><button onclick="closeEditModal()">×</button></div>
+    <div class="modal-content wide">
+      <div class="modal-header"><h3>Systeem bewerken</h3><button class="btn" onclick="closeEditModal()">×</button></div>
       <form id="editForm">
         <input type="hidden" id="editId">
         <input type="hidden" id="editSystemType">
-        <label>Merk</label><input type="text" id="editBrand" class="form-control" required>
-        <label>Model</label><input type="text" id="editModel" class="form-control" required>
-        <label>Procedure</label><textarea id="editProcedure" class="form-control" rows="5"></textarea>
-        <div id="editPartsContainer"></div>
-        <button type="button" class="btn" onclick="addPartRow('edit')" style="margin-top:10px;">+ Regel Toevoegen</button>
-        <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 20px;">Opslaan</button>
+        <div class="modal-body">
+            <label>Merk</label><input type="text" id="editBrand" class="form-control" required>
+            <label>Model</label><input type="text" id="editModel" class="form-control" required>
+            <label>Procedure</label><textarea id="editProcedure" class="form-control" rows="6"></textarea>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px;">
+                <div><label>O2 Laag</label><input type="text" id="editO2Low" class="form-control"></div>
+                <div><label>O2 Hoog</label><input type="text" id="editO2High" class="form-control"></div>
+            </div>
+            
+            <label style="margin-top:15px; display:block;">Materialen</label>
+            <div id="editPartsContainer"></div>
+            <button type="button" class="btn" onclick="addPartRow('edit')">+ Regel</button>
+            
+            <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 25px; justify-content: center;">Wijzigingen Opslaan</button>
+        </div>
       </form>
     </div>
   </div>
 
+  <!-- LIGHTBOX -->
   <div id="lightbox" class="lightbox" onclick="closeLightbox()">
     <img id="lightboxImg" class="lightbox-img">
-  </div>
-
-  <div id="pendingScreen" class="hidden container" style="text-align: center; margin-top: 100px;">
-    <h1>⏳</h1>
-    <h2>Toegang in afwachting</h2>
-    <p id="pendingMessage"></p>
-    <button onclick="location.reload()" class="btn btn-primary">Check status</button>
   </div>
 
   <script>
@@ -206,73 +180,46 @@
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNyc25qaWZlenR0aXZhd3hubmR1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQwNzY1MjcsImV4cCI6MjA3OTY1MjUyN30.5RmDp3QgAYX7yDS39KwoRtHc6c9Kp-wGKGYeJctoY7w';
     var supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    let currentUser = null;
-    let currentUserRole = 'user';
-    let systems = [];
-    let favorites = [];
-    let currentEditingId = null;
+    let currentUser = null, currentUserRole = 'user', systems = [], favorites = [];
 
-    // --- 1. INITIALISATIE ---
+    // --- 1. STARTUP ---
     async function init() {
         const { data: { session } } = await supabase.auth.getSession();
         if (session) {
             currentUser = session.user;
-            const approved = await checkUserApproval(session.user);
-            if (approved) {
+            const res = await supabase.from('user_roles').select('is_approved, role').eq('user_id', currentUser.id).maybeSingle();
+            if (res.data && res.data.is_approved) {
+                currentUserRole = res.data.role;
                 showApp();
                 await loadData();
             } else {
-                showPendingScreen(session.user.email);
+                document.getElementById('authContainer').innerHTML = "<h2>Wacht op goedkeuring...</h2>";
             }
-        } else {
-            showAuth();
         }
         setupEventListeners();
-        initTheme();
-    }
-
-    async function checkUserApproval(user) {
-        try {
-            const { data, error } = await supabase.from('user_roles').select('is_approved, role').eq('user_id', user.id).maybeSingle();
-            if (!data) return false;
-            currentUserRole = data.role || 'user';
-            return data.is_approved;
-        } catch (err) { return false; }
+        document.body.setAttribute('data-theme', localStorage.getItem('theme') || 'light');
     }
 
     function showApp() {
         document.getElementById('authContainer').classList.add('hidden');
         document.getElementById('appContainer').classList.remove('hidden');
-        const adminBtn = document.getElementById('adminBtn');
-        if(adminBtn) adminBtn.style.display = (currentUserRole === 'admin') ? 'inline-flex' : 'none';
-        const addBtn = document.getElementById('addSystemBtn');
-        if(addBtn) addBtn.style.display = (currentUserRole === 'admin' || currentUserRole === 'moderator') ? 'inline-flex' : 'none';
+        if(currentUserRole === 'admin') document.getElementById('adminBtn').style.display = 'inline-flex';
+        if(['admin', 'moderator'].includes(currentUserRole)) document.getElementById('addSystemBtn').style.display = 'inline-flex';
     }
 
-    function showAuth() { document.getElementById('authContainer').classList.remove('hidden'); document.getElementById('appContainer').classList.add('hidden'); }
-    
-    function showPendingScreen(email) {
-        document.getElementById('authContainer').classList.add('hidden');
-        document.getElementById('pendingScreen').classList.remove('hidden');
-        document.getElementById('pendingMessage').textContent = `Hoi ${email}, je account moet nog worden goedgekeurd door de beheerder.`;
-    }
-
-    // --- 2. DATA LADEN ---
+    // --- 2. DATA ---
     async function loadData() {
-        document.getElementById('loadingState').classList.remove('hidden');
-        try {
-            const { data, error } = await supabase.from('systems').select('*').order('brand', { ascending: true });
-            if (error) throw error;
-            systems = data;
-
-            if (currentUser) {
-                const { data: favs } = await supabase.from('favorites').select('system_id').eq('user_id', currentUser.id);
-                favorites = favs ? favs.map(f => f.system_id) : [];
-            }
-            updateBrandFilter();
-            filterSystems();
-        } catch (err) { console.error(err); }
-        finally { document.getElementById('loadingState').classList.add('hidden'); }
+        const { data } = await supabase.from('systems').select('*').order('brand', { ascending: true });
+        systems = data || [];
+        const { data: f } = await supabase.from('favorites').select('system_id').eq('user_id', currentUser.id);
+        favorites = f ? f.map(x => x.system_id) : [];
+        
+        const bSelect = document.getElementById('brandFilter');
+        const brands = [...new Set(systems.map(s => s.brand))].sort();
+        bSelect.innerHTML = '<option value="all">Alle Merken</option>' + brands.map(b => `<option value="${b}">${b}</option>`).join('');
+        
+        filterSystems();
+        document.getElementById('loadingState').classList.add('hidden');
     }
 
     function filterSystems() {
@@ -295,113 +242,60 @@
         document.getElementById('resultsCount').textContent = `${filtered.length} systemen gevonden`;
     }
 
-    // --- 3. DE KAARTJES (HERSTELD MET 4 TABBLADEN) ---
+    // --- 3. UI GENERATION ---
     function createSystemCard(s) {
         const isFav = favorites.includes(s.id);
-        const canEdit = (currentUserRole === 'admin' || currentUserRole === 'moderator');
+        const canEdit = ['admin', 'moderator'].includes(currentUserRole);
         
-        // Tab 2: Materialen
-        let partsHtml = '<p style="padding:10px; color:gray;">Geen materialen toegevoegd.</p>';
+        // Materialen Tabel + Links
+        let partsHtml = '';
         try {
             const parts = Array.isArray(s.parts) ? s.parts : JSON.parse(s.parts || '[]');
             if (parts.length > 0) {
-                partsHtml = `<table class="parts-table"><thead><tr><th>Artikel</th><th>Nr.</th><th>Lev.</th></tr></thead><tbody>` + 
-                parts.map(p => `<tr><td>${escapeHtml(p.desc)}</td><td>${p.art}</td><td>${p.supp}</td></tr>`).join('') + `</tbody></table>`;
+                partsHtml = `<table class="parts-table"><thead><tr><th>Item</th><th>Nr.</th><th>Lev.</th></tr></thead><tbody>` + 
+                parts.map(p => {
+                    const cleanNr = p.art ? p.art.toString().replace(/[\s.]/g, '') : '';
+                    const link = p.supp === 'Rensa' ? `https://rensa.nl/Product/${cleanNr}` : (p.supp === 'Wasco' ? `https://www.wasco.nl/artikel/${cleanNr}` : null);
+                    return `<tr><td>${p.desc}</td><td>${link ? `<a href="${link}" target="_blank" style="color:var(--color-primary);">${p.art} ↗</a>` : (p.art || '')}</td><td>${p.supp}</td></tr>`;
+                }).join('') + `</tbody></table>`;
             }
-        } catch(e) {}
+        } catch(e) { partsHtml = 'Geen data.'; }
 
-        // Tab 3: Controlepunten
-        let checksHtml = '<p style="padding:10px; color:gray;">Geen aandachtspunten.</p>';
-        try {
-            const checks = Array.isArray(s.checks) ? s.checks : JSON.parse(s.checks || '[]');
-            if (checks.length > 0) {
-                checksHtml = checks.map(c => `
-                    <div class="check-card" style="border:1px solid #eee; padding:10px; margin-bottom:10px; border-radius:8px;">
-                        <div style="font-weight:bold; color:var(--color-primary);">${escapeHtml(c.subject)}</div>
-                        <div style="font-size:13px;"><b>Probleem:</b> ${escapeHtml(c.problem)}</div>
-                        <div style="font-size:13px;"><b>Oplossing:</b> ${escapeHtml(c.solution)}</div>
-                        ${c.imgUrl ? `<img src="${c.imgUrl}" style="max-width:100%; margin-top:5px; border-radius:4px;" onclick="openLightbox(this.src)">` : ''}
-                    </div>`).join('');
-            }
-        } catch(e) {}
-
-        // Tab 4: Storingen
-        let faultsHtml = '<p style="padding:10px; color:gray;">Geen storingen bekend.</p>';
+        // Storingen
+        let faultsHtml = '';
         try {
             const faults = Array.isArray(s.faults) ? s.faults : JSON.parse(s.faults || '[]');
-            if (faults.length > 0) {
-                faultsHtml = faults.map(f => `
-                    <div class="fault-row">
-                        <div class="fault-code">${escapeHtml(f.code)}</div>
-                        <div style="font-size:13px;"><b>Oorzaak:</b> ${escapeHtml(f.cause || f.problem || '')}<br><b>Oplossing:</b> ${escapeHtml(f.solution || f.sol || '')}</div>
-                    </div>`).join('');
-            }
+            faultsHtml = faults.map(f => `<div class="fault-row"><div class="fault-code">${f.code}</div><div><b>O:</b> ${f.cause || ''}<br><b>S:</b> ${f.solution || ''}</div></div>`).join('');
         } catch(e) {}
-
-        // O2/CO2 Waarden
-        let valuesHtml = '';
-        if (s.o2_low || s.o2_high || s.maxco) {
-            valuesHtml = `<div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:15px; background:rgba(33,141,141,0.05); padding:10px; border-radius:8px;">
-                ${s.o2_low ? `<div><small>O₂ Laag</small><br><b>${s.o2_low}</b></div>` : ''}
-                ${s.o2_high ? `<div><small>O₂ Hoog</small><br><b>${s.o2_high}</b></div>` : ''}
-                ${s.maxco ? `<div><small>Max CO</small><br><b>${s.maxco} PPM</b></div>` : ''}
-            </div>`;
-        }
 
         return `
         <div class="system-card" id="card-${s.id}">
             <div class="card-header">
-                <div class="card-header-with-logo">
-                    <div class="card-header-text">
-                        <div class="brand-label">${s.brand}</div>
-                        <div class="model-label">${s.model}</div>
-                        ${s.handbook_date && s.handbook_date !== '1900-01-01' ? `<div style="font-size:11px; color:orange;">📅 ${new Date(s.handbook_date).toLocaleDateString('nl-NL')}</div>` : ''}
-                    </div>
+                <div class="card-header-text">
+                    <div class="brand-label">${s.brand}</div>
+                    <div class="model-label">${s.model}</div>
                 </div>
-                <div class="card-actions" style="display:flex; gap:5px;">
-                    ${s.device_image_url ? `<button class="btn" style="padding:5px 8px;" onclick="openLightbox('${s.device_image_url}')">📷</button>` : ''}
-                    <button class="btn ${isFav ? 'active' : ''}" style="padding:5px 8px;" onclick="toggleFavorite('${s.id}')">★</button>
-                    ${canEdit ? `<button class="btn" style="padding:5px 8px;" onclick="openEditModal('${s.id}')">✎</button>` : ''}
+                <div class="card-actions">
+                    ${s.device_image_url ? `<button class="btn" onclick="openLightbox('${s.device_image_url}')">📷</button>` : ''}
+                    <button class="btn ${isFav ? 'active' : ''}" onclick="toggleFavorite('${s.id}')">★</button>
+                    ${canEdit ? `<button class="btn" onclick="openEditModal('${s.id}')">✎</button>` : ''}
                 </div>
             </div>
             <div class="tabs-nav">
                 <button class="tab-btn active" onclick="switchTab('${s.id}', 'info', this)">Afstelling</button>
                 <button class="tab-btn" onclick="switchTab('${s.id}', 'parts', this)">Materialen</button>
-                <button class="tab-btn" onclick="switchTab('${s.id}', 'checks', this)">Controle</button>
                 <button class="tab-btn" onclick="switchTab('${s.id}', 'faults', this)">Storingen</button>
             </div>
             <div id="content-info-${s.id}" class="tab-content active">
-                ${valuesHtml}
+                <div style="margin-bottom:10px; font-size:13px;">O2 Laag: <b>${s.o2_low || '-'}</b> | Hoog: <b>${s.o2_high || '-'}</b></div>
                 <pre class="procedure-text">${s.procedure || 'Geen procedure.'}</pre>
             </div>
-            <div id="content-parts-${s.id}" class="tab-content">${partsHtml}</div>
-            <div id="content-checks-${s.id}" class="tab-content">${checksHtml}</div>
-            <div id="content-faults-${s.id}" class="tab-content">${faultsHtml}</div>
+            <div id="content-parts-${s.id}" class="tab-content">${partsHtml || 'Geen info.'}</div>
+            <div id="content-faults-${s.id}" class="tab-content">${faultsHtml || 'Geen storingen.'}</div>
         </div>`;
     }
 
-    // --- 4. ACTIONS & CALCULATOR ---
-    function calculateHVAC() {
-        const start = parseFloat(document.getElementById('gasStart').value) || 0;
-        const eind = parseFloat(document.getElementById('gasEind').value) || 0;
-        const flow = parseFloat(document.getElementById('calcFlow').value) || 0;
-        const tk = parseFloat(document.getElementById('calcTempKoud').value) || 0;
-        const tw = parseFloat(document.getElementById('calcTempWarm').value) || 0;
-
-        if (eind > start) {
-            const belasting = ((eind - start) / 180) * 35.17;
-            document.getElementById('resBelastingHs').innerHTML = `Belasting (H<sub>s</sub>): <b>${belasting.toFixed(2)} kW</b>`;
-            if (flow > 0 && tw > tk) {
-                const vermogen = ((flow / 60) / 1000 * 4186 * 983 * (tw - tk)) / 1000;
-                document.getElementById('resVermogen').innerHTML = `Vermogen (P): <b>${vermogen.toFixed(2)} kW</b>`;
-                const rendement = (vermogen / belasting) * 100;
-                const rEl = document.getElementById('resRendement');
-                rEl.textContent = rendement.toFixed(1) + '%';
-                rEl.style.color = rendement > 90 ? 'var(--color-success)' : 'orange';
-            }
-        }
-    }
-
+    // --- 4. ACTIONS ---
     async function handleEditSubmit(e) {
         e.preventDefault();
         const id = document.getElementById('editId').value;
@@ -409,13 +303,33 @@
             brand: document.getElementById('editBrand').value,
             model: document.getElementById('editModel').value,
             procedure: document.getElementById('editProcedure').value,
+            o2_low: document.getElementById('editO2Low').value,
+            o2_high: document.getElementById('editO2High').value,
             parts: collectPartsData('edit')
         };
         const { error } = await supabase.from('systems').update(updates).eq('id', id);
         if (error) alert(error.message); else location.reload();
     }
 
-    // --- 5. UI HELPERS ---
+    function calculateHVAC() {
+        const s = parseFloat(document.getElementById('gasStart').value) || 0;
+        const e = parseFloat(document.getElementById('gasEind').value) || 0;
+        const f = parseFloat(document.getElementById('calcFlow').value) || 0;
+        const tk = parseFloat(document.getElementById('calcTempKoud').value) || 0;
+        const tw = parseFloat(document.getElementById('calcTempWarm').value) || 0;
+        if (e > s) {
+            const bel = ((e - s) / 180) * 35.17;
+            document.getElementById('resBelastingHs').innerHTML = `Belasting: <b>${bel.toFixed(2)} kW</b>`;
+            if (f > 0 && tw > tk) {
+                const verm = ((f / 60) / 1000 * 4186 * 983 * (tw - tk)) / 1000;
+                const ren = (verm / bel) * 100;
+                const rEl = document.getElementById('resRendement');
+                rEl.textContent = ren.toFixed(1) + '%';
+                rEl.style.color = ren > 90 ? 'var(--color-success)' : 'orange';
+            }
+        }
+    }
+
     function switchTab(id, tab, btn) {
         const card = document.getElementById(`card-${id}`);
         card.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -424,21 +338,14 @@
         btn.classList.add('active');
     }
 
-    function setupEventListeners() {
-        document.getElementById('loginForm')?.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const { error } = await supabase.auth.signInWithPassword({ email: document.getElementById('loginEmail').value, password: document.getElementById('loginPassword').value });
-            if (error) alert(error.message); else location.reload();
-        });
-        document.getElementById('editForm')?.addEventListener('submit', handleEditSubmit);
-    }
-
     function openEditModal(id) {
         const s = systems.find(x => x.id === id);
         document.getElementById('editId').value = id;
         document.getElementById('editBrand').value = s.brand;
         document.getElementById('editModel').value = s.model;
-        document.getElementById('editProcedure').value = s.procedure;
+        document.getElementById('editProcedure').value = s.procedure || '';
+        document.getElementById('editO2Low').value = s.o2_low || '';
+        document.getElementById('editO2High').value = s.o2_high || '';
         const cont = document.getElementById('editPartsContainer');
         cont.innerHTML = '';
         const parts = Array.isArray(s.parts) ? s.parts : JSON.parse(s.parts || '[]');
@@ -449,12 +356,10 @@
     function addPartRow(mode, desc='', art='', supp='Overig') {
         const div = document.createElement('div');
         div.className = 'part-input-row';
-        div.style.display = 'flex'; div.style.gap = '5px'; div.style.marginBottom = '5px';
-        div.innerHTML = `
-            <input type="text" class="form-control part-desc" value="${desc}" placeholder="Item">
-            <input type="text" class="form-control part-art" value="${art}" placeholder="Nr">
-            <select class="form-control part-supp"><option ${supp==='Overig'?'selected':''}>Overig</option><option ${supp==='Wasco'?'selected':''}>Wasco</option><option ${supp==='Rensa'?'selected':''}>Rensa</option></select>
-            <button type="button" onclick="this.parentElement.remove()">×</button>`;
+        div.innerHTML = `<input type="text" class="form-control part-desc" value="${desc}" placeholder="Item">
+        <input type="text" class="form-control part-art" value="${art}" placeholder="Nr">
+        <select class="form-control part-supp"><option ${supp==='Overig'?'selected':''}>Overig</option><option ${supp==='Wasco'?'selected':''}>Wasco</option><option ${supp==='Rensa'?'selected':''}>Rensa</option></select>
+        <button type="button" class="btn" onclick="this.parentElement.remove()">×</button>`;
         document.getElementById(`${mode}PartsContainer`).appendChild(div);
     }
 
@@ -466,33 +371,34 @@
         })).filter(p => p.desc || p.art);
     }
 
-    function updateBrandFilter() {
-        const brands = [...new Set(systems.map(s => s.brand))].sort();
-        document.getElementById('brandFilter').innerHTML = '<option value="all">Alle Merken</option>' + brands.map(b => `<option value="${b}">${b}</option>`).join('');
-    }
-
-    function updateModelFilter() {}
     function toggleTheme() {
         const t = document.body.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
         document.body.setAttribute('data-theme', t);
         localStorage.setItem('theme', t);
     }
-    function initTheme() { document.body.setAttribute('data-theme', localStorage.getItem('theme') || 'light'); }
-    function openLightbox(src) { document.getElementById('lightboxImg').src = src; document.getElementById('lightbox').classList.add('active'); }
-    function closeLightbox() { document.getElementById('lightbox').classList.remove('active'); }
+
+    async function toggleFavorite(id) {
+        if (favorites.includes(id)) await supabase.from('favorites').delete().eq('user_id', currentUser.id).eq('system_id', id);
+        else await supabase.from('favorites').insert([{ user_id: currentUser.id, system_id: id }]);
+        location.reload();
+    }
+
+    function setupEventListeners() {
+        document.getElementById('loginForm')?.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const { error } = await supabase.auth.signInWithPassword({ email: document.getElementById('loginEmail').value, password: document.getElementById('loginPassword').value });
+            if (error) alert(error.message); else location.reload();
+        });
+        document.getElementById('editForm')?.addEventListener('submit', handleEditSubmit);
+    }
+
+    function handleLogout() { supabase.auth.signOut(); location.reload(); }
     function openCalcModal() { document.getElementById('calcModal').classList.add('active'); }
     function closeCalcModal() { document.getElementById('calcModal').classList.remove('active'); }
     function closeEditModal() { document.getElementById('editModal').classList.remove('active'); }
+    function openLightbox(src) { document.getElementById('lightboxImg').src = src; document.getElementById('lightbox').classList.add('active'); }
+    function closeLightbox() { document.getElementById('lightbox').classList.remove('active'); }
     function escapeHtml(t) { const d = document.createElement('div'); d.textContent = t; return d.innerHTML; }
-
-    async function toggleFavorite(id) {
-        if (favorites.includes(id)) {
-            await supabase.from('favorites').delete().eq('user_id', currentUser.id).eq('system_id', id);
-        } else {
-            await supabase.from('favorites').insert([{ user_id: currentUser.id, system_id: id }]);
-        }
-        location.reload();
-    }
 
     init();
   </script>
