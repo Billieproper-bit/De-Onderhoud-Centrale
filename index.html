@@ -19,7 +19,6 @@
       --color-error: #c0152f;
       --color-success: #218D8D;
       --color-warning: #a84b2f;
-      --radius-base: 8px;
       --radius-lg: 12px;
       --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.04);
     }
@@ -33,64 +32,29 @@
     * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
     body { font-family: -apple-system, system-ui, sans-serif; background: var(--color-bg-primary); color: var(--color-text); line-height: 1.5; overflow-x: hidden; }
     .container { width: 100%; max-width: 1280px; margin: 0 auto; padding: 0 15px; }
-    
-    /* Header & Navbar */
     .header { background: var(--color-surface); border-bottom: 1px solid var(--color-border); padding: 12px 0; }
-    .header-content { display: flex; justify-content: space-between; align-items: center; }
-    
-    /* Filters */
     .filters { background: var(--color-surface); padding: 15px; border-radius: var(--radius-lg); margin: 16px 0; border: 1px solid var(--color-card-border); position: sticky; top: 10px; z-index: 100; box-shadow: var(--shadow-md); }
     .filters-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
-    
-    /* Cards Grid */
     .cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 20px; padding-bottom: 40px; }
     .system-card { background: var(--color-surface); border: 1px solid var(--color-card-border); border-radius: var(--radius-lg); padding: 16px; position: relative; }
-    
-    /* Card Header Mobile First */
     .card-header { display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px; }
-    .card-header-with-logo { display: flex; flex-direction: column; align-items: flex-start; gap: 10px; }
     .card-actions { position: absolute; top: 15px; right: 15px; display: flex; gap: 8px; }
     .brand-label { font-size: 12px; font-weight: 800; text-transform: uppercase; color: var(--color-primary); letter-spacing: 1px; }
     .model-label { font-size: 18px; font-weight: 700; line-height: 1.2; word-wrap: break-word; padding-right: 60px; }
-    .brand-logo { width: 48px; height: 48px; object-fit: contain; }
-
-    @media (min-width: 600px) {
-      .card-header { flex-direction: row; justify-content: space-between; }
-      .card-header-with-logo { flex-direction: row; align-items: center; }
-      .card-actions { position: static; }
-      .model-label { padding-right: 0; }
-    }
-
-    /* Tabs */
     .tabs-nav { display: flex; gap: 10px; border-bottom: 1px solid var(--color-border); margin-bottom: 15px; overflow-x: auto; }
     .tab-btn { background: none; border: none; padding: 8px 4px; cursor: pointer; color: var(--color-text-secondary); font-weight: 600; font-size: 13px; white-space: nowrap; }
     .tab-btn.active { color: var(--color-primary); border-bottom: 2px solid var(--color-primary); }
     .tab-content { display: none; }
     .tab-content.active { display: block; }
-
-    /* Tables & Content */
-    .parts-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-    .parts-table th, .parts-table td { text-align: left; padding: 8px; border-bottom: 1px solid var(--color-card-border); }
-    .fault-row { display: flex; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--color-card-border); }
-    .fault-code { min-width: 50px; font-weight: bold; color: var(--color-error); }
-    .check-card { border: 1px solid var(--color-border); padding: 10px; margin-bottom: 10px; border-radius: 8px; background: var(--color-bg-primary); }
     .procedure-text { white-space: pre-wrap; font-family: inherit; font-size: 14px; color: var(--color-text-secondary); }
-
-    /* Modals */
-    .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; padding: 15px; }
-    .modal.active { display: flex; }
-    .modal-content { background: var(--color-surface); padding: 20px; border-radius: var(--radius-lg); width: 100%; max-width: 600px; max-height: 90vh; overflow-y: auto; }
-    .form-control { width: 100%; padding: 10px; border: 1px solid var(--color-border); border-radius: 8px; background: var(--color-bg-primary); color: var(--color-text); font-size: 16px !important; margin-bottom: 10px; }
-    
-    /* Buttons */
+    .values-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 10px 0; background: rgba(33,141,141,0.05); padding: 10px; border-radius: 8px; }
+    .value-item { font-size: 13px; }
+    .value-item b { color: var(--color-text); }
     .btn { display: inline-flex; align-items: center; gap: 8px; padding: 8px 16px; border-radius: 8px; cursor: pointer; border: 1px solid var(--color-border); background: var(--color-surface); color: var(--color-text); font-size: 14px; }
     .btn-primary { background: var(--color-primary); color: white; border: none; }
-    .icon-btn { background: none; border: none; cursor: pointer; font-size: 18px; }
-
-    /* Images */
-    .image-gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 8px; margin-top: 10px; }
-    .gallery-item { aspect-ratio: 1; border-radius: 8px; overflow: hidden; border: 1px solid var(--color-border); }
-    .gallery-item img { width: 100%; height: 100%; object-fit: cover; }
+    .form-control { width: 100%; padding: 10px; border: 1px solid var(--color-border); border-radius: 8px; background: var(--color-bg-primary); color: var(--color-text); font-size: 16px !important; margin-bottom: 10px; }
+    .app-footer { margin-top: 40px; padding: 24px 0; border-top: 1px solid var(--color-border); text-align: center; color: var(--color-text-secondary); font-size: 13px; }
+    .hidden { display: none !important; }
     .lightbox { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 2000; align-items: center; justify-content: center; }
     .lightbox.active { display: flex; }
     .lightbox-img { max-width: 95%; max-height: 90%; object-fit: contain; }
@@ -98,7 +62,7 @@
 </head>
 <body>
 
-  <!-- AUTH SCREEN -->
+  <!-- 1. LOGIN -->
   <div id="authContainer" class="container" style="margin-top: 100px; max-width: 400px;">
     <div style="background: var(--color-surface); padding: 30px; border-radius: 20px; box-shadow: var(--shadow-md); text-align: center;">
       <h2 style="margin-bottom: 20px;">OHC Login</h2>
@@ -110,7 +74,7 @@
     </div>
   </div>
 
-  <!-- PENDING SCREEN -->
+  <!-- 2. PENDING -->
   <div id="pendingScreen" class="hidden container" style="text-align: center; margin-top: 100px;">
     <h1>⏳</h1>
     <h2>Toegang in afwachting</h2>
@@ -119,10 +83,10 @@
     <button onclick="handleLogout()" class="btn" style="margin-top: 10px;">Uitloggen</button>
   </div>
 
-  <!-- MAIN APP -->
+  <!-- 3. MAIN APP -->
   <div id="appContainer" class="hidden">
     <div class="header">
-      <div class="container header-content">
+      <div class="container" style="display: flex; justify-content: space-between; align-items: center;">
         <h1 style="font-size: 20px; font-weight: 800; color: var(--color-primary);">OHC</h1>
         <div style="display: flex; gap: 8px;">
           <button class="btn" onclick="openModal('calcModal')">🧮 Calculator</button>
@@ -137,12 +101,6 @@
       <div class="filters">
         <div class="filters-row">
           <input type="text" id="searchInput" class="form-control" placeholder="Snel zoeken..." oninput="filterSystems()">
-          <select id="systemTypeFilter" class="form-control" onchange="filterSystems()">
-            <option value="">Alle Categorieën</option>
-            <option value="cv-ketel">CV-ketels</option>
-            <option value="warmtepomp">Warmtepompen</option>
-            <option value="mv-wtw">MV/WTW</option>
-          </select>
           <select id="brandFilter" class="form-control" onchange="filterSystems()"></select>
           <select id="favoritesFilter" class="form-control" onchange="filterSystems()">
             <option value="all">Alle systemen</option>
@@ -150,60 +108,40 @@
           </select>
         </div>
         <div id="resultsCount" style="font-size: 12px; margin-top: 10px; color: var(--color-text-secondary);">Laden...</div>
-        <button id="addSystemBtn" class="btn btn-primary" style="margin-top: 10px; display: none;" onclick="openModal('addModal')">+ Toevoegen</button>
       </div>
-
-      <div id="loadingState" style="text-align: center; padding: 50px;">Systemen worden geladen...</div>
+      <div id="loadingState" style="text-align: center; padding: 50px;">Laden...</div>
       <div id="cardsGrid" class="cards-grid hidden"></div>
+      
+      <div class="app-footer">
+        &copy; <span id="currentYear"></span> <strong id="copyrightName" style="cursor: pointer;" onclick="activateEasterEgg()">K.W. Diets</strong>. Alle rechten voorbehouden.
+      </div>
     </div>
   </div>
 
   <!-- MODALS -->
-  <!-- 1. Calculator -->
   <div id="calcModal" class="modal">
     <div class="modal-content">
-      <div class="modal-header"><h3>HVAC Calculator (NEN)</h3><button class="icon-btn" onclick="closeModal('calcModal')">×</button></div>
+      <div class="modal-header"><h3>HVAC Calculator</h3><button class="btn" onclick="closeModal('calcModal')">×</button></div>
       <div class="modal-body">
         <label>Gasverbruik liters (180 sec)</label>
-        <div style="display: flex; gap: 5px;">
-           <input type="number" id="gasStart" class="form-control" placeholder="Start" oninput="calculateHVAC()">
-           <input type="number" id="gasEind" class="form-control" placeholder="Eind" oninput="calculateHVAC()">
-        </div>
-        <div id="resBelastingHs" style="margin: 10px 0; font-weight: bold;">Belasting: - kW</div>
-        <hr style="margin: 15px 0;">
-        <label>Waterzijdig (Flowbeker)</label>
-        <input type="number" id="calcFlow" class="form-control" placeholder="Flow (L/min)" oninput="calculateHVAC()">
-        <div style="display: flex; gap: 5px;">
-          <input type="number" id="calcTempKoud" class="form-control" placeholder="T-Koud" oninput="calculateHVAC()">
-          <input type="number" id="calcTempWarm" class="form-control" placeholder="T-Warm" oninput="calculateHVAC()">
-        </div>
-        <div id="resRendement" style="margin-top: 20px; font-size: 32px; font-weight: 900; text-align: center; color: var(--color-primary);">-%</div>
+        <div style="display: flex; gap: 5px;"><input type="number" id="gasStart" class="form-control" placeholder="Start" oninput="calculateHVAC()"><input type="number" id="gasEind" class="form-control" placeholder="Eind" oninput="calculateHVAC()"></div>
+        <div id="resBelastingHs" style="margin-top: 10px; font-weight: bold;">Belasting: - kW</div>
+        <hr style="margin: 15px 0;"><label>Flow (L/min)</label><input type="number" id="calcFlow" class="form-control" oninput="calculateHVAC()">
+        <div style="display: flex; gap: 5px;"><input type="number" id="calcTempKoud" class="form-control" placeholder="T-Koud" oninput="calculateHVAC()"><input type="number" id="calcTempWarm" class="form-control" placeholder="T-Warm" oninput="calculateHVAC()"></div>
+        <div id="resRendement" style="margin-top: 20px; font-size: 28px; font-weight: 800; text-align: center;">-%</div>
       </div>
     </div>
   </div>
 
-  <!-- 2. Admin (User Management) -->
-  <div id="adminModal" class="modal">
-    <div class="modal-content" style="max-width: 800px;">
-      <div class="modal-header"><h3>Gebruikersbeheer</h3><button class="icon-btn" onclick="closeModal('adminModal')">×</button></div>
-      <div id="pendingUsersList"></div>
-      <table class="parts-table" style="margin-top: 20px;">
-        <thead><tr><th>E-mail</th><th>Rol</th><th>Acties</th></tr></thead>
-        <tbody id="usersTableBody"></tbody>
-      </table>
-    </div>
-  </div>
-
-  <!-- 3. Edit System -->
   <div id="editModal" class="modal">
     <div class="modal-content">
-      <div class="modal-header"><h3>Systeem bewerken</h3><button class="icon-btn" onclick="closeModal('editModal')">×</button></div>
+      <div class="modal-header"><h3>Systeem bewerken</h3><button class="btn" onclick="closeModal('editModal')">×</button></div>
       <form id="editForm">
         <input type="hidden" id="editId">
         <label>Merk</label><input type="text" id="editBrand" class="form-control" required>
         <label>Model</label><input type="text" id="editModel" class="form-control" required>
-        <label>O2 Laag</label><input type="text" id="editO2Low" class="form-control">
-        <label>O2 Hoog</label><input type="text" id="editO2High" class="form-control">
+        <label>O2 Laag / Hoog</label><div style="display:flex; gap:5px;"><input type="text" id="editO2Low" class="form-control"><input type="text" id="editO2High" class="form-control"></div>
+        <label>CO2 Laag / Hoog</label><div style="display:flex; gap:5px;"><input type="text" id="editCO2Low" class="form-control"><input type="text" id="editCO2High" class="form-control"></div>
         <label>Procedure</label><textarea id="editProcedure" class="form-control" rows="5"></textarea>
         <div id="editPartsContainer"></div>
         <button type="button" class="btn" onclick="addPartRow('edit')">+ Regel</button>
@@ -212,10 +150,7 @@
     </div>
   </div>
 
-  <!-- 4. Lightbox -->
-  <div id="lightbox" class="lightbox" onclick="closeLightbox()">
-    <img id="lightboxImg" class="lightbox-img">
-  </div>
+  <div id="lightbox" class="lightbox" onclick="closeLightbox()"><img id="lightboxImg" class="lightbox-img"></div>
 
   <script>
     const SUPABASE_URL = 'https://srsnjifezttivawxnndu.supabase.co';
@@ -224,127 +159,93 @@
 
     let currentUser = null, currentUserRole = 'user', systems = [], favorites = [];
 
-    // --- INIT ---
     async function init() {
+        // RESET UI: Verberg alles voor de check
+        document.getElementById('authContainer').classList.add('hidden');
+        document.getElementById('appContainer').classList.add('hidden');
+        document.getElementById('pendingScreen').classList.add('hidden');
+
         const { data: { session } } = await supabase.auth.getSession();
         if (session) {
             currentUser = session.user;
-            const approved = await checkUserApproval(session.user);
-            if (approved) { 
-                showApp(); 
-                await loadData(); 
-            } else { 
-                showPendingScreen(session.user.email); 
+            const res = await supabase.from('user_roles').select('is_approved, role').eq('user_id', currentUser.id).maybeSingle();
+            if (res.data && res.data.is_approved) {
+                currentUserRole = res.data.role;
+                showApp();
+                await loadData();
+            } else {
+                showPendingScreen(session.user.email);
             }
+        } else {
+            document.getElementById('authContainer').classList.remove('hidden');
         }
         setupEventListeners();
-    }
-
-    async function checkUserApproval(user) {
-        const { data } = await supabase.from('user_roles').select('is_approved, role').eq('user_id', user.id).maybeSingle();
-        if (!data) {
-            await supabase.from('user_roles').insert([{ user_id: user.id, email: user.email, is_approved: false }]);
-            return false;
-        }
-        currentUserRole = data.role;
-        return data.is_approved;
+        document.getElementById('currentYear').textContent = new Date().getFullYear();
     }
 
     function showApp() {
-        document.getElementById('authContainer').classList.add('hidden');
         document.getElementById('appContainer').classList.remove('hidden');
         if(currentUserRole === 'admin') document.getElementById('adminBtn').style.display = 'inline-flex';
-        if(['admin', 'moderator'].includes(currentUserRole)) document.getElementById('addSystemBtn').style.display = 'inline-flex';
     }
 
-    function showAuth() { document.getElementById('authContainer').classList.remove('hidden'); document.getElementById('appContainer').classList.add('hidden'); }
-    
     function showPendingScreen(email) {
-        document.getElementById('authContainer').classList.add('hidden');
         document.getElementById('pendingScreen').classList.remove('hidden');
-        document.getElementById('pendingMessage').textContent = `Hoi ${email}, je account moet nog worden goedgekeurd door de beheerder.`;
+        document.getElementById('pendingMessage').textContent = `Hoi ${email}, je account wacht op goedkeuring.`;
     }
 
-    // --- DATA ---
     async function loadData() {
         const { data } = await supabase.from('systems').select('*').order('brand', { ascending: true });
         systems = data || [];
         const { data: f } = await supabase.from('favorites').select('system_id').eq('user_id', currentUser.id);
         favorites = f ? f.map(x => x.system_id) : [];
-        
         const brands = [...new Set(systems.map(s => s.brand))].sort();
         document.getElementById('brandFilter').innerHTML = '<option value="all">Alle Merken</option>' + brands.map(b => `<option value="${b}">${b}</option>`).join('');
-        
         filterSystems();
         document.getElementById('loadingState').classList.add('hidden');
     }
 
     function filterSystems() {
         const term = document.getElementById('searchInput').value.toLowerCase();
-        const type = document.getElementById('systemTypeFilter').value;
         const brand = document.getElementById('brandFilter').value;
         const favsOnly = document.getElementById('favoritesFilter').value === 'favorites';
-
         const filtered = systems.filter(s => {
             const matchSearch = s.brand.toLowerCase().includes(term) || s.model.toLowerCase().includes(term);
-            const matchType = !type || s.systemtype === type || (type === 'mv-wtw' && (s.systemtype === 'mv-wtw' || s.systemtype === 'wtw-mv'));
             const matchBrand = brand === 'all' || s.brand === brand;
             const matchFav = !favsOnly || favorites.includes(s.id);
-            return matchSearch && matchType && matchBrand && matchFav;
+            return matchSearch && matchBrand && matchFav;
         });
-
         const grid = document.getElementById('cardsGrid');
         grid.innerHTML = filtered.map(s => createSystemCard(s)).join('');
         grid.classList.remove('hidden');
         document.getElementById('resultsCount').textContent = `${filtered.length} systemen gevonden`;
     }
 
-    // --- CARDS ---
     function createSystemCard(s) {
         const isFav = favorites.includes(s.id);
         const canEdit = ['admin', 'moderator'].includes(currentUserRole);
         
-        // Materialen
         let partsHtml = '';
         try {
             const parts = Array.isArray(s.parts) ? s.parts : JSON.parse(s.parts || '[]');
             if (parts.length > 0) {
-                partsHtml = `<table class="parts-table"><thead><tr><th>Item</th><th>Nr.</th><th>Lev.</th></tr></thead><tbody>` + 
+                partsHtml = `<table class="parts-table"><thead><tr><th>Item</th><th>Nr.</th></tr></thead><tbody>` + 
                 parts.map(p => {
                     const cleanNr = p.art ? p.art.toString().replace(/[\s.]/g, '') : '';
                     const link = p.supp === 'Rensa' ? `https://rensa.nl/Product/${cleanNr}` : (p.supp === 'Wasco' ? `https://www.wasco.nl/artikel/${cleanNr}` : null);
-                    return `<tr><td>${p.desc}</td><td>${link ? `<a href="${link}" target="_blank" style="color:var(--color-primary);">${p.art} ↗</a>` : (p.art || '')}</td><td>${p.supp}</td></tr>`;
+                    return `<tr><td>${p.desc}</td><td>${link ? `<a href="${link}" target="_blank" style="color:var(--color-primary);">${p.art} ↗</a>` : (p.art || '')}</td></tr>`;
                 }).join('') + `</tbody></table>`;
             }
         } catch(e) { partsHtml = 'Fout bij laden.'; }
 
-        // Controle
-        let checksHtml = '';
-        try {
-            const checks = Array.isArray(s.checks) ? s.checks : JSON.parse(s.checks || '[]');
-            checksHtml = checks.map(c => `<div class="check-card"><b>${c.subject}</b><br><small>P: ${c.problem}</small><br><small>S: ${c.solution}</small>${c.imgUrl ? `<br><img src="${c.imgUrl}" style="width:100%; border-radius:4px; margin-top:5px;" onclick="openLightbox(this.src)">` : ''}</div>`).join('');
-        } catch(e) {}
-
-        // Storingen
-        let faultsHtml = '';
-        try {
-            const faults = Array.isArray(s.faults) ? s.faults : JSON.parse(s.faults || '[]');
-            faultsHtml = faults.map(f => `<div class="fault-row"><div class="fault-code">${f.code}</div><div><b>O:</b> ${f.cause || ''}<br><b>S:</b> ${f.solution || ''}</div></div>`).join('');
-        } catch(e) {}
-
         return `
         <div class="system-card" id="card-${s.id}">
             <div class="card-header">
-                <div class="card-header-with-logo">
-                    ${s.logo_url ? `<img src="${s.logo_url}" class="brand-logo">` : ''}
-                    <div class="card-header-text">
-                        <div class="brand-label">${s.brand}</div>
-                        <div class="model-label">${s.model}</div>
-                        ${s.handbook_date && s.handbook_date !== '1900-01-01' ? `<div style="font-size:11px; color:orange;">📅 ${new Date(s.handbook_date).toLocaleDateString('nl-NL')}</div>` : ''}
-                    </div>
+                <div class="card-header-text">
+                    <div class="brand-label">${s.brand}</div>
+                    <div class="model-label">${s.model}</div>
                 </div>
                 <div class="card-actions">
-                    ${s.device_image_url ? `<button class="icon-btn" onclick="openLightbox('${s.device_image_url}')">📷</button>` : ''}
+                    ${s.manual_url ? `<a href="${s.manual_url}" target="_blank" class="icon-btn" title="Handleiding">📄</a>` : ''}
                     <button class="icon-btn ${isFav ? 'active' : ''}" onclick="toggleFavorite('${s.id}')">★</button>
                     ${canEdit ? `<button class="icon-btn" onclick="openEditModal('${s.id}')">✎</button>` : ''}
                 </div>
@@ -352,62 +253,39 @@
             <div class="tabs-nav">
                 <button class="tab-btn active" onclick="switchTab('${s.id}', 'info', event)">Afstelling</button>
                 <button class="tab-btn" onclick="switchTab('${s.id}', 'parts', event)">Materialen</button>
-                <button class="tab-btn" onclick="switchTab('${s.id}', 'checks', event)">Controle</button>
-                <button class="tab-btn" onclick="switchTab('${s.id}', 'faults', event)">Storingen</button>
             </div>
             <div id="content-info-${s.id}" class="tab-content active">
-                <div style="margin-bottom:10px; font-size:13px;">O2: <b>${s.o2_low || '-'}</b> / <b>${s.o2_high || '-'}</b></div>
+                <div class="values-grid">
+                    <div>O2 Laag: <b>${s.o2_low || '-'}</b><br>O2 Hoog: <b>${s.o2_high || '-'}</b></div>
+                    <div>CO2 Laag: <b>${s.co2_low || '-'}</b><br>CO2 Hoog: <b>${s.co2_high || '-'}</b></div>
+                </div>
                 <pre class="procedure-text">${s.procedure || 'Geen procedure.'}</pre>
             </div>
             <div id="content-parts-${s.id}" class="tab-content">${partsHtml || 'Geen info.'}</div>
-            <div id="content-checks-${s.id}" class="tab-content">${checksHtml || 'Geen info.'}</div>
-            <div id="content-faults-${s.id}" class="tab-content">${faultsHtml || 'Geen info.'}</div>
         </div>`;
     }
 
-    // --- ACTIONS ---
-    async function handleEditSubmit(e) {
-        e.preventDefault();
-        const id = document.getElementById('editId').value;
-        const updates = {
-            brand: document.getElementById('editBrand').value,
-            model: document.getElementById('editModel').value,
-            procedure: document.getElementById('editProcedure').value,
-            o2_low: document.getElementById('editO2Low').value,
-            o2_high: document.getElementById('editO2High').value,
-            parts: JSON.stringify(collectPartsData('edit'))
-        };
-        const { error } = await supabase.from('systems').update(updates).eq('id', id);
-        if (error) alert(error.message); else location.reload();
-    }
-
     function calculateHVAC() {
-        const start = parseFloat(document.getElementById('gasStart').value) || 0;
-        const eind = parseFloat(document.getElementById('gasEind').value) || 0;
-        const flow = parseFloat(document.getElementById('calcFlow').value) || 0;
-        const tk = parseFloat(document.getElementById('calcTempKoud').value) || 0;
-        const tw = parseFloat(document.getElementById('calcTempWarm').value) || 0;
-        if (eind > start) {
-            const bel = ((eind - start) / 180) * 35.17;
+        const s = parseFloat(document.getElementById('gasStart').value) || 0, e = parseFloat(document.getElementById('gasEind').value) || 0;
+        if (e > s) {
+            const bel = ((e - s) / 180) * 35.17;
             document.getElementById('resBelastingHs').innerHTML = `Belasting (H<sub>s</sub>): <b>${bel.toFixed(2)} kW</b>`;
-            if (flow > 0 && tw > tk) {
-                const verm = ((flow / 60) / 1000 * 4186 * 983 * (tw - tk)) / 1000;
-                const rendement = (verm / bel) * 100;
+            const f = parseFloat(document.getElementById('calcFlow').value) || 0, tk = parseFloat(document.getElementById('calcTempKoud').value) || 0, tw = parseFloat(document.getElementById('calcTempWarm').value) || 0;
+            if (f > 0 && tw > tk) {
+                const verm = ((f / 60) / 1000 * 4186 * 983 * (tw - tk)) / 1000;
+                const ren = (verm / bel) * 100;
                 const rEl = document.getElementById('resRendement');
-                rEl.textContent = rendement.toFixed(1) + '%';
-                rEl.style.color = rendement > 90 ? 'var(--color-success)' : 'orange';
+                rEl.textContent = ren.toFixed(1) + '%';
+                rEl.style.color = ren > 90 ? 'var(--color-success)' : 'orange';
             }
         }
     }
 
-    // --- UI HELPERS ---
-    function setupEventListeners() {
-        document.getElementById('loginForm')?.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const { error } = await supabase.auth.signInWithPassword({ email: document.getElementById('loginEmail').value, password: document.getElementById('loginPassword').value });
-            if (error) alert(error.message); else location.reload();
-        });
-        document.getElementById('editForm')?.addEventListener('submit', handleEditSubmit);
+    function activateEasterEgg() {
+        const themes = [{bg: '#6C10F3', text: '#43EDC2'}, {bg: '#163C64', text: '#F76648'}, {bg: '#DFDE2F', text: '#1E1D1C'}];
+        const r = themes[Math.floor(Math.random() * themes.length)];
+        const t = document.documentElement;
+        t.style.setProperty('--color-bg-primary', r.bg); t.style.setProperty('--color-surface', r.bg); t.style.setProperty('--color-text', r.text);
     }
 
     function switchTab(id, tab, e) {
@@ -418,64 +296,70 @@
         e.target.classList.add('active');
     }
 
-    function openEditModal(id) {
-        const s = systems.find(x => x.id === id);
-        document.getElementById('editId').value = id;
-        document.getElementById('editBrand').value = s.brand;
-        document.getElementById('editModel').value = s.model;
-        document.getElementById('editO2Low').value = s.o2_low || '';
-        document.getElementById('editO2High').value = s.o2_high || '';
-        document.getElementById('editProcedure').value = s.procedure || '';
-        const parts = Array.isArray(s.parts) ? s.parts : JSON.parse(s.parts || '[]');
-        const cont = document.getElementById('editPartsContainer');
-        cont.innerHTML = '';
-        parts.forEach(p => addPartRow('edit', p.desc, p.art, p.supp));
-        document.getElementById('editModal').classList.add('active');
+    function setupEventListeners() {
+        document.getElementById('loginForm')?.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const { error } = await supabase.auth.signInWithPassword({ email: document.getElementById('loginEmail').value, password: document.getElementById('loginPassword').value });
+            if (error) alert(error.message); else location.reload();
+        });
+        document.getElementById('editForm')?.addEventListener('submit', handleEditSubmit);
     }
 
-    function addPartRow(mode, desc='', art='', supp='Overig') {
-        const div = document.createElement('div');
-        div.className = 'part-input-row';
-        div.innerHTML = `<input type="text" class="form-control part-desc" value="${desc}" placeholder="Item">
-        <input type="text" class="form-control part-art" value="${art}" placeholder="Nr">
-        <select class="form-control part-supp"><option ${supp==='Overig'?'selected':''}>Overig</option><option ${supp==='Wasco'?'selected':''}>Wasco</option><option ${supp==='Rensa'?'selected':''}>Rensa</option></select>
-        <button type="button" class="btn" onclick="this.parentElement.remove()">×</button>`;
-        document.getElementById(`${mode}PartsContainer`).appendChild(div);
+    async function handleEditSubmit(e) {
+        e.preventDefault();
+        const id = document.getElementById('editId').value;
+        const updates = {
+            brand: document.getElementById('editBrand').value,
+            model: document.getElementById('editModel').value,
+            procedure: document.getElementById('editProcedure').value,
+            o2_low: document.getElementById('editO2Low').value, o2_high: document.getElementById('editO2High').value,
+            co2_low: document.getElementById('editCO2Low').value, co2_high: document.getElementById('editCO2High').value,
+            parts: JSON.stringify(collectPartsData('edit'))
+        };
+        const { error } = await supabase.from('systems').update(updates).eq('id', id);
+        if (error) alert(error.message); else location.reload();
     }
 
     function collectPartsData(mode) {
         return Array.from(document.querySelectorAll(`#${mode}PartsContainer .part-input-row`)).map(row => ({
-            desc: row.querySelector('.part-desc').value,
-            art: row.querySelector('.part-art').value,
-            supp: row.querySelector('.part-supp').value
+            desc: row.querySelector('.part-desc').value, art: row.querySelector('.part-art').value, supp: row.querySelector('select').value
         })).filter(p => p.desc || p.art);
     }
+
+    function addPartRow(mode, desc='', art='', supp='Overig') {
+        const div = document.createElement('div'); div.className = 'part-input-row';
+        div.innerHTML = `<input type="text" class="form-control part-desc" value="${desc}" placeholder="Item"><input type="text" class="form-control part-art" value="${art}" placeholder="Nr">
+        <select class="form-control"><option ${supp==='Overig'?'selected':''}>Overig</option><option ${supp==='Wasco'?'selected':''}>Wasco</option><option ${supp==='Rensa'?'selected':''}>Rensa</option></select>
+        <button type="button" class="btn" onclick="this.parentElement.remove()">×</button>`;
+        document.getElementById(`${mode}PartsContainer`).appendChild(div);
+    }
+
+    function openEditModal(id) {
+        const s = systems.find(x => x.id === id);
+        document.getElementById('editId').value = id;
+        document.getElementById('editBrand').value = s.brand; document.getElementById('editModel').value = s.model;
+        document.getElementById('editO2Low').value = s.o2_low || ''; document.getElementById('editO2High').value = s.o2_high || '';
+        document.getElementById('editCO2Low').value = s.co2_low || ''; document.getElementById('editCO2High').value = s.co2_high || '';
+        document.getElementById('editProcedure').value = s.procedure || '';
+        const cont = document.getElementById('editPartsContainer'); cont.innerHTML = '';
+        const parts = Array.isArray(s.parts) ? s.parts : JSON.parse(s.parts || '[]');
+        parts.forEach(p => addPartRow('edit', p.desc, p.art, p.supp));
+        openModal('editModal');
+    }
+
+    function openModal(id) { document.getElementById(id).classList.add('active'); }
+    function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+    function handleLogout() { supabase.auth.signOut(); location.reload(); }
+    function toggleTheme() { const t = document.body.getAttribute('data-theme') === 'dark' ? 'light' : 'dark'; document.body.setAttribute('data-theme', t); localStorage.setItem('theme', t); }
+    function openLightbox(src) { document.getElementById('lightboxImg').src = src; document.getElementById('lightbox').classList.add('active'); }
+    function closeLightbox() { document.getElementById('lightbox').classList.remove('active'); }
+    function escapeHtml(t) { const d = document.createElement('div'); d.textContent = t; return d.innerHTML; }
 
     async function toggleFavorite(id) {
         if (favorites.includes(id)) await supabase.from('favorites').delete().eq('user_id', currentUser.id).eq('system_id', id);
         else await supabase.from('favorites').insert([{ user_id: currentUser.id, system_id: id }]);
         location.reload();
     }
-
-    async function deleteUser(uid, email) {
-        if(confirm(`Gebruiker ${email} echt verwijderen?`)) {
-            const { error } = await supabase.rpc('delete_user_by_id', { user_id: uid });
-            if (error) alert(error.message); else location.reload();
-        }
-    }
-
-    function toggleTheme() {
-        const t = document.body.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
-        document.body.setAttribute('data-theme', t);
-        localStorage.setItem('theme', t);
-    }
-
-    function handleLogout() { supabase.auth.signOut(); location.reload(); }
-    function openModal(id) { document.getElementById(id).classList.add('active'); }
-    function closeModal(id) { document.getElementById(id).classList.remove('active'); }
-    function openLightbox(src) { document.getElementById('lightboxImg').src = src; document.getElementById('lightbox').classList.add('active'); }
-    function closeLightbox() { document.getElementById('lightbox').classList.remove('active'); }
-    function escapeHtml(t) { const d = document.createElement('div'); d.textContent = t; return d.innerHTML; }
 
     init();
   </script>
