@@ -1569,7 +1569,7 @@ async function uploadSingleFile(file) {
   }
 }
 
-    return parts.length > 0 ? return parts; : null;
+    return parts.length > 0 ? return parts;
   } catch (err) {
     console.error("Fout in collectPartsData:", err);
     return null;
