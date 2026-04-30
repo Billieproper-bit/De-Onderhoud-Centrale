@@ -1447,16 +1447,21 @@ async function uploadSingleFile(file) {
     if (!container) return;
 
     const div = document.createElement('div');
-    div.className = 'part-input-row'; // DIT IS CRUCIAAL
+    div.className = 'part-input-row'; 
+    div.style.display = 'flex';
+    div.style.gap = '8px';
+    div.style.marginBottom = '8px';
+
     div.innerHTML = `
-        <input type="text" class="form-control part-desc" value="${desc}" placeholder="Item">
-        <input type="text" class="form-control part-art" value="${art}" placeholder="Nr">
-        <select class="form-control" style="width:100px;">
-            <option value="Overig" ${supp==='Overig'?'selected':''}>Overig</option>
-            <option value="Wasco" ${supp==='Wasco'?'selected':''}>Wasco</option>
-            <option value="Rensa" ${supp==='Rensa'?'selected':''}>Rensa</option>
+        <input type="text" class="form-control part-desc" value="${desc}" placeholder="Artikel omschrijving">
+        <input type="text" class="form-control part-art" value="${art}" placeholder="Art. nr">
+        <select class="form-control part-supp" style="width:110px;">
+            <option value="Overig" ${supp === 'Overig' ? 'selected' : ''}>Overig</option>
+            <option value="Wasco" ${supp === 'Wasco' ? 'selected' : ''}>Wasco</option>
+            <option value="Rensa" ${supp === 'Rensa' ? 'selected' : ''}>Rensa</option>
         </select>
-        <button type="button" class="btn" style="padding: 5px 10px;" onclick="this.parentElement.remove()">×</button>`;
+        <button type="button" class="btn" style="color:var(--color-error);" onclick="this.parentElement.remove()">×</button>
+    `;
     container.appendChild(div);
 }
 
@@ -1516,14 +1521,24 @@ async function uploadSingleFile(file) {
 
     function collectPartsData(mode) {
     const rows = document.querySelectorAll(`#${mode}PartsContainer .part-input-row`);
-    const parts = [];
+    const materials = [];
+
     rows.forEach(row => {
         const desc = row.querySelector('.part-desc')?.value.trim();
         const art = row.querySelector('.part-art')?.value.trim();
-        const supp = row.querySelector('select')?.value || 'Overig';
-        if (desc || art) parts.push({ desc, art, supp });
+        const supp = row.querySelector('.part-supp')?.value || 'Overig';
+
+        if (desc || art) {
+            materials.push({
+                desc: desc || '',
+                art: art || '',
+                supp: supp
+            });
+        }
     });
-    return parts; // Stuur als Array voor jsonb
+
+    console.log("📦 Verzamelde materialen voor " + mode + ":", materials);
+    return materials; // Retourneer de Array direct (voor jsonb)
 }
 
 function collectFaultsData(mode) {
@@ -1540,34 +1555,35 @@ function collectFaultsData(mode) {
 }
 
     function populatePartsForm(mode, data) {
-  const container = document.getElementById(mode + 'PartsContainer');
-  if (!container) return;
-  container.innerHTML = ''; 
-  
-  if (!data) return; 
+    const container = document.getElementById(mode + 'PartsContainer');
+    if (!container) return;
+    container.innerHTML = ''; 
+    
+    if (!data) return; 
 
-  // STAP A: Als de data al een echte lijst (Array) is (Nieuwe situatie door JSONB)
-  if (Array.isArray(data)) {
-    data.forEach(p => addPartRow(mode, p.desc, p.art, p.supp));
-    return;
-  }
+    let partsArray = [];
 
-  // STAP B: Als de data een tekst (String) is (Oude records)
-  if (typeof data === 'string') {
     try {
-      const parts = JSON.parse(data);
-      if (Array.isArray(parts)) {
-        parts.forEach(p => addPartRow(mode, p.desc, p.art, p.supp));
-        return;
-      }
+        if (Array.isArray(data)) {
+            partsArray = data;
+        } else if (typeof data === 'string') {
+            // Fix voor de "dubbele string" die we in je Intergas data zagen[cite: 3]
+            const parsed = JSON.parse(data);
+            partsArray = Array.isArray(parsed) ? parsed : JSON.parse(parsed);
+        }
     } catch (e) {
-      // Als het gewone tekst is met nieuwe regels (het alleroudste formaat)
-      const lines = data.split('\n');
-      lines.forEach(line => {
-        if(line.trim()) addPartRow(mode, line, '', 'Overig');
-      });
+        console.warn("Kon materialen niet parsen, poging tot platte tekst split...");
+        if (typeof data === 'string') {
+            data.split('\n').forEach(line => {
+                if(line.trim()) addPartRow(mode, line.trim(), '', 'Overig');
+            });
+            return;
+        }
     }
-  }
+
+    if (Array.isArray(partsArray)) {
+        partsArray.forEach(p => addPartRow(mode, p.desc, p.art, p.supp));
+    }
 }
     
     function openLightbox(imageUrl) {
