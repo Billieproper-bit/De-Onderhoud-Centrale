@@ -1237,21 +1237,30 @@ async function processChecksData(mode) {
     // 1. Data verzamelen
     const partsData = collectPartsData('edit');
     const faultsData = collectFaultsData('edit');
-    const checksData = await processChecksData('edit'); 
+    
+    // We gebruiken een simpele versie voor de checks om blokkades te voorkomen
+    const checksRows = Array.from(document.getElementById('editChecksContainer').children);
+    const checksData = checksRows.map(row => ({
+        subject: row.querySelector('.check-subject')?.value.trim() || '',
+        problem: row.querySelector('.check-problem')?.value.trim() || '',
+        solution: row.querySelector('.check-solution')?.value.trim() || '',
+        imgUrl: row.querySelector('.check-existing-url')?.value || ''
+    })).filter(c => c.subject !== '');
+
+    console.log("📡 Gegevens voorbereiden voor UUID:", id);
 
     const updates = {
       brand: document.getElementById('editBrand').value.trim(),
       model: document.getElementById('editModel').value.trim(),
       procedure: document.getElementById('editProcedure').value,
-      parts: partsData,   
-      faults: faultsData, 
-      checks: checksData, 
+      parts: partsData,   // Dit moet een Array zijn voor jsonb
+      faults: faultsData, // Dit moet een Array zijn voor jsonb
+      checks: checksData, // Dit moet een Array zijn voor jsonb
       logo_url: document.getElementById('editLogoUrl')?.value || null,
       notes: document.getElementById('editNotes')?.value || null,
       handbook_date: document.getElementById('editHandbookDate')?.value || null,
       manual_url: document.getElementById('editManualUrl')?.value || null,
-      maxco: document.getElementById('editMaxCO')?.value || null,
-      max_co: document.getElementById('editMaxCO')?.value || null // Beiden vullen voor je schema
+      maxco: document.getElementById('editMaxCO')?.value || null // Match schema[cite: 3]
     };
 
     if (systemType === 'cv-ketel') {
@@ -1261,26 +1270,13 @@ async function processChecksData(mode) {
       updates.co2_high = document.getElementById('editCO2High')?.value || null;
     }
 
-    // 2. Foto's verwerken
-    let deviceImgUrl = document.getElementById('editDeviceImage').dataset.currentUrl || null;
-    const deviceFile = document.getElementById('editDeviceImage').files[0];
-    if (deviceFile) {
-        deviceImgUrl = await uploadSingleFile(deviceFile);
-    }
-    updates.device_image_url = deviceImgUrl;
+    console.log("💾 Database bijwerken...");
 
-    let imageUrls = pendingImages.edit;
-    if (pendingImages.edit.some(img => img instanceof File)) {
-        const newFiles = pendingImages.edit.filter(img => img instanceof File);
-        const uploadedUrls = await uploadImages(systemType + '-' + Date.now(), newFiles);
-        const existingUrls = pendingImages.edit.filter(img => typeof img === 'string');
-        imageUrls = existingUrls.concat(uploadedUrls);
-    }
-    updates.images = imageUrls;
-
-    // 3. DATABASE UPDATE
-    console.log("💾 Database bijwerken voor ID:", id);
-    const { data, error } = await supabase.from('systems').update(updates).eq('id', id).select();
+    const { data, error } = await supabase
+      .from('systems')
+      .update(updates)
+      .eq('id', id)
+      .select();
 
     if (error) throw error;
 
@@ -1296,7 +1292,7 @@ async function processChecksData(mode) {
       submitBtn.textContent = "Bijwerken";
     }
   }
-}
+} 
    
     function handleDrop(e, mode) {
       e.preventDefault();
@@ -1555,12 +1551,21 @@ async function uploadSingleFile(file) {
     const rows = document.querySelectorAll(`#${mode}PartsContainer .part-input-row`);
     const data = [];
     rows.forEach(row => {
-        const desc = row.querySelector('.part-desc')?.value.trim();
-        const art = row.querySelector('.part-art')?.value.trim();
-        const supp = row.querySelector('select')?.value || 'Overig';
-        if (desc || art) data.push({ desc, art, supp });
+        const descEl = row.querySelector('.part-desc');
+        const artEl = row.querySelector('.part-art');
+        const suppEl = row.querySelector('select');
+
+        if (descEl && artEl) {
+            const desc = descEl.value.trim();
+            const art = artEl.value.trim();
+            const supp = suppEl ? suppEl.value : 'Overig';
+
+            if (desc !== "" || art !== "") {
+                data.push({ desc: desc, art: art, supp: supp });
+            }
+        }
     });
-    return data; // Belangrijk: Geen JSON.stringify hier!
+    return data; // Stuur de Array direct terug[cite: 3]
 }
 
     function populatePartsForm(mode, data) {
