@@ -454,51 +454,32 @@ function setupEventListeners() {
 }
 
 async function processChecksData(mode) {
-  console.log("🔍 Stap: Controlepunten verwerken...");
-  const container = document.getElementById(mode + 'ChecksContainer');
-  if (!container) return [];
-  
-  const rows = Array.from(container.children);
-  const checks = [];
+    const container = document.getElementById(mode + 'ChecksContainer');
+    if (!container) return [];
+    const rows = Array.from(container.children);
+    const checks = [];
 
-  for (const row of rows) {
-    const subject = row.querySelector('.check-subject')?.value.trim();
-    const problem = row.querySelector('.check-problem')?.value.trim();
-    const solution = row.querySelector('.check-solution')?.value.trim();
-    const fileInput = row.querySelector('.check-file');
-    const existingUrl = row.querySelector('.check-existing-url')?.value || '';
+    for (const row of rows) {
+        const subject = row.querySelector('.check-subject')?.value.trim();
+        const fileInput = row.querySelector('.check-file');
+        const existingUrl = row.querySelector('.check-existing-url')?.value || '';
 
-    if (!subject && !problem) continue;
+        let imgUrl = existingUrl;
+        if (fileInput?.files.length > 0) {
+            // Upload naar jouw eigen storage bucket
+            imgUrl = await uploadSingleFile(fileInput.files[0]);
+        }
 
-    let finalImageUrl = existingUrl;
-
-    // Check of er een NIEUWE foto geüpload moet worden
-    if (fileInput && fileInput.files.length > 0) {
-       console.log("📸 Foto uploaden voor controlepunt:", subject);
-       const file = fileInput.files[0];
-       const fileExt = file.name.split('.').pop();
-       const fileName = `checks/${Date.now()}-${Math.random().toString(36).substr(2, 5)}.${fileExt}`;
-       
-       try {
-         const { data, error } = await supabase.storage
-           .from('system-images')
-           .upload(fileName, file);
-           
-         if (error) throw error;
-         
-         const { data: publicUrlData } = supabase.storage
-           .from('system-images')
-           .getPublicUrl(fileName);
-           
-         finalImageUrl = publicUrlData.publicUrl;
-       } catch(err) {
-         console.error('❌ Foto upload fout:', err);
-       }
+        if (subject) {
+            checks.push({
+                subject,
+                problem: row.querySelector('.check-problem')?.value.trim() || '',
+                solution: row.querySelector('.check-solution')?.value.trim() || '',
+                imgUrl
+            });
+        }
     }
-    checks.push({ subject, problem, solution, imgUrl: finalImageUrl });
-  }
-  console.log("✅ Controlepunten klaar.");
-  return checks;
+    return checks;
 }
     
     function createSystemCard(system) {
@@ -1221,84 +1202,77 @@ async function processChecksData(mode) {
     }
 
     async function handleEditSubmit(e) {
-  if (e) e.preventDefault();
-  console.log("🚀 Start opslaan procedure...");
-  
-  const submitBtn = document.querySelector('#editForm button[type="submit"]');
-  try {
-    if (submitBtn) {
-      submitBtn.disabled = true;
-      submitBtn.textContent = "Bezig met opslaan...";
-    }
-
-    const id = document.getElementById('editId').value.trim(); // Trim toegevoegd voor zekerheid
-    const systemType = document.getElementById('editSystemType').value || 'cv-ketel';
+    if (e) e.preventDefault();
+    console.log("🚀 Start opslaan procedure...");
+    const submitBtn = document.querySelector('#editForm button[type="submit"]');
     
-    // 1. Data verzamelen (De onderdelen, storingen en checks)
-    const partsData = collectPartsData('edit');
-    const faultsData = collectFaultsData('edit');
-    
-    // We verwerken de checks zonder de hangende foto-upload voor deze test
-    const checksRows = Array.from(document.getElementById('editChecksContainer').children);
-    const checksData = checksRows.map(row => ({
-        subject: row.querySelector('.check-subject')?.value.trim() || '',
-        problem: row.querySelector('.check-problem')?.value.trim() || '',
-        solution: row.querySelector('.check-solution')?.value.trim() || '',
-        imgUrl: row.querySelector('.check-existing-url')?.value || ''
-    })).filter(c => c.subject !== '');
+    try {
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.textContent = "Bezig met opslaan...";
+        }
 
-    console.log("📡 Gegevens voorbereiden voor database...");
+        const id = document.getElementById('editId').value;
+        const systemType = document.getElementById('editSystemType').value || 'cv-ketel';
 
-    const updates = {
-      brand: document.getElementById('editBrand').value.trim(),
-      model: document.getElementById('editModel').value.trim(),
-      procedure: document.getElementById('editProcedure').value,
-      parts: partsData,   
-      faults: faultsData, 
-      checks: checksData, 
-      logo_url: document.getElementById('editLogoUrl')?.value || null,
-      notes: document.getElementById('editNotes')?.value || null,
-      handbook_date: document.getElementById('editHandbookDate')?.value || null,
-      manual_url: document.getElementById('editManualUrl')?.value || null,
-      maxco: document.getElementById('editMaxCO')?.value || null,
-      max_co: document.getElementById('editMaxCO')?.value || null // Beide CO kolommen vullen
-    };
+        // STAP 1: Upload Toestel Foto[cite: 3]
+        let deviceImgUrl = document.getElementById('editDeviceImage').dataset.currentUrl || null;
+        const deviceFile = document.getElementById('editDeviceImage').files[0];
+        if (deviceFile) {
+            deviceImgUrl = await uploadSingleFile(deviceFile);
+        }
 
-    if (systemType === 'cv-ketel') {
-      updates.o2_low = document.getElementById('editO2Low')?.value || null;
-      updates.o2_high = document.getElementById('editO2High')?.value || null;
-      updates.co2_low = document.getElementById('editCO2Low')?.value || null;
-      updates.co2_high = document.getElementById('editCO2High')?.value || null;
+        // STAP 2: Upload Galerij Foto's[cite: 3]
+        let imageUrls = pendingImages.edit.filter(img => typeof img === 'string');
+        const newGalleryFiles = pendingImages.edit.filter(img => img instanceof File);
+        if (newGalleryFiles.length > 0) {
+            const uploadedUrls = await uploadImages('gallery-' + Date.now(), newGalleryFiles);
+            imageUrls = [...imageUrls, ...uploadedUrls];
+        }
+
+        // STAP 3: Verzamel alle overige data[cite: 3]
+        const updates = {
+            brand: document.getElementById('editBrand').value.trim(),
+            model: document.getElementById('editModel').value.trim(),
+            procedure: document.getElementById('editProcedure').value,
+            parts: collectPartsData('edit'),   
+            faults: collectFaultsData('edit'), 
+            checks: await processChecksData('edit'),
+            images: imageUrls,
+            device_image_url: deviceImgUrl,
+            logo_url: document.getElementById('editLogoUrl')?.value || null,
+            notes: document.getElementById('editNotes')?.value || null,
+            handbook_date: document.getElementById('editHandbookDate')?.value || null,
+            manual_url: document.getElementById('editManualUrl')?.value || null,
+            maxco: document.getElementById('editMaxCO')?.value || null
+        };
+
+        // CV-specifieke velden[cite: 3]
+        if (systemType === 'cv-ketel') {
+            updates.o2_low = document.getElementById('editO2Low')?.value || null;
+            updates.o2_high = document.getElementById('editO2High')?.value || null;
+            updates.co2_low = document.getElementById('editCO2Low')?.value || null;
+            updates.co2_high = document.getElementById('editCO2High')?.value || null;
+        }
+
+        console.log("💾 Database bijwerken voor ID:", id);
+        const { error } = await supabase.from('systems').update(updates).eq('id', id);
+
+        if (error) throw error;
+
+        alert('✅ Systeem succesvol bijgewerkt!');
+        location.reload();
+
+    } catch (error) {
+        console.error("❌ FOUT BIJ OPSLAAN:", error);
+        alert("Opslaan mislukt: " + error.message);
+    } finally {
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.textContent = "Bijwerken";
+        }
     }
-
-    console.log("💾 Database bijwerken voor ID:", id);
-
-    // 2. De eigenlijke database aanroep (Zonder de 'Timeout race' om het simpel te houden)
-    const { data, error } = await supabase
-      .from('systems')
-      .update(updates)
-      .eq('id', id)
-      .select(); // Dwingt Supabase om direct antwoord te geven
-
-    if (error) {
-        console.error("❌ Database gaf een fout:", error);
-        throw error;
-    }
-
-    console.log("🎉 Update geslaagd!", data);
-    alert('✅ Systeem succesvol bijgewerkt!');
-    location.reload();
-
-  } catch (error) {
-    console.error("❌ FOUT BIJ OPSLAAN:", error);
-    alert("Opslaan mislukt: " + error.message);
-  } finally {
-    if (submitBtn) {
-      submitBtn.disabled = false;
-      submitBtn.textContent = "Bijwerken";
-    }
-  }
-} 
+}
    
     function handleDrop(e, mode) {
       e.preventDefault();
@@ -1509,19 +1483,6 @@ async function uploadSingleFile(file) {
       container.appendChild(div);
     }
 
-    function collectFaultsData(mode) {
-    const container = document.getElementById(mode + 'FaultsContainer');
-    const rows = container.querySelectorAll('.part-input-row');
-    const faults = [];
-    rows.forEach(row => {
-        const code = row.querySelector('.fault-code-input')?.value.trim();
-        const cause = row.querySelector('.fault-cause-input')?.value.trim();
-        const solution = row.querySelector('.fault-sol-input')?.value.trim();
-        if (code || cause || solution) faults.push({ code, cause, solution });
-    });
-    return JSON.stringify(JSON.stringify(faults)); 
-}
-
     function populateFaultsForm(mode, data) {
   const container = document.getElementById(mode + 'FaultsContainer');
   if (!container) return;
@@ -1555,23 +1516,27 @@ async function uploadSingleFile(file) {
 
     function collectPartsData(mode) {
     const rows = document.querySelectorAll(`#${mode}PartsContainer .part-input-row`);
-    const data = [];
+    const parts = [];
     rows.forEach(row => {
-        const descEl = row.querySelector('.part-desc');
-        const artEl = row.querySelector('.part-art');
-        const suppEl = row.querySelector('select');
-
-        if (descEl && artEl) {
-            const desc = descEl.value.trim();
-            const art = artEl.value.trim();
-            const supp = suppEl ? suppEl.value : 'Overig';
-
-            if (desc !== "" || art !== "") {
-                data.push({ desc: desc, art: art, supp: supp });
-            }
-        }
+        const desc = row.querySelector('.part-desc')?.value.trim();
+        const art = row.querySelector('.part-art')?.value.trim();
+        const supp = row.querySelector('select')?.value || 'Overig';
+        if (desc || art) parts.push({ desc, art, supp });
     });
-    return data; // Stuur de Array direct terug[cite: 3]
+    return parts; // Stuur als Array voor jsonb
+}
+
+function collectFaultsData(mode) {
+    const container = document.getElementById(mode + 'FaultsContainer');
+    const rows = container.querySelectorAll('.part-input-row');
+    const faults = [];
+    rows.forEach(row => {
+        const code = row.querySelector('.fault-code-input')?.value.trim();
+        const cause = row.querySelector('.fault-cause-input')?.value.trim();
+        const solution = row.querySelector('.fault-sol-input')?.value.trim();
+        if (code || cause || solution) faults.push({ code, cause, solution });
+    });
+    return faults; // Stuur als Array voor jsonb[cite: 3]
 }
 
     function populatePartsForm(mode, data) {
