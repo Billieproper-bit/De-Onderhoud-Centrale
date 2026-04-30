@@ -1262,23 +1262,37 @@ async function processChecksData(mode) {
       updates.maxco = document.getElementById('editMaxCO')?.value || null;
     }
 
-    // 3. Database Update
-    console.log("💾 Database bijwerken...");
-    const { error } = await supabase.from('systems').update(updates).eq('id', id);
+    // 3. Database Update met Diagnose
+    console.log("💾 Database bijwerken voor ID:", id);
+    if (!id) {
+        throw new Error("Het systeem-ID ontbreekt. Ik weet niet welk record ik moet bijwerken.");
+    }
+
+    // We maken een 'race': de database-update tegen een klok van 5 seconden
+    const timeout = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error("Timeout: De database reageert niet binnen 5 seconden. Heb je een ad-blocker aan staan?")), 5000)
+    );
+
+    console.log("📡 Verzoek wordt nu verstuurd...");
+    
+    // De eigenlijke update
+    const updateActie = supabase
+      .from('systems')
+      .update(updates)
+      .eq('id', id)
+      .select(); // De .select() dwingt Supabase om direct antwoord te geven
+
+    // Race starten
+    const { data, error } = await Promise.race([updateActie, timeout]);
 
     if (error) throw error;
 
-    console.log("🎉 Alles opgeslagen!");
-    alert('✅ Systeem succesvol bijgewerkt!');
-    location.reload();
-
-  } catch (error) {
-    console.error("❌ FOUT BIJ OPSLAAN:", error);
-    alert("Opslaan mislukt: " + error.message);
-  } finally {
-    if (submitBtn) {
-      submitBtn.disabled = false;
-      submitBtn.textContent = "Bijwerken";
+    if (!data || data.length === 0) {
+        alert("⚠️ De database zegt dat het gelukt is, maar er is niets aangepast. Bestaat dit ID wel in Supabase?");
+    } else {
+        console.log("🎉 Alles opgeslagen!", data);
+        alert('✅ Systeem succesvol bijgewerkt!');
+        location.reload();
     }
   }
 }
