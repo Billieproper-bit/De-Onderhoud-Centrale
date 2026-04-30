@@ -1295,6 +1295,17 @@ async function processChecksData(mode) {
         location.reload();
     }
    
+  } catch (error) {
+    console.error("❌ FOUT BIJ OPSLAAN:", error);
+    alert("Opslaan mislukt: " + error.message);
+  } finally {
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.textContent = "Bijwerken";
+    }
+  }
+}
+   
     function handleDrop(e, mode) {
       e.preventDefault();
       e.currentTarget.classList.remove('drag-over');
