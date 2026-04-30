@@ -453,47 +453,48 @@ function setupEventListeners() {
   }
 }
 
-     // Deze functie is 'async' omdat hij moet wachten op uploads
-    async function processChecksData(mode) {
-      const container = document.getElementById(mode + 'ChecksContainer');
-      const rows = Array.from(container.children); // Maak er een array van
-      const checks = [];
+async function processChecksData(mode) {
+  const container = document.getElementById(mode + 'ChecksContainer');
+  if (!container) return [];
+  const rows = Array.from(container.children);
+  const checks = [];
 
-      for (const row of rows) {
-        const subject = row.querySelector('.check-subject').value.trim();
-        const problem = row.querySelector('.check-problem').value.trim();
-        const solution = row.querySelector('.check-solution').value.trim();
-        const fileInput = row.querySelector('.check-file');
-        const existingUrl = row.querySelector('.check-existing-url').value;
+  for (const row of rows) {
+    const subject = row.querySelector('.check-subject')?.value.trim();
+    const problem = row.querySelector('.check-problem')?.value.trim();
+    const solution = row.querySelector('.check-solution')?.value.trim();
+    const fileInput = row.querySelector('.check-file');
+    const existingUrl = row.querySelector('.check-existing-url')?.value || '';
 
-        if (!subject && !problem) continue; // Lege regels overslaan
+    if (!subject && !problem) continue;
 
-        let finalImageUrl = existingUrl;
+    let finalImageUrl = existingUrl;
 
-        // Als er een nieuwe foto is gekozen, uploaden we die nu direct
-        if (fileInput.files.length > 0) {
-           const file = fileInput.files[0];
-           const fileExt = file.name.split('.').pop();
-           const fileName = 'check-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9) + '.' + fileExt;
+    if (fileInput && fileInput.files.length > 0) {
+       const file = fileInput.files[0];
+       const fileExt = file.name.split('.').pop();
+       const fileName = `checks/${Date.now()}-${Math.random().toString(36).substr(2, 5)}.${fileExt}`;
+       
+       try {
+         const { data, error } = await supabase.storage
+           .from('system-images')
+           .upload(fileName, file);
            
-           try {
-             const { data, error } = await supabase.storage
-               .from('system-images')
-               .upload(fileName, file, { upsert: true });
-               
-             if (!error) {
-               finalImageUrl = 'https://srsnjifezttivawxnndu.supabase.co/storage/v1/object/public/system-images/' + fileName;
-             }
-           } catch(err) {
-             console.error('Foto upload fout bij controlepunt', err);
-           }
-        }
-
-        checks.push({ subject, problem, solution, imgUrl: finalImageUrl });
-      }
-
-      return checks;
+         if (error) throw error;
+         
+         const { data: publicUrlData } = supabase.storage
+           .from('system-images')
+           .getPublicUrl(fileName);
+           
+         finalImageUrl = publicUrlData.publicUrl;
+       } catch(err) {
+         console.error('Foto upload fout bij controlepunt:', err);
+       }
     }
+    checks.push({ subject, problem, solution, imgUrl: finalImageUrl });
+  }
+  return checks;
+}
     
     function createSystemCard(system) {
       const isFavorite = favorites.includes(system.id);
@@ -1229,28 +1230,26 @@ function setupEventListeners() {
     const id = document.getElementById('editId').value;
     const systemType = document.getElementById('editSystemType').value || 'update';
     
-    console.log("🚀 Start opslaan voor ID:", id);
-
-    // 1. Data verzamelen (slechts ÉÉN keer aanroepen!)
+    // 1. Data verzamelen
     const partsData = collectPartsData('edit');
     const faultsData = collectFaultsData('edit');
     const checksData = await processChecksData('edit'); 
 
-    // 2. Basis object bouwen
+    // 2. Het update-object bouwen
     const updates = {
       brand: document.getElementById('editBrand').value.trim(),
       model: document.getElementById('editModel').value.trim(),
       procedure: document.getElementById('editProcedure').value,
-      parts: partsData,   // Direct als Array naar jsonb
-      faults: faultsData, // Direct als Array naar jsonb
-      checks: checksData, // Direct als Array naar jsonb
-      logo_url: document.getElementById('editLogoUrl') ? document.getElementById('editLogoUrl').value : null,
-      notes: document.getElementById('editNotes') ? document.getElementById('editNotes').value : null,
-      handbook_date: document.getElementById('editHandbookDate') ? document.getElementById('editHandbookDate').value : null,
-      manual_url: document.getElementById('editManualUrl') ? document.getElementById('editManualUrl').value : null
+      parts: partsData,   
+      faults: faultsData, 
+      checks: checksData, 
+      logo_url: document.getElementById('editLogoUrl')?.value || null,
+      notes: document.getElementById('editNotes')?.value || null,
+      handbook_date: document.getElementById('editHandbookDate')?.value || null,
+      manual_url: document.getElementById('editManualUrl')?.value || null
     };
 
-    // 3. Specifieke CV-waarden toevoegen
+    // 3. CV-specifieke velden (alleen als het een CV-ketel is)
     if (systemType === 'cv-ketel') {
       updates.o2_low = document.getElementById('editO2Low')?.value || null;
       updates.o2_high = document.getElementById('editO2High')?.value || null;
@@ -1259,7 +1258,7 @@ function setupEventListeners() {
       updates.maxco = document.getElementById('editMaxCO')?.value || null;
     }
 
-    // 4. Foto's (Toestel)
+    // 4. Hoofdfoto (Toestel) verwerken
     let deviceImgUrl = document.getElementById('editDeviceImage').dataset.currentUrl || null;
     const deviceFile = document.getElementById('editDeviceImage').files[0];
     if (deviceFile) {
@@ -1267,8 +1266,9 @@ function setupEventListeners() {
     }
     updates.device_image_url = deviceImgUrl;
 
-    // 5. Foto's (Galerij)
+    // 5. Galerij foto's verwerken
     let imageUrls = pendingImages.edit;
+    // Check of er nieuwe bestanden tussen zitten die nog geüpload moeten worden
     if (pendingImages.edit.some(img => img instanceof File)) {
         const newFiles = pendingImages.edit.filter(img => img instanceof File);
         const uploadedUrls = await uploadImages(systemType + '-' + Date.now(), newFiles);
@@ -1277,37 +1277,15 @@ function setupEventListeners() {
     }
     updates.images = imageUrls;
 
-    console.log("📡 Gegevens verzenden naar Supabase...");
+    // 6. De daadwerkelijke update in de database
+    const { error } = await supabase.from('systems').update(updates).eq('id', id);
 
-    // 6. DE UPDATE 
-    const databaseDeadline = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error("De database reageert niet binnen 10 seconden. Controleer je internet of log opnieuw in.")), 10000)
-    );
-
-    try {
-        // We laten de update 'racen' tegen de klok
-        const updateActie = supabase.from('systems').update(updates).eq('id', id);
-        
-        const { error } = await Promise.race([updateActie, databaseDeadline]);
-
-        if (error) {
-            console.error("❌ Database gaf een fout:", error);
-            alert("Database weigert update: " + error.message);
-            return;
-        }
-
-        console.log("✅ Update succesvol!");
-        alert('✅ Systeem succesvol bijgewerkt!');
-        location.reload();
-
-    } catch (deadlineError) {
-        console.error("⏱️ Timeout:", deadlineError.message);
-        alert("Opslaan mislukt: " + deadlineError.message);
+    if (error) {
+        throw error; // Springt direct naar de catch(error) hieronder
     }
 
-    // 7. UI synchroniseren
     alert('✅ Systeem succesvol bijgewerkt!');
-    location.reload(); // De meest veilige manier om je lijst te verversen
+    location.reload(); 
 
   } catch (error) {
     console.error("Fout bij opslaan:", error);
