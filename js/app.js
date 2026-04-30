@@ -1231,17 +1231,15 @@ async function processChecksData(mode) {
       submitBtn.textContent = "Bezig met opslaan...";
     }
 
-    // ID ophalen als tekst (omdat het een UUID is in jouw schema)
     const id = document.getElementById('editId').value;
     const systemType = document.getElementById('editSystemType').value || 'cv-ketel';
     
-    console.log("🆔 Controleren ID:", id);
-
-    // Data verzamelen
+    // 1. Data verzamelen
     const partsData = collectPartsData('edit');
     const faultsData = collectFaultsData('edit');
     const checksData = await processChecksData('edit'); 
 
+    console.log("📡 Gegevens voorbereiden...");
     const updates = {
       brand: document.getElementById('editBrand').value.trim(),
       model: document.getElementById('editModel').value.trim(),
@@ -1252,11 +1250,9 @@ async function processChecksData(mode) {
       logo_url: document.getElementById('editLogoUrl')?.value || null,
       notes: document.getElementById('editNotes')?.value || null,
       handbook_date: document.getElementById('editHandbookDate')?.value || null,
-      manual_url: document.getElementById('editManualUrl')?.value || null,
-      device_image_url: document.getElementById('editDeviceImage').dataset.currentUrl || null
+      manual_url: document.getElementById('editManualUrl')?.value || null
     };
 
-    // Specifieke CV-velden (Let op: in jouw schema heet de kolom 'maxco', niet 'max_co')
     if (systemType === 'cv-ketel') {
       updates.o2_low = document.getElementById('editO2Low')?.value || null;
       updates.o2_high = document.getElementById('editO2High')?.value || null;
@@ -1265,22 +1261,42 @@ async function processChecksData(mode) {
       updates.maxco = document.getElementById('editMaxCO')?.value || null;
     }
 
-    console.log("💾 Database bijwerken voor ID:", id);
+    // 2. Foto's verwerken (Toestel)
+    let deviceImgUrl = document.getElementById('editDeviceImage').dataset.currentUrl || null;
+    const deviceFile = document.getElementById('editDeviceImage').files[0];
+    if (deviceFile) {
+        deviceImgUrl = await uploadSingleFile(deviceFile);
+    }
+    updates.device_image_url = deviceImgUrl;
 
-    // De update actie
+    // 3. Foto's verwerken (Galerij) - Zorg dat we alleen URLs overhouden
+    let imageUrls = [];
+    if (pendingImages.edit && pendingImages.edit.length > 0) {
+        const filesToUpload = pendingImages.edit.filter(img => img instanceof File);
+        const existingUrls = pendingImages.edit.filter(img => typeof img === 'string');
+        
+        if (filesToUpload.length > 0) {
+            const newUrls = await uploadImages(systemType + '-' + Date.now(), filesToUpload);
+            imageUrls = existingUrls.concat(newUrls);
+        } else {
+            imageUrls = existingUrls;
+        }
+    }
+    updates.images = imageUrls;
+
+    // 4. DATABASE UPDATE
+    console.log("💾 Database bijwerken voor ID:", id);
+    
     const { data, error } = await supabase
       .from('systems')
       .update(updates)
       .eq('id', id)
       .select();
 
-    if (error) {
-        console.error("❌ Supabase gaf een foutmelding:", error);
-        throw error;
-    }
+    if (error) throw error;
 
     if (!data || data.length === 0) {
-        alert("⚠️ Let op: De database zegt dat het gelukt is, maar er is niets aangepast. Bestaat dit ID (" + id + ") wel echt in de tabel?");
+        alert("⚠️ Geen wijzigingen doorgevoerd. Bestaat het ID nog?");
     } else {
         alert('✅ Systeem succesvol bijgewerkt!');
         location.reload();
