@@ -1294,9 +1294,7 @@ async function processChecksData(mode) {
         alert('✅ Systeem succesvol bijgewerkt!');
         location.reload();
     }
-  }
-}
-    
+   
     function handleDrop(e, mode) {
       e.preventDefault();
       e.currentTarget.classList.remove('drag-over');
