@@ -1231,29 +1231,32 @@ async function processChecksData(mode) {
       submitBtn.textContent = "Bezig met opslaan...";
     }
 
-    const id = parseInt(document.getElementById('editId').value);
+    // ID ophalen als tekst (omdat het een UUID is in jouw schema)
+    const id = document.getElementById('editId').value;
     const systemType = document.getElementById('editSystemType').value || 'cv-ketel';
     
-    // 1. Data verzamelen
+    console.log("🆔 Controleren ID:", id);
+
+    // Data verzamelen
     const partsData = collectPartsData('edit');
     const faultsData = collectFaultsData('edit');
-    const checksData = await processChecksData('edit'); // Hier hing hij waarschijnlijk
+    const checksData = await processChecksData('edit'); 
 
-    console.log("📡 Gegevens voorbereiden voor database...");
     const updates = {
       brand: document.getElementById('editBrand').value.trim(),
       model: document.getElementById('editModel').value.trim(),
       procedure: document.getElementById('editProcedure').value,
-      parts: partsData,
-      faults: faultsData,
-      checks: checksData,
+      parts: partsData,   
+      faults: faultsData, 
+      checks: checksData, 
       logo_url: document.getElementById('editLogoUrl')?.value || null,
       notes: document.getElementById('editNotes')?.value || null,
       handbook_date: document.getElementById('editHandbookDate')?.value || null,
-      manual_url: document.getElementById('editManualUrl')?.value || null
+      manual_url: document.getElementById('editManualUrl')?.value || null,
+      device_image_url: document.getElementById('editDeviceImage').dataset.currentUrl || null
     };
 
-    // 2. CV-specifieke velden
+    // Specifieke CV-velden (Let op: in jouw schema heet de kolom 'maxco', niet 'max_co')
     if (systemType === 'cv-ketel') {
       updates.o2_low = document.getElementById('editO2Low')?.value || null;
       updates.o2_high = document.getElementById('editO2High')?.value || null;
@@ -1262,39 +1265,27 @@ async function processChecksData(mode) {
       updates.maxco = document.getElementById('editMaxCO')?.value || null;
     }
 
-    // 3. Database Update met Diagnose
     console.log("💾 Database bijwerken voor ID:", id);
-    if (!id) {
-        throw new Error("Het systeem-ID ontbreekt. Ik weet niet welk record ik moet bijwerken.");
-    }
 
-    // We maken een 'race': de database-update tegen een klok van 5 seconden
-    const timeout = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error("Timeout: De database reageert niet binnen 5 seconden. Heb je een ad-blocker aan staan?")), 5000)
-    );
-
-    console.log("📡 Verzoek wordt nu verstuurd...");
-    
-    // De eigenlijke update
-    const updateActie = supabase
+    // De update actie
+    const { data, error } = await supabase
       .from('systems')
       .update(updates)
       .eq('id', id)
-      .select(); // De .select() dwingt Supabase om direct antwoord te geven
+      .select();
 
-    // Race starten
-    const { data, error } = await Promise.race([updateActie, timeout]);
-
-    if (error) throw error;
+    if (error) {
+        console.error("❌ Supabase gaf een foutmelding:", error);
+        throw error;
+    }
 
     if (!data || data.length === 0) {
-        alert("⚠️ De database zegt dat het gelukt is, maar er is niets aangepast. Bestaat dit ID wel in Supabase?");
+        alert("⚠️ Let op: De database zegt dat het gelukt is, maar er is niets aangepast. Bestaat dit ID (" + id + ") wel echt in de tabel?");
     } else {
-        console.log("🎉 Alles opgeslagen!", data);
         alert('✅ Systeem succesvol bijgewerkt!');
         location.reload();
     }
-   
+
   } catch (error) {
     console.error("❌ FOUT BIJ OPSLAAN:", error);
     alert("Opslaan mislukt: " + error.message);
