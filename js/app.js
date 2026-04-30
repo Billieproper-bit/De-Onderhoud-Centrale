@@ -1231,7 +1231,7 @@ async function processChecksData(mode) {
       submitBtn.textContent = "Bezig met opslaan...";
     }
 
-    const id = document.getElementById('editId').value;
+    const id = parseInt(document.getElementById('editId').value);
     const systemType = document.getElementById('editSystemType').value || 'cv-ketel';
     
     // 1. Data verzamelen
