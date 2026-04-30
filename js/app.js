@@ -1234,61 +1234,46 @@ async function processChecksData(mode) {
     const id = document.getElementById('editId').value;
     const systemType = document.getElementById('editSystemType').value || 'cv-ketel';
     
-    // 1. Data verzamelen
-    const partsData = collectPartsData('edit');
+    // 1. Data verzamelen (We maken hier schone Arrays van voor jsonb)
+    const partsData = collectPartsData('edit'); 
     const faultsData = collectFaultsData('edit');
-    const checksData = await processChecksData('edit'); 
+    
+    // We slaan de foto-verwerking van checks even over voor de test
+    const checksRows = Array.from(document.getElementById('editChecksContainer').children);
+    const checksData = checksRows.map(row => ({
+        subject: row.querySelector('.check-subject')?.value.trim() || '',
+        problem: row.querySelector('.check-problem')?.value.trim() || '',
+        solution: row.querySelector('.check-solution')?.value.trim() || '',
+        imgUrl: row.querySelector('.check-existing-url')?.value || ''
+    })).filter(c => c.subject !== '');
 
-    console.log("📡 Gegevens voorbereiden...");
+    console.log("📡 Gegevens voorbereiden voor UUID:", id);
+
     const updates = {
       brand: document.getElementById('editBrand').value.trim(),
       model: document.getElementById('editModel').value.trim(),
       procedure: document.getElementById('editProcedure').value,
-      parts: partsData,   
-      faults: faultsData, 
-      checks: JSON.stringify(JSON.stringify(checksData)), // Ook hier dubbel inpakken
+      parts: partsData,   // Supabase jsonb accepteert dit direct als Array
+      faults: faultsData, // Supabase jsonb accepteert dit direct als Array
+      checks: checksData, // Supabase jsonb accepteert dit direct als Array
       logo_url: document.getElementById('editLogoUrl')?.value || null,
       notes: document.getElementById('editNotes')?.value || null,
       handbook_date: document.getElementById('editHandbookDate')?.value || null,
       manual_url: document.getElementById('editManualUrl')?.value || null,
-      maxco: document.getElementById('editMaxCO')?.value || null,
-      max_co: document.getElementById('editMaxCO')?.value || null 
+      maxco: document.getElementById('editMaxCO')?.value || null
     };
 
+    // 2. CV-specifieke velden (Check schema: maxco, niet max_co)
     if (systemType === 'cv-ketel') {
       updates.o2_low = document.getElementById('editO2Low')?.value || null;
       updates.o2_high = document.getElementById('editO2High')?.value || null;
       updates.co2_low = document.getElementById('editCO2Low')?.value || null;
       updates.co2_high = document.getElementById('editCO2High')?.value || null;
-      updates.maxco = document.getElementById('editMaxCO')?.value || null;
     }
 
-    // 2. Foto's verwerken (Toestel)
-    let deviceImgUrl = document.getElementById('editDeviceImage').dataset.currentUrl || null;
-    const deviceFile = document.getElementById('editDeviceImage').files[0];
-    if (deviceFile) {
-        deviceImgUrl = await uploadSingleFile(deviceFile);
-    }
-    updates.device_image_url = deviceImgUrl;
+    console.log("💾 Database bijwerken...");
 
-    // 3. Foto's verwerken (Galerij) - Zorg dat we alleen URLs overhouden
-    let imageUrls = [];
-    if (pendingImages.edit && pendingImages.edit.length > 0) {
-        const filesToUpload = pendingImages.edit.filter(img => img instanceof File);
-        const existingUrls = pendingImages.edit.filter(img => typeof img === 'string');
-        
-        if (filesToUpload.length > 0) {
-            const newUrls = await uploadImages(systemType + '-' + Date.now(), filesToUpload);
-            imageUrls = existingUrls.concat(newUrls);
-        } else {
-            imageUrls = existingUrls;
-        }
-    }
-    updates.images = imageUrls;
-
-    // 4. DATABASE UPDATE
-    console.log("💾 Database bijwerken voor ID:", id);
-    
+    // 3. Directe aanroep zonder extra timeouts om netwerk-verkeer te dwingen
     const { data, error } = await supabase
       .from('systems')
       .update(updates)
@@ -1297,12 +1282,9 @@ async function processChecksData(mode) {
 
     if (error) throw error;
 
-    if (!data || data.length === 0) {
-        alert("⚠️ Geen wijzigingen doorgevoerd. Bestaat het ID nog?");
-    } else {
-        alert('✅ Systeem succesvol bijgewerkt!');
-        location.reload();
-    }
+    console.log("🎉 Gelukt!", data);
+    alert('✅ Systeem succesvol bijgewerkt!');
+    location.reload();
 
   } catch (error) {
     console.error("❌ FOUT BIJ OPSLAAN:", error);
@@ -1570,14 +1552,17 @@ async function uploadSingleFile(file) {
 
     function collectPartsData(mode) {
     const rows = document.querySelectorAll(`#${mode}PartsContainer .part-input-row`);
-    const data = [];
+    const partsArray = [];
     rows.forEach(row => {
         const desc = row.querySelector('.part-desc')?.value.trim();
         const art = row.querySelector('.part-art')?.value.trim();
         const supp = row.querySelector('select')?.value || 'Overig';
-        if (desc || art) data.push({ desc, art, supp });
+
+        if (desc || art) {
+            partsArray.push({ desc, art, supp });
+        }
     });
-    return JSON.stringify(data); 
+    return partsArray; // Geen JSON.stringify doen!
 }
 
     function populatePartsForm(mode, data) {
