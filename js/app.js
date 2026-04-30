@@ -1234,36 +1234,26 @@ async function processChecksData(mode) {
     const id = document.getElementById('editId').value;
     const systemType = document.getElementById('editSystemType').value || 'cv-ketel';
     
-    // 1. Data verzamelen (We maken hier schone Arrays van voor jsonb)
-    const partsData = collectPartsData('edit'); 
+    // 1. Data verzamelen
+    const partsData = collectPartsData('edit');
     const faultsData = collectFaultsData('edit');
-    
-    // We slaan de foto-verwerking van checks even over voor de test
-    const checksRows = Array.from(document.getElementById('editChecksContainer').children);
-    const checksData = checksRows.map(row => ({
-        subject: row.querySelector('.check-subject')?.value.trim() || '',
-        problem: row.querySelector('.check-problem')?.value.trim() || '',
-        solution: row.querySelector('.check-solution')?.value.trim() || '',
-        imgUrl: row.querySelector('.check-existing-url')?.value || ''
-    })).filter(c => c.subject !== '');
-
-    console.log("📡 Gegevens voorbereiden voor UUID:", id);
+    const checksData = await processChecksData('edit'); 
 
     const updates = {
       brand: document.getElementById('editBrand').value.trim(),
       model: document.getElementById('editModel').value.trim(),
       procedure: document.getElementById('editProcedure').value,
-      parts: partsData,   // Supabase jsonb accepteert dit direct als Array
-      faults: faultsData, // Supabase jsonb accepteert dit direct als Array
-      checks: checksData, // Supabase jsonb accepteert dit direct als Array
+      parts: partsData,   
+      faults: faultsData, 
+      checks: checksData, 
       logo_url: document.getElementById('editLogoUrl')?.value || null,
       notes: document.getElementById('editNotes')?.value || null,
       handbook_date: document.getElementById('editHandbookDate')?.value || null,
       manual_url: document.getElementById('editManualUrl')?.value || null,
-      maxco: document.getElementById('editMaxCO')?.value || null
+      maxco: document.getElementById('editMaxCO')?.value || null,
+      max_co: document.getElementById('editMaxCO')?.value || null // Beiden vullen voor je schema
     };
 
-    // 2. CV-specifieke velden (Check schema: maxco, niet max_co)
     if (systemType === 'cv-ketel') {
       updates.o2_low = document.getElementById('editO2Low')?.value || null;
       updates.o2_high = document.getElementById('editO2High')?.value || null;
@@ -1271,18 +1261,29 @@ async function processChecksData(mode) {
       updates.co2_high = document.getElementById('editCO2High')?.value || null;
     }
 
-    console.log("💾 Database bijwerken...");
+    // 2. Foto's verwerken
+    let deviceImgUrl = document.getElementById('editDeviceImage').dataset.currentUrl || null;
+    const deviceFile = document.getElementById('editDeviceImage').files[0];
+    if (deviceFile) {
+        deviceImgUrl = await uploadSingleFile(deviceFile);
+    }
+    updates.device_image_url = deviceImgUrl;
 
-    // 3. Directe aanroep zonder extra timeouts om netwerk-verkeer te dwingen
-    const { data, error } = await supabase
-      .from('systems')
-      .update(updates)
-      .eq('id', id)
-      .select();
+    let imageUrls = pendingImages.edit;
+    if (pendingImages.edit.some(img => img instanceof File)) {
+        const newFiles = pendingImages.edit.filter(img => img instanceof File);
+        const uploadedUrls = await uploadImages(systemType + '-' + Date.now(), newFiles);
+        const existingUrls = pendingImages.edit.filter(img => typeof img === 'string');
+        imageUrls = existingUrls.concat(uploadedUrls);
+    }
+    updates.images = imageUrls;
+
+    // 3. DATABASE UPDATE
+    console.log("💾 Database bijwerken voor ID:", id);
+    const { data, error } = await supabase.from('systems').update(updates).eq('id', id).select();
 
     if (error) throw error;
 
-    console.log("🎉 Gelukt!", data);
     alert('✅ Systeem succesvol bijgewerkt!');
     location.reload();
 
@@ -1552,17 +1553,14 @@ async function uploadSingleFile(file) {
 
     function collectPartsData(mode) {
     const rows = document.querySelectorAll(`#${mode}PartsContainer .part-input-row`);
-    const partsArray = [];
+    const data = [];
     rows.forEach(row => {
         const desc = row.querySelector('.part-desc')?.value.trim();
         const art = row.querySelector('.part-art')?.value.trim();
         const supp = row.querySelector('select')?.value || 'Overig';
-
-        if (desc || art) {
-            partsArray.push({ desc, art, supp });
-        }
+        if (desc || art) data.push({ desc, art, supp });
     });
-    return partsArray; // Geen JSON.stringify doen!
+    return data; // Belangrijk: Geen JSON.stringify hier!
 }
 
     function populatePartsForm(mode, data) {
