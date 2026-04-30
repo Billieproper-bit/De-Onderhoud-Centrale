@@ -1231,14 +1231,14 @@ async function processChecksData(mode) {
       submitBtn.textContent = "Bezig met opslaan...";
     }
 
-    const id = document.getElementById('editId').value;
+    const id = document.getElementById('editId').value.trim(); // Trim toegevoegd voor zekerheid
     const systemType = document.getElementById('editSystemType').value || 'cv-ketel';
     
-    // 1. Data verzamelen
+    // 1. Data verzamelen (De onderdelen, storingen en checks)
     const partsData = collectPartsData('edit');
     const faultsData = collectFaultsData('edit');
     
-    // We gebruiken een simpele versie voor de checks om blokkades te voorkomen
+    // We verwerken de checks zonder de hangende foto-upload voor deze test
     const checksRows = Array.from(document.getElementById('editChecksContainer').children);
     const checksData = checksRows.map(row => ({
         subject: row.querySelector('.check-subject')?.value.trim() || '',
@@ -1247,20 +1247,21 @@ async function processChecksData(mode) {
         imgUrl: row.querySelector('.check-existing-url')?.value || ''
     })).filter(c => c.subject !== '');
 
-    console.log("📡 Gegevens voorbereiden voor UUID:", id);
+    console.log("📡 Gegevens voorbereiden voor database...");
 
     const updates = {
       brand: document.getElementById('editBrand').value.trim(),
       model: document.getElementById('editModel').value.trim(),
       procedure: document.getElementById('editProcedure').value,
-      parts: partsData,   // Dit moet een Array zijn voor jsonb
-      faults: faultsData, // Dit moet een Array zijn voor jsonb
-      checks: checksData, // Dit moet een Array zijn voor jsonb
+      parts: partsData,   
+      faults: faultsData, 
+      checks: checksData, 
       logo_url: document.getElementById('editLogoUrl')?.value || null,
       notes: document.getElementById('editNotes')?.value || null,
       handbook_date: document.getElementById('editHandbookDate')?.value || null,
       manual_url: document.getElementById('editManualUrl')?.value || null,
-      maxco: document.getElementById('editMaxCO')?.value || null // Match schema[cite: 3]
+      maxco: document.getElementById('editMaxCO')?.value || null,
+      max_co: document.getElementById('editMaxCO')?.value || null // Beide CO kolommen vullen
     };
 
     if (systemType === 'cv-ketel') {
@@ -1270,16 +1271,21 @@ async function processChecksData(mode) {
       updates.co2_high = document.getElementById('editCO2High')?.value || null;
     }
 
-    console.log("💾 Database bijwerken...");
+    console.log("💾 Database bijwerken voor ID:", id);
 
+    // 2. De eigenlijke database aanroep (Zonder de 'Timeout race' om het simpel te houden)
     const { data, error } = await supabase
       .from('systems')
       .update(updates)
       .eq('id', id)
-      .select();
+      .select(); // Dwingt Supabase om direct antwoord te geven
 
-    if (error) throw error;
+    if (error) {
+        console.error("❌ Database gaf een fout:", error);
+        throw error;
+    }
 
+    console.log("🎉 Update geslaagd!", data);
     alert('✅ Systeem succesvol bijgewerkt!');
     location.reload();
 
