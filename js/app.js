@@ -1246,11 +1246,13 @@ async function processChecksData(mode) {
       procedure: document.getElementById('editProcedure').value,
       parts: partsData,   
       faults: faultsData, 
-      checks: checksData, 
+      checks: JSON.stringify(JSON.stringify(checksData)), // Ook hier dubbel inpakken
       logo_url: document.getElementById('editLogoUrl')?.value || null,
       notes: document.getElementById('editNotes')?.value || null,
       handbook_date: document.getElementById('editHandbookDate')?.value || null,
-      manual_url: document.getElementById('editManualUrl')?.value || null
+      manual_url: document.getElementById('editManualUrl')?.value || null,
+      maxco: document.getElementById('editMaxCO')?.value || null,
+      max_co: document.getElementById('editMaxCO')?.value || null 
     };
 
     if (systemType === 'cv-ketel') {
@@ -1523,20 +1525,17 @@ async function uploadSingleFile(file) {
     }
 
     function collectFaultsData(mode) {
-      const container = document.getElementById(mode + 'FaultsContainer');
-      const rows = container.querySelectorAll('.part-input-row');
-      const faults = [];
-      rows.forEach(row => {
-        const code = row.querySelector('.fault-code-input').value.trim();
-        const cause = row.querySelector('.fault-cause-input').value.trim();
-        const solution = row.querySelector('.fault-sol-input').value.trim();
-        
-        if (code || cause || solution) {
-            faults.push({ code, cause, solution });
-        }
-      });
-      return faults;
-    }
+    const container = document.getElementById(mode + 'FaultsContainer');
+    const rows = container.querySelectorAll('.part-input-row');
+    const faults = [];
+    rows.forEach(row => {
+        const code = row.querySelector('.fault-code-input')?.value.trim();
+        const cause = row.querySelector('.fault-cause-input')?.value.trim();
+        const solution = row.querySelector('.fault-sol-input')?.value.trim();
+        if (code || cause || solution) faults.push({ code, cause, solution });
+    });
+    return JSON.stringify(JSON.stringify(faults)); 
+}
 
     function populateFaultsForm(mode, data) {
   const container = document.getElementById(mode + 'FaultsContainer');
@@ -1573,27 +1572,12 @@ async function uploadSingleFile(file) {
     const rows = document.querySelectorAll(`#${mode}PartsContainer .part-input-row`);
     const data = [];
     rows.forEach(row => {
-        const descEl = row.querySelector('.part-desc');
-        const artEl = row.querySelector('.part-art');
-        const suppEl = row.querySelector('select');
-
-        if (descEl && artEl) {
-            const desc = descEl.value.trim();
-            const art = artEl.value.trim();
-            const supp = suppEl ? suppEl.value : 'Overig';
-
-            // Alleen toevoegen als er echt tekst is
-            if (desc !== "" || art !== "") {
-                data.push({ 
-                    desc: desc, 
-                    art: art, 
-                    supp: supp 
-                });
-            }
-        }
+        const desc = row.querySelector('.part-desc')?.value.trim();
+        const art = row.querySelector('.part-art')?.value.trim();
+        const supp = row.querySelector('select')?.value || 'Overig';
+        if (desc || art) data.push({ desc, art, supp });
     });
-    console.log("Verzamelde onderdelen:", data);
-    return data; // Stuurt een schone Array terug
+    return JSON.stringify(data); 
 }
 
     function populatePartsForm(mode, data) {
