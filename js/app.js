@@ -1300,33 +1300,7 @@ async function processChecksData(mode) {
       renderImagePreview(mode);
     }
     
-    const fileExt = file.name.split('.').pop();
-    const fileName = `${folderName}/${Date.now()}.${fileExt}`;
 
-    console.log("Poging tot upload...", fileName);
-
-    // We maken een timeout van 10 seconden
-    const timeout = new Promise((_, reject) => 
-      setTimeout(() => reject(new Error("Supabase upload timeout (10s)")), 10000)
-    );
-
-    try {
-      // We laten de upload racen tegen de klok
-      const uploadPromise = supabase.storage.from('system-images').upload(fileName, file);
-      const { data, error } = await Promise.race([uploadPromise, timeout]);
-
-      if (error) throw error;
-
-      const { data: urlData } = supabase.storage.from('system-images').getPublicUrl(fileName);
-      urls.push(urlData.publicUrl);
-      console.log("Upload geslaagd:", urlData.publicUrl);
-    } catch (err) {
-      console.error("Upload gestopt:", err.message);
-      alert("Upload fout: " + err.message);
-      throw err; // Dit stopt het 'hangen' en geeft een melding
-    }
-  return urls;
-}
 
 function openCalcModal() {
     document.getElementById('calcModal').classList.add('active');
