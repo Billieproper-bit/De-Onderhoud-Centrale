@@ -1299,16 +1299,7 @@ async function processChecksData(mode) {
       pendingImages[mode].splice(index, 1);
       renderImagePreview(mode);
     }
-
-    async function uploadImages(folderName, files) {
-  const urls = [];
-  
-  for (let file of files) {
-    if (!(file instanceof File)) {
-      if (typeof file === 'string') urls.push(file);
-      continue;
-    }
-
+    
     const fileExt = file.name.split('.').pop();
     const fileName = `${folderName}/${Date.now()}.${fileExt}`;
 
