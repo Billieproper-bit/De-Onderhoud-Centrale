@@ -1325,7 +1325,7 @@ async function processChecksData(mode) {
       alert("Upload fout: " + err.message);
       throw err; // Dit stopt het 'hangen' en geeft een melding
     }
-  }
+{
   return urls;
 }
 
