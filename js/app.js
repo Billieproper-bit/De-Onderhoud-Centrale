@@ -1252,10 +1252,16 @@ async function processChecksData(mode) {
         }
 
         console.log("💾 Database bijwerken voor ID:", id);
-        const { error } = await supabase.from('systems').update(updates).eq('id', id);
 
-        if (error) throw error;
+            const timeout = new Promise((_, reject) =>
+            setTimeout(() => reject(new Error("Supabase reageert niet (timeout na 10s)")), 10000)
+        );
 
+            const updateTask = supabase.from('systems').update(updates).eq('id', id);
+            const { error } = await Promise.race([updateTask, timeout]);
+
+            if (error) throw error;
+        
         alert('✅ Systeem succesvol bijgewerkt!');
         location.reload();
 
