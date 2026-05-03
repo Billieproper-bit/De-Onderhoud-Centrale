@@ -1,6 +1,27 @@
 import { supabase } from './supabase-config.js';
-// Als je de upload-functies ook apart hebt gezet:
-// import { uploadImages } from './storage-service.js';
+
+async function uploadImages(prefix, files) {
+  const urls = [];
+  for (const file of files) {
+    if (!(file instanceof File)) {
+      urls.push(file); // al een URL, gewoon doorsturen
+      continue;
+    }
+    try {
+      const ext = file.name.split('.').pop();
+      const fileName = `${prefix}-${Date.now()}-${Math.random().toString(36).substr(2,9)}.${ext}`;
+      const { error } = await supabase.storage
+        .from('system-images')
+        .upload(fileName, file, { upsert: true });
+      if (error) throw error;
+      const { data } = supabase.storage.from('system-images').getPublicUrl(fileName);
+      urls.push(data.publicUrl);
+    } catch (err) {
+      console.error('Fout bij uploaden afbeelding:', err.message);
+    }
+  }
+  return urls;
+}
 
     let currentUser = null;
     let currentUserRole = 'user';
@@ -1192,12 +1213,9 @@ async function processChecksData(mode) {
         
         alert('✅ Systeem is succesvol opgeslagen!');
 
-      } catch (error) {
+         } catch (error) {
         console.error('❌ FOUT BIJ OPSLAAN:', error);
-        alert('Er ging iets mis: ' + (error.message || "Onbekende fout bij het opslaan"));
-      } finally {
-        submitBtn.disabled = false;
-        submitBtn.textContent = originalText;
+        alert('Er ging iets mis: ' + (error.message || JSON.stringify(error)));
       }
     }
 
