@@ -1,27 +1,5 @@
 import { supabase } from './supabase-config.js';
-
-async function uploadImages(prefix, files) {
-  const urls = [];
-  for (const file of files) {
-    if (!(file instanceof File)) {
-      urls.push(file); // al een URL, gewoon doorsturen
-      continue;
-    }
-    try {
-      const ext = file.name.split('.').pop();
-      const fileName = `${prefix}-${Date.now()}-${Math.random().toString(36).substr(2,9)}.${ext}`;
-      const { error } = await supabase.storage
-        .from('system-images')
-        .upload(fileName, file, { upsert: true });
-      if (error) throw error;
-      const { data } = supabase.storage.from('system-images').getPublicUrl(fileName);
-      urls.push(data.publicUrl);
-    } catch (err) {
-      console.error('Fout bij uploaden afbeelding:', err.message);
-    }
-  }
-  return urls;
-}
+import { uploadImages } from './storage-service.js';
 
     let currentUser = null;
     let currentUserRole = 'user';
