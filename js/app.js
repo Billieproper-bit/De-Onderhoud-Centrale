@@ -1490,8 +1490,8 @@ async function uploadSingleFile(file) {
     const materials = [];
 
     rows.forEach(row => {
-        const desc = row.querySelector('.part-desc')?.value.trim();
-        const art = row.querySelector('.part-art')?.value.trim();
+        const desc = row.querySelector('.part-desc')?.value.replace(/[\u00A0\u200B\u200C\u200D\uFEFF]/g, ' ').trim();
+        const art = row.querySelector('.part-art')?.value.replace(/[\u00A0\u200B\u200C\u200D\uFEFF]/g, ' ').trim();
         const supp = row.querySelector('.part-supp')?.value || 'Overig';
 
         if (desc || art) {
